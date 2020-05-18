@@ -1,0 +1,76 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+3^(-6)
+3^6
+pi
+exp(1)
+log(exp(1))
+log(10)
+c(1:10)
+c(seq(.1,.9,.1))
+
+c(rep(1,5),6)
+```
+```{r}
+x = c(seq(1,7,2),8:9)
+x
+x[1]
+x[-1]
+x[-4]
+```
+```{r}
+x= 1:10
+x=x*2
+x
+x^2
+2^x
+log(x)
+x[x>3]
+x[4:9]
+sum(x)
+sum(x[x>18])
+as.character.POSIXt(x)
+
+which(x>8)
+x[which(x>8)]
+max(x)
+which(x==max(x))
+rep(2,6)
+```
+```{r}
+x=c(1,3,5,7,8,9)
+y=1:60
+x+y
+length(rep(x,10))
+```
+
+```{r}
+x=1:9
+y=9:1
+
+X = rbind(x,y)
+X
+Y = cbind(x,y)
+Y
+```
+```{r}
+x=1:9
+y=rev(x)
+X= matrix(x,3,3,byrow=TRUE)
+Y=matrix(y,3,3,byrow=TRUE)
+X
+Y
+X%*%Y
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
