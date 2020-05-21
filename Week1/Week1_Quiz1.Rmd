@@ -1,0 +1,161 @@
+---
+title: "Week1_quiz1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Q1. How many individuals in the Melanoma dataset from the MASS package died from a melanoma?
+
+```{r}
+library(MASS)
+# status 1 means died from Melanoma
+diedMelanoma <- Melanoma[Melanoma$status==1,]
+nrow(diedMelanoma)
+```
+
+Q2. What is the average age of individuals in the Melanoma dataset from the MASS package who are alive?
+#WRONG
+```{r}
+AliveMelanoma <- Melanoma[Melanoma$status>1,]
+mean(AliveMelanoma$age)
+```
+
+Q3. Which animal in the mammals dataset from the MASS package has the largest brain weight relative to its body weight (that is, the largest brain weight to body weight ratio)?
+#WRONG
+```{r}
+mammals[max(mammals$brain/mammals$body),]
+```
+
+
+Q4. Create side-by-side boxplots for each of the numeric variables in the iris dataset. To do so, simply supply the usual function with a dataframe of only the numeric variables of the dataset. (Use the code block above.)
+
+```{r}
+boxplot(iris$Sepal.Length,iris$Sepal.Width,iris$Petal.Length, iris$Petal.Width)
+```
+Q5. Based on this plot, which variable is the most variable? Calculate the standard deviation of this variable. (Use the code block above.
+```{r}
+sd(iris$Petal.Length)
+```
+```{r}
+z <-  list(c(6.85,-2.82,1.82,3.16,2.02,-0.53,7.56,-0.47,10.09,-0.31,6.52,11.43,-6.94,-1.39,-0.67,3.18,-1.42,-13.28,-12.20,6.60,-1.53,-8.91,-0.86,6.07,9.48),
+c(1, 1, 2, 3, 5, 8),
+c(11, 30, 12, 22,  2, 19, 17,  4,  6, 29, 14, 25, 20, 10, 18,  3, 23, 21,  9, 15,  1, 26, 28, 16,  8, 7, 24, 27, 13,  5))
+
+min(z[[1]]) +
+max(z[[2]]) +
+mean(z[[3]])
+```
+
+Q6. Where were the measurements taken in the airquality dataset?
+```{r eval=FALSE}
+?airquality
+```
+New York
+
+Q7. Using the airquality dataset, what is the average wind speed in May ?
+```{r}
+mean(airquality[airquality$Month==5,]$Wind)
+```
+
+Q8. Using the airquality dataset, what is the average ozone measurement? Hint: read the documentation of any function that returns an unexpected result. You will likely find a solution to the issue.
+```{r}
+mean(airquality$Ozone,na.rm = TRUE)
+```
+
+Q9. Using the airquality dataset, create a scatter plot to compare windspeed and temperature. Based on this plot, you believe that:
+
+- Wind speed and temperature have no relationship.
+- As temperature increases, wind speed increases.
+- As temprature increases, wind speed decreases
+```{r}
+library(ggplot2)
+plot(Wind~Temp, data=airquality )
+ggplot(airquality, aes(x=Temp, y=Wind))+geom_point()
+```
+
+Q10. What proportion of the elements of x are larger than 2 in magnitude? Be sure to run the two lines in order, otherwise your vector will not contain the expected elements.
+#WRONG
+```{r}
+set.seed(1337)
+x = rnorm(10000)
+length(x[x>2])/length(x)
+
+```
+
+Q11. Write a function called f that has a single argument input with a default value of 42 which is assumed to be a vector of numeric values. The function should output a vector that is input but with any negative values replaced with 0.
+
+Hint: The ifelse() function could be useful here. Note that all three arguments to ifelse() are vectors.
+
+Run your function followed by the three lines given. Submit the output as your answer.
+
+```{r}
+f <- function(input=42){
+  input[input<0]=0
+  return(input)    
+}
+
+
+set.seed(42)
+x = rnorm(100, mean = 0, sd = 10)
+mean(f(input = x)) - f()
+```
+
+Q12. Create three vectors x0, x1, and y. Each should have a length of 30 and store the following:
+
+x0: Each element should be the value 1
+x1: The first 30 square numbers, starting from 1 (so 1, 4, 9, etc.)
+y: The result of running the given code, after creating the other two vectors
+Report the mean of the values stored in y.
+```{r}
+# create vectors x0 and x1
+x0 <- rep(1,30)
+x1 <- c(1:30)^2
+set.seed(42)
+y  = 5 * x0 + x1 + rnorm(n = 30, mean = 0 , sd = 1)
+mean(y)
+```
+
+Q13. Continued from Question 12. You will need to copy and paste your code from Question 12 into the code block first before completing this question.Create a matrix X with columns x0 and x1. Report the sum of the elements in rows 17 and 19.
+
+```{r}
+m1 <- cbind("x0"=x0, "x1"=x1)
+sum(m1[17,])+sum(m1[19,])
+```
+
+Q14. Continued from Questions 12-13. You will need to copy and paste your code from Questions 12-13 into the code block first before completing this question.
+Use matrix operations to create a new matrix beta_hat defined as follows. Report the sum of the values stored in this matrix.`$ \hatβ=(X^T.X)^{-1}. X^T.y$'
+
+```{r}
+m1 <- cbind("x0"=x0, "x1"=x1)
+beta_hat <- solve(t(m1)%*%m1)%*%t(m1)%*%y
+sum(beta_hat)
+```
+
+Q15. Continued from Questions 12-14. You will need to copy and paste your code from Questions 12-14 into the code block first before completing this question. Create a new variable y_hat which stores the result of the matrix operation,
+
+$\hat{y} = X \hat{\beta}$
+
+The result will be a 30×1 matrix. Perform and report the result of the following operation,
+
+$\sum_{i = 1}^{30} (y_i - \hat{y}_i)^ 2$
+
+```{r}
+x0 <- rep(1,30)
+x1 <- c(1:30)^2
+set.seed(42)
+y  = 5 * x0 + x1 + rnorm(n = 30, mean = 0 , sd = 1)
+X <- cbind("x0"=x0, "x1"=x1)
+
+beta_hat <- solve(t(X)%*%X)%*%t(X)%*%y
+
+y_hat <- X %*% beta_hat
+# here is what y_hat looks like as a vector
+y_hat[,1]
+#now to substract each element of 2 vectors and square them
+sum((y-y_hat[,1])^2)
+```
+
