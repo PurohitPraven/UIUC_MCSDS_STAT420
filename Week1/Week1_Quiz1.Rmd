@@ -18,16 +18,20 @@ nrow(diedMelanoma)
 ```
 
 Q2. What is the average age of individuals in the Melanoma dataset from the MASS package who are alive?
-#WRONG
+
 ```{r}
-AliveMelanoma <- Melanoma[Melanoma$status>1,]
+library(MASS)
+AliveMelanoma <- Melanoma[Melanoma$status==2,]
 mean(AliveMelanoma$age)
 ```
 
 Q3. Which animal in the mammals dataset from the MASS package has the largest brain weight relative to its body weight (that is, the largest brain weight to body weight ratio)?
-#WRONG
+
 ```{r}
-mammals[max(mammals$brain/mammals$body),]
+library(MASS)
+m <- data.frame((cbind(name=rownames(mammals), BrainVsBody = (mammals$brain/1000)/mammals$body)), stringsAsFactors = FALSE)
+is.data.frame(m)
+m[m$BrainVsBody == max(m$BrainVsBody),]
 ```
 
 
@@ -82,7 +86,7 @@ Q10. What proportion of the elements of x are larger than 2 in magnitude? Be sur
 ```{r}
 set.seed(1337)
 x = rnorm(10000)
-length(x[x>2])/length(x)
+length(x[(x>2) | (x< -2)])/length(x)
 
 ```
 
