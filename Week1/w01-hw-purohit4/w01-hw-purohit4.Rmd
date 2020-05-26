@@ -11,6 +11,7 @@ urlcolor: cyan
 ---
 
 ***
+### Assignment submitted by Praveen Purohit. Email: purohit4@illinois.edu
 
 ## Exercise 1 (Subsetting and Statistics)
 
@@ -33,11 +34,7 @@ ncol(msleep)
 ```
 
 What are the observations in this dataset?
-```{r}
-?msleep
-colnames(msleep)
-```
-OR the below method can be used to see the observations and their meanings by using the printr package
+
 ```{r include=FALSE}
 library(printr)
 ```
@@ -68,7 +65,7 @@ n[!is.na(n$name),][,"name"]
 
 **(f)** What is the average bodyweight of carnivores in this dataset?
 ```{r}
-mean(msleep[msleep$order=="Carnivora",]$bodywt)
+mean(msleep[msleep$vore=="carni",]$bodywt, na.rm = TRUE)
 ```
 
 
@@ -91,10 +88,6 @@ ncol(birthwt)
 
 
 What are the observations in this dataset?
-```{r}
-colnames(birthwt)
-```
-OR the below method can be used to see the observations and their meanings
 
 ```{r printr.help.sections="format"}
 ?birthwt
@@ -105,31 +98,29 @@ OR the below method can be used to see the observations and their meanings
 library(ggplot2)
 ggplot(birthwt, aes(x=lwt, y=bwt, color=I("red")))+geom_point()+ggtitle("Relationship between Infant's birth weight vs Mother's weight") + xlab("Mother's weight at last menstrual period (Pounds/lbs)") + ylab("Infant's birth weight (Grams/gms)")
 ```
-```{r eval=FALSE, include=TRUE}
 There seems to be no obvious relationship when the mothers are low to medium weight. When we get to heavier moms, we see that they have heavy babies. This general observation doesnt define causality and further analysis and studies will need to be done
-```
+
 
 
 **(c)** Create a scatter plot of birth weight (y-axis) vs mother's age (x-axis). Use a non-default color for the points. (Also, be sure to give the plot a title and label the axes appropriately.) Based on the scatter plot, does there seem to be a relationship between the two variables? Briefly explain.
 ```{r fig.width=10}
 ggplot(birthwt, aes(x=age, y=bwt, color=I("red")))+geom_point()+ggtitle("Relationship between Infant's birth weight vs Mother's age") + xlab("mother's age in years.") + ylab("Infant's birth weight (Grams/gms)")
 ```
-```{r eval=FALSE, include=TRUE}
-There seems to be no obvious relationship between mothers age and Infants weight. We do notice that some of the low weight babies are born to mothers who are 25+ years which implies the probablity of a low weight baby may be higer for mothers who are 25+. This general observation doesnt define causality and further analysis and studies will need to be done. There is one outlier in the plot which we should probably ignore.
-```
+There seems to be no obvious relationship between mothers age and Infants weight. We do notice that some of the low weight babies are born to mothers who are 25+ years which implies the probablity of a low weight baby may be higer for mothers who are 25+. This general observation doesnt define causality and further analysis and studies will need to be done. There is one outlier (5kg baby) in the plot which we should probably ignore.
+
 
 **(d)** Create side-by-side boxplots for birth weight grouped by smoking status. Use non-default colors for the plot. (Also, be sure to give the plot a title and label the axes appropriately.) Based on the boxplot, does there seem to be a difference in birth weight for mothers who smoked? Briefly explain.
 ```{r fig.width=10}
 #boxplot(birthwt$bwt~birthwt$smoke)
 ggplot(birthwt, aes(group=smoke, x=smoke, y= bwt, color=I("purple")))+geom_boxplot()+ggtitle("Relationship between Infant's birth weight vs Smoking/Nonsmoking Mother") + xlab("Mother's smoking status (0 = Non smoking, 1 = Smoking)") + ylab("Infant's birth weight (Grams/gms)")
 ```
-```{r eval=FALSE, include=TRUE}
 There seems to be a relationship between mother's smoking status and infant's weight. We make the following observations
 - Median of non smoking mothers is higher, implying that comparitively for non smoking mothers have more babies with higher weight compared to smoking mothers
 - The IQR range is braoder for non smoking mothers with both the 1st and 3rd Quaraltile being higher implying heavier infants
 - The top quarltile wisker for non smoking mohter goes a lot higher for non smoking mothers implying heavier babies are born 
 - There is an outlier for a smoking mother which can be ignored
-```
+
+
 ***
 
 ## Exercise 3 (Importing Data, More Plotting)
@@ -159,16 +150,52 @@ The variables in the dataset are:
 - `Portion` - description of standard serving size used in analysis
 
 **(a)** Create a histogram of `Calories`. Do not modify `R`'s default bin selection. Make the plot presentable. Describe the shape of the histogram. Do you notice anything unusual?
-```{r}
+```{r fig.width=10}
 hist(nutrition$Calories, col="orange", border="blue", main = "Distribution of Calories in nutrition dataset", xlab = "Calories", ylab = "Number of foods")
 ```
-```{r include=TRUE}
-The share of the histogram is slightly right skewed
-```
+
+The shape of the histogram is right skewed. Most of the foods captured, are below 250 calories. There are a few outliers as very high calorie foods, approximately a 100 of them. There is a spike in the middle which should be investigated.
+
 
 **(b)** Create a scatter plot of calories (y-axis) vs protein (x-axis). Make the plot presentable. Do you notice any trends? Do you think that knowing only the protein content of a food, you could make a good prediction of the calories in the food?
+```{r fig.width=10}
+ggplot(nutrition, aes(x=Protein, y=Calories, color=I("red"))) + 
+  geom_point(aes(size=I(1), alpha=I(.1))) +
+  ggtitle("Relationship between Protien vs Calories") + 
+  xlab("Protein content of food items") + 
+  ylab("Calories of food items")
+```
+
+There seems to be no obvious relationship between calories and protein content of foods. Knowing just the Protien content of food we would not be able to easily predict the calorie cotent. We also notice that relatively fewer foods have protien content above approximately 35 grams of protien
+
+
 
 **(c)** Create a scatter plot of `Calories` (y-axis) vs `4 * Protein + 4 * Carbs + 9 * Fat` (x-axis). Make the plot presentable. You will either need to add a new variable to the data frame, or use the `I()` function in your formula in the call to `plot()`. If you are at all familiar with nutrition, you may realize that this formula calculates the calorie count based on the protein, carbohydrate, and fat values. You'd expect then that the result here is a straight line. Is it? If not, can you think of any reasons why it is not?
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+nutrition <- nutrition %>% mutate(FourTimesPCF=(4*Protein+4*Carbs+9*Fat))
+```
+```{r fig.height=10, fig.width=10}
+ggplot(nutrition, aes(x=FourTimesPCF, y=Calories, color=I("red"))) + 
+  geom_point(aes(size=I(2), alpha=I(.1))) +
+  ggtitle("Relationship between Protien vs Calories") + 
+  xlab("4 * Protein + 4 * Carbs + 9 * Fat") + 
+  ylab("Calories of food items")
+```
+Most of the foods fall in the 10-15 percent range of the straight line with some observations not following the straight line pattern. 
+
+Now lets do some analysis on the nutrition items that do not follow this pattern below. In order to do the analysis we will select items whose calories have a 15 percent variation from the FourTimesPCF value. The items that have less than 15 percent calories are put in Less_Calories dataset and that have more than 15 percent calories are put in More_Calories dataset. 
+
+
+```{r}
+Less_Calories <- nutrition[(nutrition$Calories < nutrition$FourTimesPCF*.85) ,]
+More_Calories <- nutrition[(nutrition$Calories > nutrition$FourTimesPCF*1.15) ,]
+```
+Visually observing the Less_Calories and More_Calories calories dataset, we realize that our Mothers were right. 
+The foods in Less_Calories dataset are mostly vegetable, and the More_Calories dataset is mostly alchoholic beverages.
+
+So eat more vegetables and stay away from alcohol if you want to stay healthy by consuming less calories :). Since this comment is on the lighter side, it is important to say that this does not imply causality and further studies would need to be done to determine any causal relationships.
+
 
 ***
 
@@ -189,10 +216,15 @@ d = 2 ^ (1:10)
     - A vector of numeric data `x`
 - Output:
     - The sum of the squares of the elements of the vector $\sum_{i = 1}^n x_i^2$
+```{r}
+sum_of_squares <- function(x){
+  sum(x^2)
+}
+```
     
 Provide your function, as well as the result of running the following code:
 
-```{r, eval = FALSE}
+```{r}
 sum_of_squares(x = a)
 sum_of_squares(x = c(c, d))
 ```
@@ -204,6 +236,9 @@ sum_of_squares(x = c(c, d))
 \]
 
 where the $x$ vector is `d`.
+```{r}
+sqrt((1/length(d))*sum_of_squares(d-0))
+```
 
 **(c)** Using only your function `sum_of_squares()`, `mean()`, `sqrt()`, and basic math operations such as `+` and `-`, calculate
 
@@ -212,6 +247,9 @@ where the $x$ vector is `d`.
 \]
 
 where the $x$ vector is `a` and the $y$ vector is `b`.
+```{r}
+sqrt((1/length(d))*sum_of_squares(a-b))
+```
 
 ***
 
@@ -235,15 +273,32 @@ z = runif(150, min = 0, max = 1)
     - A list with two elements:
         - `small`, a vector of elements of `x` that are $k$ sample standard deviations less than the sample mean. That is, the observations that are smaller than $\bar{x} - k \cdot s$.
         - `large`, a vector of elements of `x` that are $k$ sample standard deviations greater than the sample mean. That is, the observations that are larger than $\bar{x} + k \cdot s$.
+```{r}
+list_extreme_values <- function(x, k=2){
+  s <-  x[(x < (mean(x) - k*sd(x)))]
+  l  <-  x[(x > (mean(x) + k*sd(x)))]
+  return(list(small=s, large=l))
+}
+```
 
 Provide your function, as well as the result of running the following code:
 
-```{r, eval = FALSE}
+```{r}
 list_extreme_values(x = x, k = 1)
+```
+
+```{r}
 list_extreme_values(x = y, k = 3)
+```
+```{r}
 list_extreme_values(x = y, k = 2)
+```
+```{r}
 list_extreme_values(x = z, k = 1.5)
 ```
 
 **(b)** Using only your function `list_extreme_values()`, `mean()`, and basic list operations, calculate the mean of observations that are greater than 1.5 standard deviation above the mean in the vector `y`.
+```{r}
+mean(list_extreme_values(x=y,k=1.5)[["large"]])
+```
 
