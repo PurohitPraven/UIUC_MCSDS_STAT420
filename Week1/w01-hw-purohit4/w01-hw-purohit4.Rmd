@@ -20,51 +20,60 @@ For this exercise, we will use the `msleep` dataset from the `ggplot2` package.
 **(a)** Install and load the `ggplot2` package. **Do not** include the installation command in your `.Rmd` file. (If you do it will install the package every time you knit your file.) **Do** include the command to load the package into your environment.
 ```{r}
 library(ggplot2)
+library(tibble)
 ```
-
+<br><br>
 **(b)** Note that this dataset is technically a `tibble`, not a data frame. 
 How many observations are in this dataset?
 ```{r}
+#TRUE is it is a tibble
+is_tibble(msleep)
+#numbers of observations = number of rows
 nrow(msleep)
 ```
 
 How many variables? 
 ```{r}
+#number of variables = number of columns
 ncol(msleep)
 ```
+<br>
 
 What are the observations in this dataset?
 
-```{r include=FALSE}
-library(printr)
-```
-
-```{r printr.help.sections="format"}
-?msleep
-```
+The observations in this dataset represent the sleep patterns of mammals. The mammals are categorized by their genus, vore, order and conservation status. The various sleep data captured are: total sleep time, total awake time, rem sleep time, length of sleep cycle. Two other pieces of information are captured which are the body weight and brain weight of the mammal
 
 
+
+<br><br>
 **(c)** What is the mean hours of REM sleep of individuals in this dataset?
 ```{r}
+# remove null values before calculating mean
 mean(msleep$sleep_rem, na.rm = TRUE)
 ```
 
+<br><br>
 
 **(d)** What is the standard deviation of brain weight of individuals in this dataset?
 ```{r}
+# remove null values before calculation
 sd(msleep$brainwt,na.rm = TRUE)
 ```
 
+<br><br>
 
 **(e)** Which observation (provide the `name`) in this dataset gets the most REM sleep?
 ```{r}
-n <- msleep[(msleep$sleep_rem == max(msleep$sleep_rem, na.rm = TRUE)),]
-n[!is.na(n$name),][,"name"]
+# filter the dataset for sleep_rem is maximum and also remove NAs. This will give the row of the dataset. Then adding [,name] to the resulting dataset will give just the name column of all rows. Since we have already filtered to 1 row we will get just the name
+msleep[(msleep$sleep_rem == max(msleep$sleep_rem, na.rm = TRUE)) & !is.na(msleep$sleep_rem),][,"name"][[1]]
+
 ```
 
 
+<br><br>
 **(f)** What is the average bodyweight of carnivores in this dataset?
 ```{r}
+# filter the dataset for just the carnivores, then calculate the mean of the bodyweight from the resulting dataset
 mean(msleep[msleep$vore=="carni",]$bodywt, na.rm = TRUE)
 ```
 
@@ -76,48 +85,78 @@ mean(msleep[msleep$vore=="carni",]$bodywt, na.rm = TRUE)
 For this exercise, we will use the `birthwt` dataset from the `MASS` package.
 
 **(a)** Note that this dataset is a data frame and all of the variables are numeric. 
-How many observations are in this dataset? 
 ```{r}
 library(MASS)
+```
+```{r}
+str(birthwt)
+```
+We see that the structure shows that it is a dataframe and that all variables are numeric.
+
+<br>
+<br>
+
+How many observations are in this dataset? 
+```{r}
+#numbers of observations = number of rows
 nrow(birthwt)
 ```
 How many variables? 
 ```{r}
+#numbers of variables = number of cols
 ncol(birthwt)
 ```
 
 
 What are the observations in this dataset?
 
-```{r printr.help.sections="format"}
-?birthwt
-```
+The observations in this data set map the weight of infants at birth and are compared with different characteristics, medical conditions and habits of mothers. 
+Characteristics  include race, number of physician visits and weight during last menstrual period.
+Medical conditions include number of previous premature labors, history of hypertension and presence of uterine irritability, 
+Habits include smoking.
+A infants whose birth weight was less than 2.5 kg are also characterized as such.
 
+<br><br>
 **(b)** Create a scatter plot of birth weight (y-axis) vs mother's weight before pregnancy (x-axis). Use a non-default color for the points. (Also, be sure to give the plot a title and label the axes appropriately.) Based on the scatter plot, does there seem to be a relationship between the two variables? Briefly explain.
 ```{r fig.width=10}
 library(ggplot2)
-ggplot(birthwt, aes(x=lwt, y=bwt, color=I("red")))+geom_point()+ggtitle("Relationship between Infant's birth weight vs Mother's weight") + xlab("Mother's weight at last menstrual period (Pounds/lbs)") + ylab("Infant's birth weight (Grams/gms)")
+ggplot(birthwt, aes(x=lwt, y=bwt, color=I("red"))) + 
+  geom_point() + 
+  ggtitle("Relationship between Infant's birth weight vs Mother's weight") + 
+  xlab("Mother's weight at last menstrual period (Pounds/lbs)") + 
+  ylab("Infant's birth weight (Grams/gms)")
 ```
-There seems to be no obvious relationship when the mothers are low to medium weight. When we get to heavier moms, we see that they have heavy babies. This general observation doesnt define causality and further analysis and studies will need to be done
+There seems to be no obvious relationship when the mothers are low to medium weight. When we get to heavier moms, we see that they have heavy babies. This general observation doesn't define causality and further analysis and studies will need to be done
 
 
+<br><br>
 
 **(c)** Create a scatter plot of birth weight (y-axis) vs mother's age (x-axis). Use a non-default color for the points. (Also, be sure to give the plot a title and label the axes appropriately.) Based on the scatter plot, does there seem to be a relationship between the two variables? Briefly explain.
 ```{r fig.width=10}
-ggplot(birthwt, aes(x=age, y=bwt, color=I("red")))+geom_point()+ggtitle("Relationship between Infant's birth weight vs Mother's age") + xlab("mother's age in years.") + ylab("Infant's birth weight (Grams/gms)")
+ggplot(birthwt, aes(x=age, y=bwt, color=I("red"))) + 
+  geom_point() + 
+  ggtitle("Relationship between Infant's birth weight vs Mother's age") + 
+  xlab("mother's age in years.") + 
+  ylab("Infant's birth weight (Grams/gms)")
 ```
-There seems to be no obvious relationship between mothers age and Infants weight. We do notice that some of the low weight babies are born to mothers who are 25+ years which implies the probablity of a low weight baby may be higer for mothers who are 25+. This general observation doesnt define causality and further analysis and studies will need to be done. There is one outlier (5kg baby) in the plot which we should probably ignore.
+There seems to be no obvious relationship between mothers age and Infants weight. We do notice that some of the low weight babies are born to mothers who are 25+ years which implies the probability of a low weight baby may be higher for mothers who are 25+. This general observation doesnt define causality and further analysis and studies will need to be done. There is one outlier (5kg baby) in the plot which we should probably ignore.
 
 
+<br><br>
 **(d)** Create side-by-side boxplots for birth weight grouped by smoking status. Use non-default colors for the plot. (Also, be sure to give the plot a title and label the axes appropriately.) Based on the boxplot, does there seem to be a difference in birth weight for mothers who smoked? Briefly explain.
 ```{r fig.width=10}
 #boxplot(birthwt$bwt~birthwt$smoke)
-ggplot(birthwt, aes(group=smoke, x=smoke, y= bwt, color=I("purple")))+geom_boxplot()+ggtitle("Relationship between Infant's birth weight vs Smoking/Nonsmoking Mother") + xlab("Mother's smoking status (0 = Non smoking, 1 = Smoking)") + ylab("Infant's birth weight (Grams/gms)")
+ggplot(birthwt, aes(group=smoke, x=smoke, y= bwt, color=I("purple"))) + 
+  geom_boxplot() + 
+  ggtitle("Relationship between Infant's birth weight vs Smoking/Nonsmoking Mother") + 
+  xlab("Mother's smoking status (0 = Non smoking, 1 = Smoking)") + 
+  ylab("Infant's birth weight (Grams/gms)")
 ```
 There seems to be a relationship between mother's smoking status and infant's weight. We make the following observations
-- Median of non smoking mothers is higher, implying that comparitively for non smoking mothers have more babies with higher weight compared to smoking mothers
-- The IQR range is braoder for non smoking mothers with both the 1st and 3rd Quaraltile being higher implying heavier infants
-- The top quarltile wisker for non smoking mohter goes a lot higher for non smoking mothers implying heavier babies are born 
+
+- Median of non smoking mothers is higher, implying that comparatively for non smoking mothers have more babies with higher weight compared to smoking mothers
+- The IQR range is broader for non smoking mothers with both the 1st and 3rd Quaraltile being higher implying heavier infants
+- The top quarltile whisker for non smoking mother goes a higher for non smoking mothers implying heavier babies are born 
 - There is an outlier for a smoking mother which can be ignored
 
 
@@ -127,7 +166,6 @@ There seems to be a relationship between mother's smoking status and infant's we
 
 For this exercise we will use the data stored in [`nutrition-2018.csv`](nutrition-2018.csv). It contains the nutritional values per serving size for a large variety of foods as calculated by the USDA in 2018. It is a cleaned version totaling 5956 observations and is current as of April 2018.
 ```{r}
-library(tibble)
 nutrition <- read.csv("nutrition-2018.csv")
 ```
 
@@ -157,6 +195,7 @@ hist(nutrition$Calories, col="orange", border="blue", main = "Distribution of Ca
 The shape of the histogram is right skewed. Most of the foods captured, are below 250 calories. There are a few outliers as very high calorie foods, approximately a 100 of them. There is a spike in the middle which should be investigated.
 
 
+<br><br>
 **(b)** Create a scatter plot of calories (y-axis) vs protein (x-axis). Make the plot presentable. Do you notice any trends? Do you think that knowing only the protein content of a food, you could make a good prediction of the calories in the food?
 ```{r fig.width=10}
 ggplot(nutrition, aes(x=Protein, y=Calories, color=I("red"))) + 
@@ -166,10 +205,11 @@ ggplot(nutrition, aes(x=Protein, y=Calories, color=I("red"))) +
   ylab("Calories of food items")
 ```
 
-There seems to be no obvious relationship between calories and protein content of foods. Knowing just the Protien content of food we would not be able to easily predict the calorie cotent. We also notice that relatively fewer foods have protien content above approximately 35 grams of protien
+There seems to be no obvious relationship between calories and protein content of foods. Knowing just the Protein content of food we would not be able to easily predict the calorie content. We also notice that relatively fewer foods have protein content above approximately 35 grams of protein
 
 
 
+<br><br>
 **(c)** Create a scatter plot of `Calories` (y-axis) vs `4 * Protein + 4 * Carbs + 9 * Fat` (x-axis). Make the plot presentable. You will either need to add a new variable to the data frame, or use the `I()` function in your formula in the call to `plot()`. If you are at all familiar with nutrition, you may realize that this formula calculates the calorie count based on the protein, carbohydrate, and fat values. You'd expect then that the result here is a straight line. Is it? If not, can you think of any reasons why it is not?
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
@@ -192,7 +232,7 @@ Less_Calories <- nutrition[(nutrition$Calories < nutrition$FourTimesPCF*.85) ,]
 More_Calories <- nutrition[(nutrition$Calories > nutrition$FourTimesPCF*1.15) ,]
 ```
 Visually observing the Less_Calories and More_Calories calories dataset, we realize that our Mothers were right. 
-The foods in Less_Calories dataset are mostly vegetable, and the More_Calories dataset is mostly alchoholic beverages.
+The foods in Less_Calories dataset are mostly vegetable, and the More_Calories dataset is mostly alcoholic beverages.
 
 So eat more vegetables and stay away from alcohol if you want to stay healthy by consuming less calories :). Since this comment is on the lighter side, it is important to say that this does not imply causality and further studies would need to be done to determine any causal relationships.
 
@@ -218,7 +258,7 @@ d = 2 ^ (1:10)
     - The sum of the squares of the elements of the vector $\sum_{i = 1}^n x_i^2$
 ```{r}
 sum_of_squares <- function(x){
-  sum(x^2)
+  sum(x^2) #square each element of the vector
 }
 ```
     
@@ -229,6 +269,7 @@ sum_of_squares(x = a)
 sum_of_squares(x = c(c, d))
 ```
 
+<br><br>
 **(b)** Using only your function `sum_of_squares()`, `mean()`, `sqrt()`, and basic math operations such as `+` and `-`, calculate
 
 \[
@@ -240,6 +281,7 @@ where the $x$ vector is `d`.
 sqrt((1/length(d))*sum_of_squares(d-0))
 ```
 
+<br><br>
 **(c)** Using only your function `sum_of_squares()`, `mean()`, `sqrt()`, and basic math operations such as `+` and `-`, calculate
 
 \[
@@ -275,8 +317,11 @@ z = runif(150, min = 0, max = 1)
         - `large`, a vector of elements of `x` that are $k$ sample standard deviations greater than the sample mean. That is, the observations that are larger than $\bar{x} + k \cdot s$.
 ```{r}
 list_extreme_values <- function(x, k=2){
+  #filter vector for elements that are less than k*standard deviation compared to the mean
   s <-  x[(x < (mean(x) - k*sd(x)))]
+  #filter vector for elements that are more than k*standard deviation compared to the mean
   l  <-  x[(x > (mean(x) + k*sd(x)))]
+  #return a list of the above two vectors
   return(list(small=s, large=l))
 }
 ```
@@ -297,8 +342,10 @@ list_extreme_values(x = y, k = 2)
 list_extreme_values(x = z, k = 1.5)
 ```
 
+<br><br>
 **(b)** Using only your function `list_extreme_values()`, `mean()`, and basic list operations, calculate the mean of observations that are greater than 1.5 standard deviation above the mean in the vector `y`.
 ```{r}
+# call the list_extreme_values function and take the mean of large element from the returned list
 mean(list_extreme_values(x=y,k=1.5)[["large"]])
 ```
 
