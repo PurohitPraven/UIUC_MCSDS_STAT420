@@ -1,0 +1,457 @@
+---
+title: "Week 2 - Homework"
+author: "Praveen Purohit, purohit4@illinois.edu"
+date: ''
+output:
+  html_document: 
+    theme: readable
+    toc: yes  
+  pdf_document: default
+urlcolor: cyan
+---
+
+
+***
+
+## Exercise 1 (Using `lm`)
+
+For this exercise we will use the `cats` dataset from the `MASS` package. You should use `?cats` to learn about the background of this dataset.
+```{r message=FALSE, warning=FALSE}
+library(MASS)
+library(dplyr)
+library(statsr)
+```
+
+
+**(a)** Suppose we would like to understand the size of a cat's heart based on the body weight of a cat. Fit a simple linear model in `R` that accomplishes this task. Store the results in a variable called `cat_model`. Output the result of calling `summary()` on `cat_model`.
+```{r}
+# Response variable is size of cat's heart and explanatory variable is body weight
+cat_model <- lm(Hwt~Bwt, data = cats)
+summary(cat_model)
+```
+<br><br>
+
+**(b)** Output only the estimated regression coefficients. Interpret $\hat{\beta_0}$ and $\beta_1$ in the *context of the problem*. Be aware that only one of those is an estimate.
+```{r}
+coef(cat_model)
+```
+$\hat{\beta_0}$ is -0.3566624, which is the estimated value of the Heart weight of a cat if the body weight of the cat was 0. This clearly is an estimate and not based on data, since the dataset contains only body weight of cats 2kg and above, and obviously a cat cant have 0 body weight.
+
+$\beta_1$ is the slope of the linear model. This can be defined as the amount by which the average weight of a cat's heart increases in grams, for every 1 kg increase in weight of the cat's body. i.e. for every 1 kg increase in cat's body weight, the heart weight increases on an average by 4.034 gms.
+<br><br>
+
+**(c)** Use your model to predict the heart weight of a cat that weights **3.1** kg. Do you feel confident in this prediction? Briefly explain.
+```{r}
+print(paste("The weight of the cats heart would be an average of ", predict(cat_model, newdata = data.frame(Bwt=c(3.1))), "gms, if the Body Weight of the cat was 3.1kg"))
+
+print(paste("Is 3.1kg bodyweight in range of the dataset? ", max(cats$Bwt)>=3.1 & 3.1>=min(cats$Bwt)))
+
+```
+Since the 3.1kg falls in the range of the given dataset, it is Interpolation, hence we can be fairly confident that the average weight of a cat that has 3.1 kg will have a heart weight of 12.148 gms
+
+<br><br>
+
+**(d)** Use your model to predict the heart weight of a cat that weights **1.5** kg. Do you feel confident in this prediction? Briefly explain.
+```{r}
+print(paste("The weight of the cats heart would be an average of ", predict(cat_model, newdata = data.frame(Bwt=c(1.5))), "gms, if the Body Weight of the cat was 1.5kg"))
+
+print(paste("Is 1.5 kg bodyweight in range of the dataset? ", max(cats$Bwt)>=1.5 & 1.5>=min(cats$Bwt)))
+
+```
+Since we are predicting for a cat of body weight 1.5kg, which falls outside the range of the dataset, we cant be confident that this is an accurate prediction. We are using Extrapolation for this prediction and Extrapolation can be prone to errors since we dont have any data that validates this prediction.
+
+<br><br>
+
+**(e)** Create a scatterplot of the data and add the fitted regression line. Make sure your plot is well labeled and is somewhat visually appealing.
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(data=cats, aes(x=Bwt, y=Hwt)) + 
+  geom_point(aes(color=I("dark green"), size=I(1))) +
+  stat_smooth(method = lm, se=FALSE, aes(color=I("orange"))) +
+  ggtitle("Weight of cats heart vs. it body weight") +
+  xlab("Body Weight of cats in Kgs") +
+  ylab("Heart weight of cats in grams") +
+  theme_linedraw()
+```
+
+<br><br>
+
+**(f)** Report the value of $R^2$ for the model. Do so directly. Do not simply copy and paste the value from the full output in the console after running `summary()` in part **(a)**.
+```{r}
+print(paste("The R square value for the model is ", summary(cat_model)$r.squared))
+```
+<br><br>
+
+***
+
+## Exercise 2 (Writing Functions)
+
+This exercise is a continuation of Exercise 1.
+
+**(a)** Write a function called `get_sd_est` that calculates an estimate of $\sigma$ in one of two ways depending on input to the function. The function should take three arguments as input:
+
+- `fitted_vals` - A vector of fitted values from a model
+- `actual_vals` - A vector of the true values of the response
+- `mle` - A logical (`TRUE` / `FALSE`) variable which defaults to `FALSE`
+
+The function should return a single value:
+
+- $s_e$ if `mle` is set to `FALSE`.
+- $\hat{\sigma}$ if `mle` is set to `TRUE`.
+```{r}
+get_sd_est <- function(fitted_vals, actual_vals, mle=FALSE){
+  if (mle){
+    vari = sum((actual_vals - fitted_vals)^2) / length(actual_vals)
+  }  
+  else{
+    vari =  sum((actual_vals - fitted_vals)^2) / (length(actual_vals)-2)
+  }
+  
+  return(sqrt(vari))
+}
+```
+
+<br><br>
+
+**(b)** Run the function `get_sd_est` on the residuals from the model in Exercise 1, with `mle` set to `FALSE`. Explain the resulting estimate in the context of the model.
+```{r}
+(sd_est <- get_sd_est(fitted(cat_model), cats$Hwt))
+```
+The resulting estimate is standard deviation of the estimated y values. What this implies that we predict the brain weight of the cat using its body weight, the estimate will off by 1.45 gms.
+Stated another way, 68% of the times, the actual brain weight will be $\pm1.45$ of the predicted brainweights. and 95% of the times, the actual brain weight will be $\pm2.9$ of the predicted brain weight. 
+
+<br><br>
+
+**(c)** Run the function `get_sd_est` on the residuals from the model in Exercise 1, with `mle` set to `TRUE`. Explain the resulting estimate in the context of the model. Note that we are trying to estimate the same parameter as in part **(b)**.
+```{r}
+(sd_est_mle <- get_sd_est(fitted(cat_model), cats$Hwt, mle=TRUE))
+```
+We see that the estimated variance using mle method is less than the one calculated using least squares method. The reason is that MLE method is biased. Mathematically MLE method divides by n vs. n-2 for method of least squares, hence the variance is smaller for MLE.
+
+<br><br>
+
+**(d)** To check your work, output `summary(cat_model)$sigma`. It should match at least one of **(b)** or **(c)**.
+```{r}
+summary(cat_model)$sigma
+
+print(paste("We verify that our calulation with Sum of least squares method matches the calculation done by R model for SLR. identical(sd_est, summary(cat_model)$sigma)? = ", identical(sd_est, summary(cat_model)$sigma)))
+```
+<br><br>
+
+***
+
+## Exercise 3 (Simulating SLR)
+
+Consider the model
+
+\[
+Y_i = 5 + -3 x_i + \epsilon_i
+\]
+
+with 
+
+\[
+\epsilon_i \sim N(\mu = 0, \sigma^2 = 10.24)
+\]
+
+where $\beta_0 = 5$ and $\beta_1 = -3$.
+
+This exercise relies heavily on generating random observations. To make this reproducible we will set a seed for the randomization. Alter the following code to make `birthday` store your birthday in the format: `yyyymmdd`. For example, [William Gosset](https://en.wikipedia.org/wiki/William_Sealy_Gosset), better known as *Student*, was born on June 13, 1876, so he would use:
+
+```{r}
+birthday = 19730321
+set.seed(birthday)
+```
+
+**(a)** Use `R` to simulate `n = 25` observations from the above model. For the remainder of this exercise, use the following "known" values of $x$.
+```{r}
+simulate_data <- function(beta_0, beta_1, sd_error, x_values){
+  epsilon <- rnorm(n=length(x_values), mean=0, sd = sd_error)
+  y <- beta_0 + beta_1*x_values + epsilon
+  return(data.frame(x= x_values, y=y))
+}
+```
+
+
+```{r}
+x = runif(n = 25, 0, 10)
+# Beta 0 = 5; Beta 1=-3; variance = 10.24
+beta_0 <- 5
+beta_1 <- -3
+sd_error <- sqrt(10.24)
+sim_data <- simulate_data(beta_0 = beta_0, beta_1 = beta_1, sd_error = sd_error, x_values = x)
+```
+
+
+<br><br>
+
+**(b)** Fit a model to your simulated data. Report the estimated coefficients. Are they close to what you would expect? Briefly explain.
+```{r}
+m1 <- lm(y~x, data = sim_data)
+coefficients(m1)
+```
+The coefficients are pretty close to the actual data. They will not be the same since these are coefficients for simulated data    
+
+<br><br>
+
+**(c)** Plot the data you simulated in part **(a)**. Add the regression line from part **(b)** as well as the line for the true model. Hint: Keep all plotting commands in the same chunk.
+```{r message=FALSE}
+colors <- c("Simulated model"="orange","Original Model"="blue")
+
+ggplot(sim_data, aes(x=x,y=y)) +
+  geom_point(color='red') +
+  stat_smooth(method=lm, se=FALSE, aes(color='Simulated model')) +
+  geom_abline(aes(intercept=beta_0 , slope=beta_1, 
+                  color='Original Model'), show.legend = TRUE) +
+  scale_colour_manual(name="Model",values=colors) +
+  xlab("Predictor variable x") +
+  ylab("Response variable y hat") +
+  ggtitle("Comparison of model of simulated dataset vs original model") +
+  theme_linedraw()
+```
+
+<br><br>
+
+**(d)** Use `R` to repeat the process of simulating `n = 25` observations from the above model $1500$ times. Each time fit a SLR model to the data and store the value of $\hat{\beta_1}$ in a variable called `beta_hat_1`. Some hints:
+
+- Consider a `for` loop.
+- Create `beta_hat_1` before writing the `for` loop. Make it a vector of length $1500$ where each element is `0`.
+- Inside the body of the `for` loop, simulate new $y$ data each time. Use a variable to temporarily store this data together with the known $x$ data as a data frame.
+- After simulating the data, use `lm()` to fit a regression. Use a variable to temporarily store this output.
+- Use the `coef()` function and `[]` to extract the correct estimated coefficient.
+- Use `beta_hat_1[i]` to store in elements of `beta_hat_1`.
+- See the notes on [Distribution of a Sample Mean](http://daviddalpiaz.github.io/appliedstats/introduction-to-r.html#distribution-of-a-sample-mean) for some inspiration.
+
+You can do this differently if you like. Use of these hints is not required.
+
+```{r}
+# Create a function to simulate data n times and return the resulting beta_1_hat as a vector
+Simulate_n_times_Get_Beta_1_hat <- function(n, beta_0, beta_1, sd_error, x_values){
+  beta_hat_1 <-  rep(0,n)
+
+  for(i in 1:n){
+    sim_data_1 <- simulate_data(beta_0 = beta_0, beta_1 = beta_1, sd_error = sd_error, x_values = x_values)
+    m1 <- lm(y~x,data=sim_data_1)
+    beta_hat_1[i] <- coef(m1)[[2]]
+  }
+  return(beta_hat_1)
+}
+```
+
+
+```{r}
+beta_hat_1 <- Simulate_n_times_Get_Beta_1_hat(n=1500, beta_0 = beta_0, beta_1 = beta_1, sd_error = sd_error, x_values = x)
+```
+
+<br><br>
+
+**(e)** Report the mean and standard deviation of `beta_hat_1`. Do either of these look familiar?
+```{r}
+print(paste("mean of beta_hat_1 = ", mean(beta_hat_1)))
+print(paste("Standard deviation of beta_hat_1 = ", sd(beta_hat_1)))
+```
+The mean of beta_hat_1 is almost the same as the original model, and much closer than when we simulated data just once.
+
+<br><br>
+
+**(f)** Plot a histogram of `beta_hat_1`. Comment on the shape of this histogram.
+```{r message=FALSE}
+ggplot() + 
+  geom_histogram(aes(beta_hat_1, color=I("orange"))) +
+  ggtitle("Histogram showing the distribution of beta_hat_1 based on 1500 simulations") +
+  theme_linedraw()
+
+```
+
+The histogram follows a normal distribution. The mean of the histogram is around -3 which is similar to the original model. We also see that most of the simulations resulted in beta_1_hat being close to the original model. Visually we can see that the 68-95-99.7 rule is valid, where 95% of the observations are within 2 standard deviation of either side of -3 (mean)
+
+<br><br>
+
+***
+
+## Exercise 4 (Be a Skeptic)
+
+Consider the model
+
+\[
+Y_i = 3 + 0 \cdot x_i + \epsilon_i
+\]
+
+with
+
+\[
+\epsilon_i \sim N(\mu = 0, \sigma^2 = 4)
+\]
+
+where $\beta_0 = 3$ and $\beta_1 = 0$.
+
+Before answering the following parts, set a seed value equal to **your** birthday, as was done in the previous exercise.
+
+```{r}
+birthday = 19732103
+set.seed(birthday)
+```
+
+**(a)** Use `R` to repeat the process of simulating `n = 75` observations from the above model $2500$ times. For the remainder of this exercise, use the following "known" values of $x$.
+
+```{r}
+x = runif(n = 75, 0, 10)
+```
+
+Each time fit a SLR model to the data and store the value of $\hat{\beta_1}$ in a variable called `beta_hat_1`. You may use [the `sim_slr ` function provided in the text](http://daviddalpiaz.github.io/appliedstats/simple-linear-regression.html#simulating-slr). Hint: Yes $\beta_1 = 0$.
+```{r}
+beta_0 <- 3
+beta_1 <- 0
+sd_error <- sqrt(4)
+beta_hat_1 <- Simulate_n_times_Get_Beta_1_hat(n=2500, beta_0 = beta_0, beta_1 = beta_1, sd_error = sd_error, x_values = x)
+```
+
+<br><br>
+
+**(b)** Plot a histogram of `beta_hat_1`. Comment on the shape of this histogram.
+```{r message=FALSE}
+p <- ggplot() + 
+  geom_histogram(aes(beta_hat_1, color=I("orange"))) +
+  ggtitle("Histogram showing the distribution of beta_hat_1 based on 2500 simulations")+
+  theme_linedraw()
+p
+```
+```{r}
+mean_b_hat_1 <- mean(beta_hat_1)
+print(paste("mean of beta_hat_1 = ", mean_b_hat_1))
+sd_b_hat_1 <- sd(beta_hat_1)
+print(paste("Standard deviation of beta_hat_1 = ", sd_b_hat_1))
+```
+The histogram follows a normal distribution. The mean of the histogram is around 0 which is similar to the original model. We also see that most of the simulations resulted in beta_1_hat being close to the original model. Visually we can see that the 68-95-99.7 rule is valid, where 95% of the observations are within 2 standard deviation of either side of 0 (mean)
+
+<br><br>
+
+**(c)** Import the data in [`skeptic.csv`](skeptic.csv) and fit a SLR model. The variable names in `skeptic.csv` follow the same convention as those returned by `sim_slr()`. Extract the fitted coefficient for $\beta_1$.
+
+```{r}
+skeptic <- read.csv("skeptic.csv")
+
+skeptic_slr <- lm(response~predictor, data = skeptic)
+b_1_hat <- coef(skeptic_slr)[2]
+print(paste("Fitted coefficient for beta_1 = ", b_1_hat))
+
+```
+
+<br><br>
+
+**(d)** Re-plot the histogram from **(b)**. Now add a vertical red line at the value of $\hat{\beta_1}$ in part **(c)**. To do so, you'll need to use `abline(v = c, col = "red")` where `c` is your value.
+
+```{r message=FALSE}
+p + geom_vline(aes(xintercept = b_1_hat, color="red", size=I(1)))
+```
+
+<br><br>
+
+**(e)** Your value of $\hat{\beta_1}$ in **(c)** should be negative. What proportion of the `beta_hat_1` values is smaller than your $\hat{\beta_1}$? Return this proportion, as well as this proportion multiplied by `2`.
+```{r}
+prop <- mean(beta_hat_1<b_1_hat)
+
+print(paste("The proportion of values smaller is = ", prop))
+print(paste("Proportion times two = ", prop*2))
+```
+
+<br><br>
+
+
+**(f)** Based on your histogram and part **(e)**, do you think the [`skeptic.csv`](skeptic.csv) data could have been generated by the model given above? Briefly explain.
+
+In order to make this determination we will state a null hypothesis and an alternate hypothesis. The null hypothesis is based on that "nothing is different", hence we will define it as
+
+${H_0} = \hat{\beta_1}$ is from the below model
+
+and 
+${H_A} = \hat{\beta_1}$ is not from the below model
+
+The model being referred to is:
+
+\[
+Y_i = 3 + 0 \cdot x_i + \epsilon_i
+\]
+
+with
+
+\[
+\epsilon_i \sim N(\mu = 0, \sigma^2 = 4)
+\]
+
+
+Now let us calculate the probability that the beta_1 could have come from the model given that null hypothesis is true
+
+Considering that the beta_hat_1 is a normal distribution, we want to calculate the probability of the lower tail where beta_1 is the mean from skeptic.csv file
+
+```{r}
+pnorm(b_1_hat, mean=mean_b_hat_1, sd=sd_b_hat_1)
+```
+We see that the probability of the beta_1 from skeptics.csv is .002.
+
+Hence it is POSSIBLE but the probability is very low.
+
+If we assume $\alpha$ of .05, then we reject the Null hypothesis if the probability is less less than .025 assuming a 95% confidence interval. Hence we reject the null hypothesis and accept the alternate hypothesis that beta_1 from skeptics.csv is not from the above model.
+
+<br><br>
+
+***
+
+## Exercise 5 (Comparing Models)
+
+For this exercise we will use the `Ozone` dataset from the `mlbench` package. You should use `?Ozone` to learn about the background of this dataset. You may need to install the `mlbench` package. If you do so, do not include code to install the package in your `R` Markdown document.
+
+For simplicity, we will perform some data cleaning before proceeding.
+
+```{r}
+data(Ozone, package = "mlbench")
+Ozone = Ozone[, c(4, 6, 7, 8)]
+colnames(Ozone) = c("ozone", "wind", "humidity", "temp")
+Ozone = Ozone[complete.cases(Ozone), ]
+```
+
+We have:
+
+- Loaded the data from the package
+- Subset the data to relevant variables
+    - This is not really necessary (or perhaps a good idea) but it makes the next step easier
+- Given variables useful names
+- Removed any observation with missing values
+    - This should be given much more thought in practice
+
+For this exercise we will define the "Root Mean Square Error" of a model as
+
+\[
+\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i = 1}^{n}(y_i - \hat{y}_i)^2}.
+\]
+
+**(a)** Fit three SLR models, each with "ozone" as the response. For the predictor, use "wind speed," "humidity percentage," and "temperature" respectively. For each, calculate $\text{RMSE}$ and $R^2$. Arrange the results in a markdown table, with a row for each model. Suggestion: Create a data frame that stores the results, then investigate the `kable()` function from the `knitr` package.
+```{r}
+m_ow <- lm(ozone~wind, data=Ozone)
+m_oh <- lm(ozone~humidity, data=Ozone)
+m_ot <- lm(ozone~temp, data=Ozone)
+
+ow_rmse <- sqrt(mean(residuals(m_ow)^2))
+ow_r2 <- summary(m_ow)$r.squared
+
+oh_rmse <- sqrt(mean(residuals(m_oh)^2))
+oh_r2 <- summary(m_oh)$r.squared
+
+ot_rmse <- sqrt(mean(residuals(m_ot)^2))
+ot_r2 <- summary(m_ot)$r.squared
+
+df1 <- rbind("ozone~wind"=c(ow_rmse,ow_r2),"ozone~humidity"=c(oh_rmse,oh_r2),"ozone~temp"=c(ot_rmse,ot_r2))
+colnames(df1) = c("RMSE", "R2")
+knitr::kable(df1, format="markdown")
+```
+
+<br><br>
+
+**(b)** Based on the results, which of the three predictors used is most helpful for predicting ozone readings? Briefly explain.
+
+Based on the above table, predicting ozone using temperature as the predictor will be most helpful. The reason is that it $R^2$ is closest to 1. With an $R^2$ of `0.6`, 60% of the variability in ozone can be explained by a simple linear model with temperature as the predictor. 
+As a contrast, the $R^2$ for wind is almost 0 and for humidity is only `0.19`. Hence these two are not great predictors for ozone.
+
+<br><br>
+
+***

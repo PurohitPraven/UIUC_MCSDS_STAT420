@@ -1,0 +1,124 @@
+---
+title: "Week2_Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Q1. Consider the simple linear regression model Y=10+5x+ϵ
+where ϵ∼N(0,σ^2=16)
+Calculate the probability that Y is less than 6 given that x = 0
+
+```{r}
+pnorm(6, mean=(10+5*0), sd=4)
+```
+Q2. Using the SLR model in Question 1, what is the probability that YY is greater than 3 given that x = -1
+```{r}
+pnorm(3, mean=(10+5*-1), sd=4, lower.tail=FALSE)
+```
+
+Q3. Using the SLR model in Question 1, what is the probability that YY is greater than 3 given that x = -2
+
+```{r}
+pnorm(3, mean=(10+5*-2), sd=4, lower.tail=FALSE)
+```
+
+For Questions 4-11, use the faithful dataset, which is built into R.
+
+
+Q4. Suppose we would like to predict the duration of an eruption of the Old Faithful geyser in Yellowstone National Park based on the waiting time before an eruption. Fit a simple linear model in R that accomplishes this task.
+
+What is the estimate of the intercept parameter?
+```{r}
+faithful_lm <- lm(eruptions~waiting, data=faithful)
+faithful_lm
+```
+Q5. What is the estimate of the slope parameter?
+```{r}
+coefficients(faithful_lm)
+```
+
+Q6. Use the fitted model to predict the duration of an eruption based on a waiting time of 80 minutes.
+
+
+```{r}
+predict(faithful_lm, newdata = data.frame(waiting=c(80)))
+```
+Q7. Use the fitted model to predict the duration of an eruption based on a waiting time of 120 minutes.
+
+```{r}
+predict(faithful_lm, newdata = data.frame(waiting=c(120)))
+
+```
+
+
+Q8. Of the predictions that you made for 80 and 120 minutes, which is more reliable?
+```{r}
+range(faithful$waiting)
+```
+
+
+Q9. Calculate the RSS for the fitted model.
+
+```{r}
+summary(lm(faithful))
+sum(residuals(faithful_lm)^2)
+```
+
+Q10. What proportion of the variation in eruption duration is explained by the linear relationship with waiting time?
+
+```{r}
+summary(faithful_lm)$r.squared
+
+```
+Q11. Calculate the standard deviation of the residuals of the fitted model.
+
+```{r}
+summary(faithful_lm)$sigma
+
+```
+Q12. Suppose both least squares and maximum likelihood are used to fit a simple linear regression model to the same data. The estimates for the slope and the intercept will be:
+
+
+* The same
+* Different
+* Possibly same or different depending on data
+```{r}
+# answer is A
+```
+
+Q13. Consider the fitted regression model:
+hat(y) =−1.5+2.3x
+Select all of the following that must be true.
+
+* There are observations in the dataset used to fit this regression with negative yy values.
+* The difference between the yy values of observations at x = 10x=10 and x = 9x=9 is 2.3.
+* A good estimate for the mean of YY when x = 0x=0 is -1.5.
+
+```{r}
+#Answer is C
+```
+
+Q14. Select all of the following that are true:
+* The SLR model assumes that the relationship between the response and the predictor is linear.
+* The SLR model assumes that the response variable follows a normal distribution.
+* The SLR model allows for larger variances for larger values of the predictor variable.
+* The SLR model assumes that errors are independent.
+
+```{r}
+# Answer is A and D
+```
+
+Q15. Suppose you fit a simple linear regression model and obtain 
+hat(Beta) = 0 
+
+Does this mean that there is no relationship between the response and the predictor?
+* Yes
+* No
+* Depends on the intercept
+```{r}
+# Answer is No
+```
+
