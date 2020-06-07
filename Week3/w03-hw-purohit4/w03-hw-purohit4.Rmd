@@ -37,6 +37,12 @@ Store the results in a variable called `cat_model`. Use a $t$ test to test the s
 - The p-value of the test
 - A statistical decision at $\alpha = 0.05$
 - A conclusion in the context of the problem
+```{r}
+library(MASS)
+cat_model <- lm(Hwt~Bwt, data = cats)
+summary(cat_model)
+
+```
 
 When reporting these, you should explicitly state them in your document, not assume that a reader will find and interpret them from a large block of `R` output.
 
@@ -189,12 +195,12 @@ sd_of_simulated <- list(beta_hat_0=sd(b_hat_0), beta_hat_1=sd(b_hat_1))
 library("data.table")
 
 knitr::kable(data.frame(
-                      rbindlist(list("true expected value given the known values of x"=true_expected_give_x,
-                                       "mean of the simulated values"=mean_of_simulated, 
-                                       "true standard deviation given the known values of x"=true_sd_given_x,
-                                       "standard deviation of the simulated values"=sd_of_simulated), 
-                                  use.names = TRUE, idcol = "Description")), 
-             format="markdown")
+  rbindlist(list("true expected value given the known values of x"=true_expected_give_x,
+            "mean of the simulated values"=mean_of_simulated, 
+            "true standard deviation given the known values of x"=true_sd_given_x,
+            "standard deviation of the simulated values"=sd_of_simulated), 
+            use.names = TRUE, idcol = "Description")), 
+            format="markdown")
 
 ```
 
@@ -202,13 +208,23 @@ knitr::kable(data.frame(
 
 - A histogram of your simulated values for $\hat{\beta}_0$. Add the normal curve for the true sampling distribution of $\hat{\beta}_0$.
 - A histogram of your simulated values for $\hat{\beta}_1$. Add the normal curve for the true sampling distribution of $\hat{\beta}_1$.
-```{r}
+```{r fig.width=10, message=FALSE}
 library(ggplot2)
 
-ggplot() + 
-  geom_histogram(aes(b_hat_0, color=I("orange"))) +
-  ggtitle("Histogram showing the distribution of beta_hat_0 based on 2000 simulations") +
-  theme_linedraw()
+b0 <- ggplot(data.frame(b_hat_0), aes(x=b_hat_0)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
+    ggtitle("beta_hat_0 distribution based on 2000 simulations") +
+    theme_linedraw() +
+    stat_function(fun = dnorm, args = list(mean = beta_0, sd = sqrt(var_beta_0_hat)), col="red", size=2)
+
+b1 <- ggplot(data.frame(b_hat_1), aes(x=b_hat_1)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .05) +
+    ggtitle("beta_hat_1 distribution based on 2000 simulations") +
+    theme_linedraw() +
+    stat_function(fun = dnorm, args = list(mean = beta_1, sd = sqrt(var_beta_1_hat)), col="red", size=2)
+
+library("gridExtra")
+grid.arrange(b0, b1, ncol=2)
 ```
 
 ***
