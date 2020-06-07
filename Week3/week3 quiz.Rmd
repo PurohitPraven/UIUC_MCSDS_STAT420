@@ -1,0 +1,174 @@
+---
+title: "Week3_Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Q1. Consider a random variable X that has a t distribution with 5 degrees of freedom. Calculate P[|X| > 2.1]
+
+
+```{r}
+pt(2.1, df = 5,lower.tail = FALSE)
+# above is incorrect. 
+
+# Correct answe r - The question asks for the probability that the absolute value of X is greater than 2.1, so it should be a two-tailed test.
+
+2*pt(2.1, df = 5,lower.tail = FALSE)
+
+
+
+```
+
+Q2. Calculate the critical value used for a 90% confidence interval about the slope parameter of a simple linear regression model that is fit to 10 observations. (Your answer should be a positive value.)
+```{r}
+qt(.95,8)
+```
+
+Q3. Consider the true simple linear regression model  
+$Y_i=5+4x_i+ϵ_i$    
+$ϵ_i∼N(0, σ^2=4)$   
+$i=1,2,…20$   
+
+Given $S_{xx} = 1.5$, calculate the probability of observing data according to this model, fitting the SLR model, and obtaining an estimate of the slope parameter greater than 4.2.
+
+In other words, calculate $P[\hat{\beta}_1 > 4.2]$.
+
+```{r}
+# The below answer is wrong
+pnorm(4.2, mean=4, sd=sqrt(2), lower.tail = FALSE)
+
+#Try this approach
+#Please notice V(β^1)=σ2/Sxx′ 
+pnorm(4.2, mean=4, sd=sqrt(4/1.5), lower.tail = FALSE)
+
+
+```
+```{r}
+
+```
+
+For Questions 4-11, use the faithful dataset, which is built into R.
+
+
+Q4. Suppose we would like to predict the duration of an eruption of the Old Faithful geyser in Yellowstone National Park based on the waiting time before an eruption. Fit a simple linear model in R that accomplishes this task.
+
+What is the value of $\text{SE}[\hat{\beta}_1]$?
+
+```{r}
+library(statsr)
+library(dplyr)
+m1 <- lm(eruptions~waiting, data=faithful)
+coef(summary(m1))["waiting","Std. Error"]
+```
+
+Q5. What is the value of the test statistic for testing $H_0: \beta_0 = 0$  vs $H_1: \beta_0 \neq 0$ ?
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+coef(summary(m1))["(Intercept)","t value"]
+```
+
+Q6. What is the value of the test statistic for testing $H_0: \beta_1 = 0$  vs $H_1: \beta_1 \neq 0$ ?
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+coef(summary(m1))["waiting","t value"]
+```
+
+Q7. Test  $H_0: \beta_1 = 0$  vs $H_1: \beta_1 \neq 0$  with α=0.01. What decision do you make?
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+beta_1_hat <- coef(summary(m1))["waiting", "Estimate"]
+beta_1_hat_se <- coef(summary(m1))["waiting", "Std. Error"]
+alpha=.01
+n <- nrow(faithful)
+
+pt(beta_1_hat, df=n-2)
+confint(m1, parm = c("waiting"), level = .99)
+
+#Todo dont know why this question is righ or wrong
+```
+Answer is Reject H0. WHY IS THAT THE ANSWER?
+
+
+Q8. Calculate a 90% confidence interval for $\beta_0$
+ . Report the upper bound of this interval.
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+
+confint(m1, parm="(Intercept)", level = .9)[,2]
+```
+ 
+ Q9. Calculate a 95% confidence interval for $\beta_1$
+ . Report the length of the margin of this interval
+ 
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+diff(c(confint(m1, parm="waiting")))
+# above answer is incorrect since the question is length of margin
+# margin is same as margin of error
+# CI = point estimate +- margin of error
+# hence margin of error OR margin is half of confidence interval
+# correct anser is below
+diff(c(confint(m1, parm="waiting")))/2
+
+```
+ 
+ Q10. Create a 90% confidence interval for the mean eruption duration for a waiting time of 81 minutes. Report the lower bound of this interval.
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+predict(m1, newdata = data.frame(waiting= 81), interval = c("confidence"), level = .9)[,"lwr"]
+```
+
+Q11. Create a 99% prediction interval for a new observation's eruption duration for a waiting time of 72 minutes. Report the upper bound of this interval
+
+```{r}
+m1 <- lm(eruptions~waiting, data=faithful)
+predict(m1, newdata = data.frame(waiting= 72), interval = c("prediction"), level = .99)[,"upr"]
+```
+ 
+ Q12. Consider a 90% confidence interval for the mean response and a 90% prediction interval, both at the same xx value. Which interval is narrower?
+ 
+ Ans. Confidence interval
+  
+  
+Q13. Suppose you obtain a 99% confidence interval for β1 that is (-0.4, 5.2)(−0.4,5.2). Now test H_0: \beta_1 = 0 vs H_1: \beta_1 \neq 0 with α=0.01. What decision do you make?
+
+Ans. Fail to reject H0
+
+
+Q14. Suppose you test H_0: β1=0 vs H_1:β1 not=0 with α=0.01 and fail to reject H_0
+ . Select all of the following that must always be true:
+1) We would also fail to reject at α=0.05
+2) There is no relationship between the response and the predictor.
+3) The probability that β1=0 is very high.
+4) The probability of observing the estimated value of β1 (or something more extreme) is greater than 0.01 if we assume that β1=0.
+5) The value of β1 is very small. For example, it could not be 1.2.
+
+Ans. 
+Option 3 should not be selected since beta1 is not an estimate, it is universal model and hence probability concept is not applicable to is.
+
+Option 4 is the definition of p value
+
+Answer Only 4 is the correct option
+
+
+
+Q15. Consider a 95% confidence interval for the mean response calculated at x = 6. If instead we calculate the interval at x = 7, select each value that would change:
+
+1) Critical Value
+2) Estimate
+3) Standard Error
+
+Answer: 
+wrong ansers
+1) Critical value and Estimate
+2) crtical value and Standard error
+3) All three
+
+
+
+
+

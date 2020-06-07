@@ -1,4 +1,4 @@
----
+ ---
 title: "Week 3 - Homework"
 author: "STAT 420, Summer 2020, D. Unger"
 date: ''
@@ -32,11 +32,6 @@ Y_i = \beta_0 + \beta_1 x_i + \epsilon_i
 
 Store the results in a variable called `cat_model`. Use a $t$ test to test the significance of the regression. Report the following:
 
-- The null and alternative hypotheses
-- The value of the test statistic
-- The p-value of the test
-- A statistical decision at $\alpha = 0.05$
-- A conclusion in the context of the problem
 ```{r}
 library(MASS)
 cat_model <- lm(Hwt~Bwt, data = cats)
@@ -44,17 +39,123 @@ summary(cat_model)
 
 ```
 
-When reporting these, you should explicitly state them in your document, not assume that a reader will find and interpret them from a large block of `R` output.
+- The null and alternative hypotheses
+
+$H_0 : \beta_1 = 0$ Implying that the response variable does not change based on the predictor variable OR no slope OR there issnt a significant linear relationship between body weight and heart weight of cats
+
+$H_A : \beta_1 \ne 0$ Implying that there is a significant linear relationship between body weight and heart weight of cats
+
+
+- The value of the test statistic
+
+```{r}
+coef(summary(cat_model))[2,3]
+```
+
+- The p-value of the test
+
+```{r}
+coef(summary(cat_model))[2,4]
+
+```
+
+- A statistical decision at $\alpha = 0.05$
+
+Looking at the p-value above which is essentially 0, we can say that the probability that the observed value of $\beta_1$ being in the 95% confidence interval is almost 0. Hence the statistical decision is to reject the null Hypothesis
+
+
+- A conclusion in the context of the problem
+
+As conclusion we can say that there is a significant linear relationship between the body weight and heart weight of a cat. We conclude this since our null Hypothesis was that there isnt a significant relationship. Then we looked at the p value OR the probability that the estimated value of $\beta_1$ which is $\hat\beta_1$ is the value by chance given that $\beta_1$ is 0, and the chance or probability of that turned out to be 0. Hence we rejected the null Hypothesis and accepted the alternate Hypothesis that $\beta_1 \ne 0$ and that there is a significant linear relationship between heart weight and body weigh of cats
+
+
 
 **(b)** Calculate a 95% confidence interval for $\beta_1$. Give an interpretation of the interval in the context of the problem.
 
+```{r}
+confint(cat_model, parm=c("Bwt"), level = .95)
+```
+
+The above is the 95% confidence interval for $\beta_1$. This implies that we are 95% confident that for every 1kg increase in body weight of a cat, the heart weight in grams of a cat increases by 3.54gms to 4.53 gms
+
+
 **(c)** Calculate a 90% confidence interval for $\beta_0$. Give an interpretation of the interval in the context of the problem.
+
+```{r}
+confint(cat_model, parm=c("(Intercept)"), level = .9)
+
+```
+Technically the interpretation of the above confidence iterval is that we are 90% confident that if a cat's body weight is 0kg then the cat's heart weight is between -1.5gms to .78gms. We should look at this conclusion with suspicion since we know that there will be no cat with 0 body weight and obviously a cat's heart cannot have a negative weight.
 
 **(d)** Use a 90% confidence interval to estimate the mean heart weight for body weights of 2.1 and 2.8 kilograms. Which of the two intervals is wider? Why?
 
+```{r}
+mean_bwt <- mean(cats$Bwt)
+print(paste("mean body weight of the cat = ", mean_bwt))
+
+m1  <- predict(cat_model, newdata = data.frame(Bwt=c(2.1, 2.8)),level = .9, interval = c("confidence"))
+
+print(paste("Difference of ", 2.1, " body weight from mean body weight is = ", mean_bwt - 2.1))
+
+print(paste("Difference of ", 2.8, " body weight from mean body weight is = ", mean_bwt - 2.8))
+
+print(paste("Length of confidnece interval for body weight 2.1 is ", diff(c(m1[1,2],m1[1,3]))))
+
+print(paste("Length of confidnece interval for body weight 2.8 is ", diff(c(m1[2,2],m1[2,3]))))
+
+```
+We see above that the interval for 2.1kg body weight is wider. We also see that 2.1kg body wight is further away from the mean body weight than 2.8 kg. Since the confidence interval is calculated as 
+
+$point estimate \pm criticaValue * standardError$ 
+
+where standard error is defined as 
+
+$s_e* \sqrt {1/n +(x- \bar x)^2/S_{xx}}$
+
+Given this equation, the bigger the difference between x and $\bar x$, the larger the confidence interval
+
+
+
+
 **(e)** Use a 90% prediction interval to predict the heart weight for body weights of 2.8 and 4.2 kilograms.
 
+```{r}
+m2  <- predict(cat_model, newdata = data.frame(Bwt=c(2.8, 4.2)),level = .9, interval = c("prediction"))
+
+print(paste("Based on 90% prediction interval, the heart weight for a body weight of 2.8 kgs will be between ", m2[1,2], "gms and ", m2[1,3], "gms"))
+
+
+print(paste("Based on 90% prediction interval, the heart weight for a body weight of 4.2 kgs will be between ", m2[2,2], "gms and ", m2[2,3], "gms"))
+
+```
+
+
 **(f)** Create a scatterplot of the data. Add the regression line, 95% confidence bands, and 95% prediction bands.
+```{r}
+library("ggplot2")
+
+p <- ggplot(data=cats, aes(x=Bwt, y=Hwt)) + geom_point() +
+  stat_smooth(method = lm, se=FALSE)+
+  ggtitle("Weight of cats heart vs. it body weight") +
+  xlab("Body Weight of cats in Kgs") +
+  ylab("Heart weight of cats in grams") +
+  theme_linedraw()
+
+#simulate x data
+x_sim <- seq(min(cats$Bwt), max(cats$Bwt),.1)
+
+c_band <- predict(cat_model, newdata = data.frame(Bwt=x_sim),level = .95, interval = c("confidence"))
+
+p_band <- predict(cat_model, newdata = data.frame(Bwt=x_sim),level = .95, interval = c("prediction"))
+
+p <- p + geom_line(data=data.frame(x=x_sim,y=c(c_band[,2])), aes(x=x_sim, y=c(c_band[,2])), color="red")
+p <- p + geom_line(data=data.frame(x=x_sim,y=c(c_band[,3])), aes(x=x_sim, y=c(c_band[,3])), color="red")
+p <- p + geom_line(data=data.frame(x=x_sim,y=c(p_band[,2])), aes(x=x_sim, y=c(p_band[,2])))
+p <- p + geom_line(data=data.frame(x=x_sim,y=c(p_band[,3])), aes(x=x_sim, y=c(p_band[,3])))
+p 
+
+```
+
 
 **(g)** Use a $t$ test to test:
 
