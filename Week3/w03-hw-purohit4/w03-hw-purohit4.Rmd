@@ -166,13 +166,15 @@ Report the following:
 
 ```
 
+We do a 2-tail test below
+
 - The p-value of the test
 ```{r}
 (p_value <- 2*pt(t_beta_1_is_4, df=nrow(cats)-2, lower.tail=FALSE))
 ```
 
 - A statistical decision at $\alpha = 0.05$
-Since the p-value is .89 which is greater than .05, we Fail to reject the null hypothesis that beta_1 is 4.
+Since the p-value is .89 which is greater than .05 ($\alpha$), our statistical decision is that we Fail to reject the null hypothesis that beta_1 is 4.
 
 
 ***
@@ -184,6 +186,7 @@ For this exercise we will use the `Ozone` dataset from the `mlbench` package. Yo
 For simplicity, we will re-perform the data cleaning done in the previous homework.
 
 ```{r}
+library(mlbench)
 data(Ozone, package = "mlbench")
 Ozone = Ozone[, c(4, 6, 7, 8)]
 colnames(Ozone) = c("ozone", "wind", "humidity", "temp")
@@ -197,14 +200,41 @@ Y_i = \beta_0 + \beta_1 x_i + \epsilon_i
 \]
 
 Store the results in a variable called `ozone_wind_model`. Use a $t$ test to test the significance of the regression. Report the following:
+```{r}
+ozone_wind_model <- lm(ozone~wind, data = Ozone)
+summary(ozone_wind_model)
+```
 
 - The null and alternative hypotheses
+
+$H_0 : \beta_1 = 0$ Implying that the response variable does not change based on the predictor variable OR no slope OR there isnt a significant linear relationship between wind speed and ozone readings
+
+$H_A : \beta_1 \ne 0$ Implying that there is a significant linear relationship between wind speed and ozone readings
+
+
 - The value of the test statistic
+
+```{r}
+coef(summary(ozone_wind_model))[2,3]
+```
+
+
 - The p-value of the test
+
+```{r}
+coef(summary(ozone_wind_model))[2,4]
+
+```
+
 - A statistical decision at $\alpha = 0.01$
+
+Looking at the p-value above which is very high and more than $\alpha$, our statistical decisionis to fail to reject the null Hypothesis. 
+
+
 - A conclusion in the context of the problem
 
-When reporting these, you should explicitly state them in your document, not assume that a reader will find and interpret them from a large block of `R` output.
+As conclusion we can say that there is not a significant linear relationship between the wind speed and ozone levels. We conclude this since our null Hypothesis was that there isnt a significant relationship. Then we looked at the p value OR the probability that the estimated value of $\beta_1$ which is $\hat\beta_1$ is the value by chance given that $\beta_1$ is 0, and the chance or probability of that turned out to be 82.7%. Hence we fail to reject the null Hypothesis.
+
 
 **(b)** Fit the following simple linear regression model in `R`. Use the ozone measurement as the response and temperature as the predictor. 
 
@@ -213,14 +243,39 @@ Y_i = \beta_0 + \beta_1 x_i + \epsilon_i
 \]
 
 Store the results in a variable called `ozone_temp_model`. Use a $t$ test to test the significance of the regression. Report the following:
+```{r}
+ozone_temp_model <- lm(ozone~temp, data = Ozone)
+summary(ozone_temp_model)
+```
 
 - The null and alternative hypotheses
+
+$H_0 : \beta_1 = 0$ Implying that the response variable does not change based on the predictor variable OR no slope OR there isnt a significant linear relationship between temperature and ozone readings 
+
+$H_A : \beta_1 \ne 0$ Implying that there is a significant linear relationship between temperature and ozone readings
+
+
 - The value of the test statistic
+
+```{r}
+coef(summary(ozone_temp_model))[2,3]
+```
+
 - The p-value of the test
+
+```{r}
+coef(summary(ozone_temp_model))[2,4]
+
+```
+
+
 - A statistical decision at $\alpha = 0.01$
+Looking at the p-value above which is essentially 0 and less than $\alpha$, our statistical decision is to reject the null Hypothesis
+
+
 - A conclusion in the context of the problem
 
-When reporting these, you should explicitly state them in your document, not assume that a reader will find and interpret them from a large block of `R` output.
+As conclusion we can say that there is a significant linear relationship between the temperature and ozone readings. We conclude this since our null Hypothesis was that there isnt a significant relationship. Then we looked at the p value OR the probability that the estimated value of $\beta_1$ which is $\hat\beta_1$ is the value by chance given that $\beta_1$ is 0, and the chance or probability of that turned out to be 0. Hence we rejected the null Hypothesis and accepted the alternate Hypothesis that $\beta_1 \ne 0$ and that there is a significant linear relationship between temprature and ozone readings
 
 ***
 
@@ -256,10 +311,11 @@ simulate_data <- function(beta_0, beta_1, sd_error, x_values){
 }
 
 # Create a function to simulate data n times and return the resulting beta_hat_0 and beta_hat_1 as a vector
-Simulate_n_times_Get_Beta_hat_0_and_1 <- function(num_simul, beta_0, beta_1, sd_error, x_values){
+Simulate_n_times_Get_Beta_hat_0_1_and_se <- function(num_simul, beta_0, beta_1, sd_error, x_values){
   
   beta_hat_0 <-  rep(0,num_simul)
   beta_hat_1 <-  rep(0,num_simul)
+  se <-  rep(0,num_simul)
 
   for(i in 1:num_simul){
     sim_data_1 <- simulate_data(beta_0 = beta_0, beta_1 = beta_1, sd_error = sd_error, x_values = x_values)
@@ -267,16 +323,18 @@ Simulate_n_times_Get_Beta_hat_0_and_1 <- function(num_simul, beta_0, beta_1, sd_
     
     beta_hat_0[i] <- coef(m1)[1]
     beta_hat_1[i] <- coef(m1)[2]
+    se[i] <- coef(summary(m1))[2,2]
   }
-  return(list(beta_hat_0=beta_hat_0,beta_hat_1=beta_hat_1))
+  return(list(beta_hat_0=beta_hat_0, beta_hat_1=beta_hat_1, se=se))
 }
 ```
 ```{r}
-beta_0 = -5
-beta_1 = 3.25
-sig = sqrt(16)
+beta_0 <- -5
+beta_1 <- 3.25
+sig <- sqrt(16)
+ns <- 2000
 
-b_0_1 <- Simulate_n_times_Get_Beta_hat_0_and_1(num_simul = 2000, beta_0 = beta_0, beta_1 = beta_1, sd_error = sig, x_values = x)
+b_0_1 <- Simulate_n_times_Get_Beta_hat_0_1_and_se(num_simul = ns, beta_0 = beta_0, beta_1 = beta_1, sd_error = sig, x_values = x)
 b_hat_0 <- b_0_1$beta_hat_0
 b_hat_1 <- b_0_1$beta_hat_1
 ```
@@ -331,6 +389,8 @@ b1 <- ggplot(data.frame(b_hat_1), aes(x=b_hat_1)) +
 
 library("gridExtra")
 grid.arrange(b0, b1, ncol=2)
+
+#Todo - is the curve and code fine?
 ```
 
 ***
@@ -351,16 +411,31 @@ Where $\epsilon_i \sim N(0, \sigma^2).$ Also, the parameters are known to be:
 
 We will use samples of size $n = 25$.
 
+
 Our goal here is to use simulation to verify that the confidence intervals really do have their stated confidence level. Do **not** use the `confint()` function for this entire exercise.
 
 **(a)** Simulate this model $2500$ times. Each time use `lm()` to fit a simple linear regression model, then store the value of $\hat{\beta}_1$ and $s_e$. Set a seed using **your** birthday before performing the simulation. Note, we are simulating the $x$ values once, and then they remain fixed for the remainder of the exercise.
 
 ```{r}
-birthday = 18760613
+birthday = 19730321
 set.seed(birthday)
 n = 25
 x = seq(0, 2.5, length = n)
 ```
+
+
+```{r}
+beta_0 <- 5
+beta_1 <- 2
+sig <-  sqrt(9)
+ns <- 2500
+
+b_1_se <- Simulate_n_times_Get_Beta_hat_0_1_and_se(num_simul = ns, beta_0 = beta_0, beta_1 = beta_1, sd_error = sig, x_values = x)
+
+b_hat_1 <- b_1_se$beta_hat_1
+b_se <- b_1_se$se
+```
+
 
 **(b)** For each of the $\hat{\beta}_1$ that you simulated, calculate a 95% confidence interval. Store the lower limits in a vector `lower_95` and the upper limits in a vector `upper_95`. Some hints:
 
