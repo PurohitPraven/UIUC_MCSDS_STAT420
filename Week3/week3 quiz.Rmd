@@ -15,7 +15,7 @@ Q1. Consider a random variable X that has a t distribution with 5 degrees of fre
 pt(2.1, df = 5,lower.tail = FALSE)
 # above is incorrect. 
 
-# Correct answe r - The question asks for the probability that the absolute value of X is greater than 2.1, so it should be a two-tailed test.
+# Correct answer - The question asks for the probability that the absolute value of X is greater than 2.1, so it should be a two-tailed test.
 
 2*pt(2.1, df = 5,lower.tail = FALSE)
 
@@ -163,11 +163,14 @@ Q15. Consider a 95% confidence interval for the mean response calculated at x = 
 3) Standard Error
 
 Answer: 
-wrong ansers
+wrong answers
 1) Critical value and Estimate
 2) crtical value and Standard error
 3) All three
+4) Standard error
 
+Correct answer:
+Standard error and estimate
 
 
 

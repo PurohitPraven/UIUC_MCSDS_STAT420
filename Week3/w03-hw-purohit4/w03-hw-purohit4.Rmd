@@ -1,4 +1,4 @@
- ---
+---
 title: "Week 3 - Homework"
 author: "STAT 420, Summer 2020, D. Unger"
 date: ''
@@ -10,13 +10,6 @@ output:
 urlcolor: cyan
 ---
 
-
-# Directions
-
-Students are encouraged to work together on homework. However, sharing, copying or providing any part of a homework solution or code is an infraction of the University's rules on Academic Integrity. Any violation will be punished as severely as possible.
-
-- Be sure to remove this section if you use this `.Rmd` file as a template.
-- You may leave the questions in your final document.
 
 ***
 
@@ -35,13 +28,11 @@ Store the results in a variable called `cat_model`. Use a $t$ test to test the s
 ```{r}
 library(MASS)
 cat_model <- lm(Hwt~Bwt, data = cats)
-summary(cat_model)
-
 ```
 
 - The null and alternative hypotheses
 
-$H_0 : \beta_1 = 0$ Implying that the response variable does not change based on the predictor variable OR no slope OR there issnt a significant linear relationship between body weight and heart weight of cats
+$H_0 : \beta_1 = 0$ Implying that the response variable does not change based on the predictor variable OR no slope OR there isnt a significant linear relationship between body weight and heart weight of cats
 
 $H_A : \beta_1 \ne 0$ Implying that there is a significant linear relationship between body weight and heart weight of cats
 
@@ -161,14 +152,28 @@ p
 
 - $H_0: \beta_1 = 4$
 - $H_1: \beta_1 \neq 4$
+```{r}
+null_beta_1 <- 4
+b1_hat_se <- coef(summary(cat_model))[2,2]
+b1_hat <- coef(summary(cat_model))[2,1]
+```
 
 Report the following:
 
 - The value of the test statistic
-- The p-value of the test
-- A statistical decision at $\alpha = 0.05$
+```{r}
+(t_beta_1_is_4 <- (b1_hat-null_beta_1)/b1_hat_se)
 
-When reporting these, you should explicitly state them in your document, not assume that a reader will find and interpret them from a large block of `R` output.
+```
+
+- The p-value of the test
+```{r}
+(p_value <- 2*pt(t_beta_1_is_4, df=nrow(cats)-2, lower.tail=FALSE))
+```
+
+- A statistical decision at $\alpha = 0.05$
+Since the p-value is .89 which is greater than .05, we Fail to reject the null hypothesis that beta_1 is 4.
+
 
 ***
 
