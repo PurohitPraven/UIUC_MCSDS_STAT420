@@ -1,6 +1,6 @@
 ---
 title: "Week 3 - Homework"
-author: "STAT 420, Summer 2020, D. Unger"
+author: "Praveen Purohit : purohit4@illinois.edu"
 date: ''
 output:
   html_document: 
@@ -52,14 +52,14 @@ coef(summary(cat_model))[2,4]
 
 - A statistical decision at $\alpha = 0.05$
 
-Looking at the p-value above which is essentially 0, we can say that the probability that the observed value of $\beta_1$ being in the 95% confidence interval is almost 0. Hence the statistical decision is to reject the null Hypothesis
+Looking at the p-value above which is essentially 0, we can say that the probability that the observed value of $\beta_1$ being in the 95% confidence interval is almost 0. Also p-value is less than alpha. Hence the statistical decision is to reject the null Hypothesis
 
 
 - A conclusion in the context of the problem
 
 As conclusion we can say that there is a significant linear relationship between the body weight and heart weight of a cat. We conclude this since our null Hypothesis was that there isnt a significant relationship. Then we looked at the p value OR the probability that the estimated value of $\beta_1$ which is $\hat\beta_1$ is the value by chance given that $\beta_1$ is 0, and the chance or probability of that turned out to be 0. Hence we rejected the null Hypothesis and accepted the alternate Hypothesis that $\beta_1 \ne 0$ and that there is a significant linear relationship between heart weight and body weigh of cats
 
-
+<br><br>
 
 **(b)** Calculate a 95% confidence interval for $\beta_1$. Give an interpretation of the interval in the context of the problem.
 
@@ -70,6 +70,8 @@ confint(cat_model, parm=c("Bwt"), level = .95)
 The above is the 95% confidence interval for $\beta_1$. This implies that we are 95% confident that for every 1kg increase in body weight of a cat, the heart weight in grams of a cat increases by 3.54gms to 4.53 gms
 
 
+<br><br>
+
 **(c)** Calculate a 90% confidence interval for $\beta_0$. Give an interpretation of the interval in the context of the problem.
 
 ```{r}
@@ -78,11 +80,13 @@ confint(cat_model, parm=c("(Intercept)"), level = .9)
 ```
 Technically the interpretation of the above confidence iterval is that we are 90% confident that if a cat's body weight is 0kg then the cat's heart weight is between -1.5gms to .78gms. We should look at this conclusion with suspicion since we know that there will be no cat with 0 body weight and obviously a cat's heart cannot have a negative weight.
 
+<br><br>
+
 **(d)** Use a 90% confidence interval to estimate the mean heart weight for body weights of 2.1 and 2.8 kilograms. Which of the two intervals is wider? Why?
 
-```{r}
+```{r results='hold'}
 mean_bwt <- mean(cats$Bwt)
-print(paste("mean body weight of the cat = ", mean_bwt))
+print(paste("mean body weight of cats is = ", mean_bwt))
 
 m1  <- predict(cat_model, newdata = data.frame(Bwt=c(2.1, 2.8)),level = .9, interval = c("confidence"))
 
@@ -106,11 +110,12 @@ $s_e* \sqrt {1/n +(x- \bar x)^2/S_{xx}}$
 Given this equation, the bigger the difference between x and $\bar x$, the larger the confidence interval
 
 
+<br><br>
 
 
 **(e)** Use a 90% prediction interval to predict the heart weight for body weights of 2.8 and 4.2 kilograms.
 
-```{r}
+```{r results='hold'}
 m2  <- predict(cat_model, newdata = data.frame(Bwt=c(2.8, 4.2)),level = .9, interval = c("prediction"))
 
 print(paste("Based on 90% prediction interval, the heart weight for a body weight of 2.8 kgs will be between ", m2[1,2], "gms and ", m2[1,3], "gms"))
@@ -121,8 +126,10 @@ print(paste("Based on 90% prediction interval, the heart weight for a body weigh
 ```
 
 
+<br><br>
+
 **(f)** Create a scatterplot of the data. Add the regression line, 95% confidence bands, and 95% prediction bands.
-```{r}
+```{r message=FALSE}
 library("ggplot2")
 
 p <- ggplot(data=cats, aes(x=Bwt, y=Hwt)) + geom_point() +
@@ -147,6 +154,8 @@ p
 
 ```
 
+
+<br><br>
 
 **(g)** Use a $t$ test to test:
 
@@ -202,7 +211,6 @@ Y_i = \beta_0 + \beta_1 x_i + \epsilon_i
 Store the results in a variable called `ozone_wind_model`. Use a $t$ test to test the significance of the regression. Report the following:
 ```{r}
 ozone_wind_model <- lm(ozone~wind, data = Ozone)
-summary(ozone_wind_model)
 ```
 
 - The null and alternative hypotheses
@@ -236,6 +244,8 @@ Looking at the p-value above which is very high and more than $\alpha$, our stat
 As conclusion we can say that there is not a significant linear relationship between the wind speed and ozone levels. We conclude this since our null Hypothesis was that there isnt a significant relationship. Then we looked at the p value OR the probability that the estimated value of $\beta_1$ which is $\hat\beta_1$ is the value by chance given that $\beta_1$ is 0, and the chance or probability of that turned out to be 82.7%. Hence we fail to reject the null Hypothesis.
 
 
+<br><br>
+
 **(b)** Fit the following simple linear regression model in `R`. Use the ozone measurement as the response and temperature as the predictor. 
 
 \[
@@ -245,7 +255,6 @@ Y_i = \beta_0 + \beta_1 x_i + \epsilon_i
 Store the results in a variable called `ozone_temp_model`. Use a $t$ test to test the significance of the regression. Report the following:
 ```{r}
 ozone_temp_model <- lm(ozone~temp, data = Ozone)
-summary(ozone_temp_model)
 ```
 
 - The null and alternative hypotheses
@@ -310,7 +319,7 @@ simulate_data <- function(beta_0, beta_1, sd_error, x_values){
   return(data.frame(x= x_values, y=y))
 }
 
-# Create a function to simulate data n times and return the resulting beta_hat_0 and beta_hat_1 as a vector
+# Create a function to simulate data n times and return the resulting beta_hat_0, beta_hat_1 and se as a list
 
 Simulate_n_times_Get_Beta_hat_0_1_and_se <- function(num_simul, beta_0, beta_1, sd_error, x_values){
   
@@ -340,6 +349,10 @@ b_hat_0 <- b_0_1$beta_hat_0
 b_hat_1 <- b_0_1$beta_hat_1
 ```
 
+
+<br><br>
+
+
 **(b)** Create a table that summarizes the results of the simulations. The table should have two columns, one for $\hat{\beta}_0$ and one for $\hat{\beta}_1$. The table should have four rows:
 
 - A row for the true expected value given the known values of $x$
@@ -368,6 +381,9 @@ knitr::kable(data.frame(
             format="markdown")
 
 ```
+
+
+<br><br>
 
 **(c)** Plot two histograms side-by-side:
 
@@ -436,6 +452,8 @@ b_se <- b_1_se$se
 ```
 
 
+<br><br>
+
 **(b)** For each of the $\hat{\beta}_1$ that you simulated, calculate a 95% confidence interval. Store the lower limits in a vector `lower_95` and the upper limits in a vector `upper_95`. Some hints:
 
 - You will need to use `qt()` to calculate the critical value, which will be the same for each interval.
@@ -462,17 +480,22 @@ upper_95 <- b_hat_1 + margin_error
 ```
 
 
+<br><br>
 
 **(c)** What proportion of these intervals contains the true value of $\beta_1$?
 ```{r}
 mean((lower_95 <= beta_1) & (beta_1 <= upper_95))
 ```
 
+<br><br>
+
 **(d)** Based on these intervals, what proportion of the simulations would reject the test $H_0: \beta_1 = 0$ vs $H_1: \beta_1 \neq 0$ at $\alpha = 0.05$?
 ```{r}
 1-mean((lower_95 <= 0) & (0 <= upper_95))
 
 ```
+
+<br><br>
 
 **(e)** For each of the $\hat{\beta}_1$ that you simulated, calculate a 99% confidence interval. Store the lower limits in a vector `lower_99` and the upper limits in a vector `upper_99`.
 ```{r}
@@ -484,10 +507,14 @@ upper_99 <- b_hat_1 + margin_error
 ```
 
 
+<br><br>
+
 **(f)** What proportion of these intervals contains the true value of $\beta_1$?
 ```{r}
 mean((lower_99 <= beta_1) & (beta_1 <= upper_99))
 ```
+
+<br><br>
 
 **(g)** Based on these intervals, what proportion of the simulations would reject the test $H_0: \beta_1 = 0$ vs $H_1: \beta_1 \neq 0$ at $\alpha = 0.01$?
 ```{r}
@@ -525,42 +552,47 @@ The function should return a named vector with three elements:
 - `lower`, the lower bound of the interval
 - `upper`, the upper bound of the interval
 
-$$
-\hat{y}(x) \pm t_{\alpha/2, n - 2} \cdot s_e\sqrt{1 + \frac{1}{n}+\frac{(x-\bar{x})^2}{S_{xx}}}.
-$$
 
 ```{r}
 
-
-
 calc_pred_int <- function(model, newdata, level=.95){
   
-  
-  
-  crit_val <- qt((1-level)/2, df=n-2, lower.tail = FALSE)
+  alpha <- 1-level
+  y_hat <- predict(model, newdata = newdata)
+  n <- nrow(model$model)
+  xName <- colnames(newdata)
+  x_bar <- mean(model$model[,xName])
+  crit_val <- qt(alpha/2, df=n-2, lower.tail = FALSE)
   se <- summary(model)$sigma
-  SE <- se * sqrt(1 + 1/)
-  n <- model$model
-  return (c(estimate=1, lower=.5, upper=2))
+  Sxx <- sum((model$model[,xName] -x_bar)^2)
+
+  SE <- se * sqrt(1 + 1/n + ((newdata-x_bar)^2 /Sxx))
+
+  lower <- (y_hat - crit_val*SE)[,1]
+  upper <- (y_hat + crit_val*SE)[,1]
+  
+  return (c(estimate=y_hat, lower=lower, upper=upper))
 }
 ```
 
 
-
+<br><br>
 
 **(b)** After writing the function, run this code:
 
-```{r, eval = FALSE}
+```{r}
 newcat_1 = data.frame(Bwt = 4.0)
 calc_pred_int(cat_model, newcat_1)
 
 ```
 
+<br><br>
+
 **(c)** After writing the function, run this code:
 
-```{r, eval = FALSE}
+```{r}
 newcat_2 = data.frame(Bwt = 3.3)
-calc_pred_int(cat_model, newcat_2, level = 0.90)
+(calc_pred_int(cat_model, newcat_2, level = 0.90))
 ```
 
 
