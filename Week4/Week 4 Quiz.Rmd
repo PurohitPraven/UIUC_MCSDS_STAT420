@@ -1,0 +1,220 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Q1. Consider testing for significance of regression in a multiple linear regression model with 9 predictors and 30 observations. If the value of the FF test statistic is 2.4, what is the p-value of this test?
+
+```{r}
+n=30
+p=9
+2*pf(2.4,p-1,n-p,lower.tail=FALSE)
+```
+
+Q2. What is the p-value for testing $H_0: \beta_1 = 0 \ \text{vs} \ H_1: \beta_1 \neq 0$ in a multiple linear regression model with 5 predictors and 20 observations if the value of the t test statistic is -1.3?
+
+```{r}
+n=20
+p=5
+2*pf(1.3^2, p-1,n-p,lower.tail=FALSE)
+```
+
+Q3. Consider the true model
+
+$Y = 3 + 2 x_1 + 0.5 x_2 + 5 x_3 + \epsilon$
+$ \epsilon \sim N(0, \sigma^2 = 9)$
+
+What is $\text{SD}[\hat{\beta}_2]$ given the values of predictors above?
+
+```{r}
+set.seed(42)
+x_values = data.frame(
+  x1 = runif(15),
+  x2 = runif(15),
+  x3 = runif(15)
+)
+b0=3
+b1=2
+b2=.5
+b3=5
+sig=3
+X = cbind(x0=rep(1, 15),x_values)
+
+C <- solve(t(X) %*% as.matrix(X))
+
+sd_b2 = 3 * sqrt(C[3, 3])
+sd_b2
+```
+
+
+For Questions 4-11, use the swiss dataset, which is built into R.
+
+Fit a multiple linear regression model with Fertility as the response and the remaining variables as predictors. You should use ?swiss to learn about the background of this dataset.
+
+Q4. Use your fitted model to make a prediction for a Swiss province in 1888 with:
+
+54% of males involved in agriculture as occupation
+23% of draftees receiving highest mark on army examination
+13% of draftees obtaining education beyond primary school
+60% of the population identifying as Catholic
+24% of live births that live less than a year
+
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+betas= coef(summary(fit))[,1]
+
+X = data.frame(1, 54, 23, 13, 60, 24)
+y=as.matrix(X) %*% as.matrix(betas)
+y
+```
+
+Q5. Create a 99% confidence interval for the coefficient for Catholic. Report the upper bound of this interval.
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+confint(fit, level=.99)["Catholic",]
+```
+
+
+Q6. Calculate the p-value of the test $H_0: \beta_{\text{Examination}} = 0 \ \text{vs} \ H_1: \beta_{\text{Examination}} \neq 0$
+
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+coef(summary(fit))
+```
+
+
+Q7. Create a 95% confidence interval for the average Fertility for a Swiss province in 1888 with:
+
+40% of males involved in agriculture as occupation
+28% of draftees receiving highest mark on army examination
+10% of draftees obtaining education beyond primary school
+42% of the population identifying as Catholic
+27% of live births that live less than a year
+Report the lower bound of this interval.
+
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+newdata=data.frame("Agriculture"=40, "Examination" = 28, "Education" = 10, "Catholic" = 42, "Infant.Mortality" = 27)
+
+predict(fit, newdata = newdata, interval="confidence", level = .95)
+
+```
+
+Q8. Create a 95% prediction interval for the Fertility of a Swiss province in 1888 with:
+
+40% of males involved in agriculture as occupation
+28% of draftees receiving highest mark on army examination
+10% of draftees obtaining education beyond primary school
+42% of the population identifying as Catholic
+27% of live births that live less than a year
+Report the lower bound of this interval.
+
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+newdata=data.frame("Agriculture"=40, "Examination" = 28, "Education" = 10, "Catholic" = 42, "Infant.Mortality" = 27)
+
+predict(fit, newdata = newdata, interval="prediction", level = .95)
+```
+
+Q9. Report the value of the FF statistic for the significance of regression test.
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+summary(fit)$fstatistic
+```
+
+Q10. Carry out the significance of regression test using α=0.01. What decision do you make?
+
+
+a) Fail to reject H_0
+b) Reject H_0
+c) Reject H_1
+d) Not enough information
+
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+summary(fit)
+```
+
+Answer. Reject H0
+
+
+Q11. Consider a model that only uses the predictors Education, Catholic, and Infant.Mortality. Use an FF test to compare this with the model that uses all predictors. Report the p-value of this test.
+```{r}
+fit = lm(Fertility~ ., data=swiss)
+fit_null = lm(Fertility~Education+Catholic+Infant.Mortality, data=swiss)
+anova(fit_null, fit)
+```
+
+Answer 0.05628 
+
+
+Q12. Consider two nested multiple linear regression models fit to the same data. One has an R^2 of 0.9 while the other has an R^2 of 0.8. Which model uses fewer predictors?
+
+
+a) The model with an R^2 of 0.9
+b) The model with an R^2R of 0.8
+c) Not enough informaiton
+
+
+
+Answer. The model with R^2 of .8
+
+
+Q13. The following multiple linear regression is fit to data
+
+$Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \epsilon$
+
+If $\hat{\beta}_1 = 5$ and $\hat{\beta}_2 = 0.25$ then
+
+a) The p-value for testing $H_0: \beta_1 = 0 \ \text{vs} \ H_1: \beta_1 \neq 0$ will be larger than the p-value for testing $H_0: \beta_2 = 0 \ \text{vs} \ H_1: \beta_2 \neq 0$
+
+b) The p-value for testing $H_0: \beta_1 = 0 \ \text{vs} \ H_1: \beta_1 \neq 0$ will be smaller than the p-value for testing $H_0: \beta_2 = 0 \ \text{vs} \ H_1: \beta_2 \neq 0$
+
+c) Not enough information
+
+Answer. Not enough informaiton
+
+
+Q14. Suppose you have an SLR model for predicting IQ from height. The estimated coefficient for height is positive. Now, we add a predictor for age to create an MLR model. After fitting this new model, the estimated coefficient for height must be:
+
+a) Exactly the same as the SLR model
+b) Different, but still positive
+c) Zero
+d) Negative
+e) None of the above
+
+Answer. None of the above
+
+
+Q15. The following multiple linear regression is fit to data
+
+$Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \epsilon$
+
+If the F test for the significance of regression has a p-value less than 0.01, then we know that:
+
+
+a) The p-values for both $H_0: \beta_1 = 0 \ \text{vs} \ H_1: \beta_1 \neq 0$ and $H_0: \beta_2 = 0 \ \text{vs} \ H_1: \beta_2 \neq 0$ will be less than 0.01.
+
+
+b) The p-values for both $H_0: \beta_1 = 0 \ \text{vs} \ H_1: \beta_1 \neq 0$ and $H_0: \beta_2 = 0 \ \text{vs} \ H_1: \beta_2 \neq 0$ could be greater than 0.01.
+
+
+c) $H_0: \beta_1 = 0 \ \text{vs} \ H_1: \beta_1 \neq 0$ will have a p-value less than 0.01 if $H_0: \beta_2 = 0 \ \text{vs} \ H_1: \beta_2 \neq 0$ has a p value greater than .01
+
+Answer B
+wrong Answer. C
+
+
+
+
+
+
+
+
+
+
+
