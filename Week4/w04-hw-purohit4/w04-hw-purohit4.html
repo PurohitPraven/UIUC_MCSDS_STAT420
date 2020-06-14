@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="STAT 420, Summer 2020, D. Unger" />
+<meta name="author" content="STAT 420, Summer 2020, purohit4@illinois.edu" />
 
 
 <title>Week 4 - Homework</title>
@@ -375,29 +375,20 @@ summary {
 
 
 <h1 class="title toc-ignore">Week 4 - Homework</h1>
-<h4 class="author">STAT 420, Summer 2020, D. Unger</h4>
+<h4 class="author">STAT 420, Summer 2020, <a href="mailto:purohit4@illinois.edu" class="email">purohit4@illinois.edu</a></h4>
 
 </div>
 
 <div id="TOC">
 <ul>
-<li><a href="#directions">Directions</a><ul>
 <li><a href="#exercise-1-using-lm">Exercise 1 (Using <code>lm</code>)</a></li>
 <li><a href="#exercise-2-more-lm-for-multiple-regression">Exercise 2 (More <code>lm</code> for Multiple Regression)</a></li>
 <li><a href="#exercise-3-regression-without-lm">Exercise 3 (Regression without <code>lm</code>)</a></li>
 <li><a href="#exercise-4-regression-for-prediction">Exercise 4 (Regression for Prediction)</a></li>
 <li><a href="#exercise-5-simulating-multiple-regression">Exercise 5 (Simulating Multiple Regression)</a></li>
-</ul></li>
 </ul>
 </div>
 
-<div id="directions" class="section level1">
-<h1>Directions</h1>
-<p>Students are encouraged to work together on homework. However, sharing, copying or providing any part of a homework solution or code is an infraction of the University’s rules on Academic Integrity. Any violation will be punished as severely as possible.</p>
-<ul>
-<li>Be sure to remove this section if you use this <code>.Rmd</code> file as a template.</li>
-<li>You may leave the questions in your final document.</li>
-</ul>
 <hr />
 <div id="exercise-1-using-lm" class="section level2">
 <h2>Exercise 1 (Using <code>lm</code>)</h2>
@@ -431,23 +422,95 @@ Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \epsilon_i.
 <li><span class="math inline">\(x_{i2}\)</span> is <code>Sugar</code>.</li>
 <li><span class="math inline">\(x_{i3}\)</span> is <code>Sodium</code>.</li>
 </ul>
-<p>Use an <span class="math inline">\(F\)</span>-test to test the significance of the regression. Report the following:</p>
+<p>Use an <span class="math inline">\(F\)</span>-test to test the significance of the regression.</p>
+<pre class="r"><code>nutrition_df &lt;- read.csv(&quot;nutrition-2018.csv&quot;)
+
+fit_nutrition_1 &lt;- lm(Calories~Fat+Sugar+Sodium, data = nutrition_df)</code></pre>
+<p>Report the following: - The null and alternative hypotheses <span class="math inline">\(H_0 : \beta_1 = \beta_2 = \beta_3 = 0\)</span> : there is no significant linear relationship between Calories and the Fat, Sugar or Sodium content of food</p>
+<p><span class="math inline">\(H_1\)</span> : Atleast one of <span class="math inline">\(\beta_j \neq 0, j= 1, 2, 3\)</span> : there is a significant linear relationship between Calories and atleast one of Fat, Sugar or Sodium content of food</p>
 <ul>
-<li>The null and alternative hypotheses</li>
 <li>The value of the test statistic</li>
-<li>The p-value of the test</li>
-<li>A statistical decision at <span class="math inline">\(\alpha = 0.01\)</span></li>
-<li>A conclusion in the context of the problem</li>
 </ul>
-<p>When reporting these, you should explicitly state them in your document, not assume that a reader will find and interpret them from a large block of <code>R</code> output.</p>
+<pre class="r"><code>(fstat &lt;- summary(fit_nutrition_1)$fstatistic)</code></pre>
+<pre><code>##   value   numdf   dendf 
+## 6590.94    3.00 5952.00</code></pre>
+<p>We report the F test statistic above where value is the value of the F-statistic, numf is the p-1 or number of predictors-1, and dendf is n-p number of observations minus number of predictors.</p>
+<p>We can also report just the value parameter as below</p>
+<pre class="r"><code>fstat[1]</code></pre>
+<pre><code>##   value 
+## 6590.94</code></pre>
+<ul>
+<li>The p-value of the test</li>
+</ul>
+<pre class="r"><code>1-pf(fstat[1], df1 = fstat[2], df2 = fstat[3])</code></pre>
+<pre><code>## value 
+##     0</code></pre>
+<ul>
+<li><p>A statistical decision at <span class="math inline">\(\alpha = 0.01\)</span> Since p-value is less than .01 we reject the Null Hypothesis</p></li>
+<li><p>A conclusion in the context of the problem In conclusion we state that atleast one of the parameters: Fat, Sugar or Sodium, has a significant linear relationship with Calories.</p></li>
+</ul>
 <p><strong>(b)</strong> Output only the estimated regression coefficients. Interpret all <span class="math inline">\(\hat{\beta}_j\)</span> coefficients in the context of the problem.</p>
+<pre class="r"><code>coef(fit_nutrition_1)</code></pre>
+<pre><code>##  (Intercept)          Fat        Sugar       Sodium 
+## 1.004561e+02 8.483289e+00 3.900517e+00 6.165246e-03</code></pre>
+<p>For <span class="math inline">\(\beta_0\)</span> we see that if Fat, sugar and Sodium are all 0, then the food will have 100 Calories</p>
+<p>For <span class="math inline">\(\beta_1\)</span> we see that for the same Sugar and Sodium content, if Fat increases by 1 gram, the calories will increase by 8.48</p>
+<p>For <span class="math inline">\(\beta_2\)</span> we see that for the same Fat and Sodium content, if Sugar increases by 1 gram, the calories will increase by 3.9.</p>
+<p>For <span class="math inline">\(\beta_3\)</span> we see that for the same Fat and Sugar content, if Sodium increases by 1 milligram, the calories will increase by .006.</p>
 <p><strong>(c)</strong> Use your model to predict the number of <code>Calories</code> in a Big Mac. According to <a href="https://www.mcdonalds.com/us/en-us/about-our-food/nutrition-calculator.html">McDonald’s publicized nutrition facts</a>, the Big Mac contains 30g of fat, 9g of sugar, and 1010mg of sodium.</p>
+<pre class="r"><code>newdata = data.frame(Fat=30, Sugar=9, Sodium=1010)
+predict(fit_nutrition_1, newdata = newdata)</code></pre>
+<pre><code>##        1 
+## 396.2863</code></pre>
 <p><strong>(d)</strong> Calculate the standard deviation, <span class="math inline">\(s_y\)</span>, for the observed values in the Calories variable. Report the value of <span class="math inline">\(s_e\)</span> from your multiple regression model. Interpret both estimates in the context of this problem.</p>
+<pre class="r"><code># Calculate Sy
+# in matrix form Y= X * B
+y &lt;-  as.matrix(nutrition_df[&quot;Calories&quot;])
+
+X &lt;- cbind(beta_0=rep(1, nrow(nutrition_df)), nutrition_df$Fat, nutrition_df$Sugar, nutrition_df$Sodium)
+
+beta_hat &lt;- solve(t(X) %*% X) %*% t(X) %*% y
+
+y_hat &lt;- as.matrix(X) %*% as.matrix(beta_hat)
+
+e &lt;- y - y_hat
+
+n &lt;- nrow(nutrition_df)
+p &lt;- 3+1
+
+Sy &lt;- c(sqrt((t(e) %*% e)/(n-p)))
+
+#Se from multiple regression model
+Se &lt;- summary(fit_nutrition_1)$sigma
+
+print(paste(&quot;Are the calculated Sy and the fitted model Se (sigma) equal &quot;, all.equal(Sy, Se)))
+#TODO Is this done right?</code></pre>
+<pre><code>## [1] &quot;Are the calculated Sy and the fitted model Se (sigma) equal  TRUE&quot;</code></pre>
+<p>We see that the calculated standard deviation for estimated calories and the standard deviation for the estimated calories in the model are the same. We also see that the value for this is 80.9. This implies that the real model Calories may be off by 80.9 (more or less) than the estimated calories</p>
 <p><strong>(e)</strong> Report the value of <span class="math inline">\(R^2\)</span> for the model. Interpret its meaning in the context of the problem.</p>
+<pre class="r"><code>summary(fit_nutrition_1)$r.squared</code></pre>
+<pre><code>## [1] 0.7686281</code></pre>
+<p><span class="math inline">\(R^2\)</span> is seen to be .7686 or 76.86%. This implies that 76.86% of the Calories in the data are explained by the model and the remaining are not</p>
 <p><strong>(f)</strong> Calculate a 90% confidence interval for <span class="math inline">\(\beta_2\)</span>. Give an interpretation of the interval in the context of the problem.</p>
+<pre class="r"><code>confint(fit_nutrition_1, parm = &quot;Sugar&quot;, level = .9)</code></pre>
+<pre><code>##            5 %     95 %
+## Sugar 3.783051 4.017983</code></pre>
+<p>Given the above confidence interval, we are 90% confident that for the same value of Fat and Sodium, when sugar increases by 1, the calories will increase by 3.78 to 4.01</p>
 <p><strong>(g)</strong> Calculate a 95% confidence interval for <span class="math inline">\(\beta_0\)</span>. Give an interpretation of the interval in the context of the problem.</p>
+<pre class="r"><code>confint(fit_nutrition_1, parm = &quot;(Intercept)&quot;, level = .95)</code></pre>
+<pre><code>##                2.5 %   97.5 %
+## (Intercept) 97.69443 103.2177</code></pre>
+<p>Given the above confidence interval, we are 95% confident that when Fat, Sugar and Sodium are all 0 for a food, then the calories for the food is in between 97.69 and 103.21</p>
 <p><strong>(h)</strong> Use a 99% confidence interval to estimate the mean Calorie content of a food with 23g of fat, 0g of sugar, and 400mg of sodium, which is true of a large order of McDonald’s french fries. Interpret the interval in context.</p>
+<pre class="r"><code>predict(fit_nutrition_1, newdata = data.frame(&quot;Fat&quot;=23,&quot;Sugar&quot;=0, &quot;Sodium&quot;=400), level = .99)</code></pre>
+<pre><code>##        1 
+## 298.0378</code></pre>
+<p>We are 99% confident that if a food has 23gms of fat, 0 gms of sugar and 400mg of sodium then its average calorie count will be 298.04. A large order of McDonals french fries has the said amount of fat, sugar and sodium, hence we can say with 99% confidence that it will have an average of 298 calories.</p>
 <p><strong>(i)</strong> Use a 99% prediction interval to predict the Calorie content of a Crunchwrap Supreme, which has 21g of fat, 6g of sugar, and 1200mg of sodium according to <a href="https://www.tacobell.com/nutrition/info">Taco Bell’s publicized nutrition information</a>. Interpret the interval in context.</p>
+<pre class="r"><code>predict(fit_nutrition_1, newdata = data.frame(&quot;Fat&quot;=21,&quot;Sugar&quot;=6, &quot;Sodium&quot;=1200), level = .99)</code></pre>
+<pre><code>##        1 
+## 309.4065</code></pre>
+<p>We can say with 99% confidence that Crunchwrap supreme has an average calorie count of 309.4 calories. This average calorie count would hold good for any food that has 21 gms of fat, 6gms of sugar and 1200mgs of Sodium and we can say that with 99% confidence</p>
 <hr />
 </div>
 <div id="exercise-2-more-lm-for-multiple-regression" class="section level2">
@@ -470,27 +533,63 @@ Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \epsilon_i.
 <li>Model 2: Goals Against, Saves, Shots Against, Minutes, Shutouts</li>
 <li>Model 3: All Available</li>
 </ul>
+<pre class="r"><code>goalies_df &lt;- read.csv(&quot;goalies.csv&quot;)
+fit_model_1 &lt;- lm(W~GA+SV, data = goalies_df)
+fit_model_2 &lt;- lm(W~GA+SV+SA+MIN+SO, data = goalies_df)
+fit_model_3 &lt;- lm(W~., data = goalies_df)</code></pre>
 <p><strong>(a)</strong> Use an <span class="math inline">\(F\)</span>-test to compares Models 1 and 2. Report the following:</p>
 <ul>
 <li>The null hypothesis</li>
+</ul>
+<p>model 1 is the smaller model. Hence we will use Model 1 as our null model and Model_2 as the full model. We note that the null model is a subset of or is nested in the full model. <span class="math inline">\(H_0: \beta_3 = \beta_4 = \beta_5 = 0\)</span> : there is no significant linear relationship between Wins vs Shots Against, Minutes and Shutouts OR the beta parameters that are not present in the null model are 0</p>
+<ul>
 <li>The value of the test statistic</li>
+</ul>
+<pre class="r"><code>anova_table_1_2 &lt;- anova(fit_model_1,fit_model_2)
+anova_table_1_2$F[2]</code></pre>
+<pre><code>## [1] 462.5935</code></pre>
+<ul>
 <li>The p-value of the test</li>
-<li>A statistical decision at <span class="math inline">\(\alpha = 0.05\)</span></li>
-<li>The model you prefer</li>
+</ul>
+<pre class="r"><code>anova_table_1_2$&quot;Pr(&gt;F)&quot;[2]</code></pre>
+<pre><code>## [1] 6.808247e-138</code></pre>
+<ul>
+<li><p>A statistical decision at <span class="math inline">\(\alpha = 0.05\)</span> Since the p-value is smaller than alpha we reject the null hypothesis</p></li>
+<li><p>The model you prefer Based on the rejection of the null hypothesis, we say that at least some of the model 2 betas have a significant linear relationship with Wins. Hence we prefer model 2 as a being better at explaining the wins</p></li>
 </ul>
 <p><strong>(b)</strong> Use an <span class="math inline">\(F\)</span>-test to compare Model 3 to your preferred model from part <strong>(a)</strong>. Report the following:</p>
+<pre class="r"><code>anova_table_2_3 &lt;- anova(fit_model_2,fit_model_3)</code></pre>
 <ul>
-<li>The null hypothesis</li>
-<li>The value of the test statistic</li>
+<li><p>The null hypothesis model 2 is the smaller model. Hence we will use Model 2 as our null model and Model 3 as the full model. We note that the null model is a subset of or is nested in the full model. <span class="math inline">\(H_0: \beta_4 = \beta_5 = \beta_8 = 0\)</span> : the beta parameters that are not present in the null model are 0 OR there is no significant linear relationship between Wins vs Save percentage, Goals against average and penalties in minutes</p></li>
+<li><p>The value of the test statistic</p></li>
+</ul>
+<pre class="r"><code>anova_table_2_3$F[2]</code></pre>
+<pre><code>## [1] 4.051968</code></pre>
+<ul>
 <li>The p-value of the test</li>
+</ul>
+<pre class="r"><code>anova_table_2_3$&quot;Pr(&gt;F)&quot;[2]</code></pre>
+<pre><code>## [1] 0.007352855</code></pre>
+<ul>
 <li>A statistical decision at <span class="math inline">\(\alpha = 0.05\)</span></li>
-<li>The model you prefer</li>
+</ul>
+<p>since p-value is less than alpha, we reject the null hypothesis</p>
+<ul>
+<li>The model you prefer We prefer the 3rd model since based on the hypothesis test, there is a significant relationship between atleast one of the parameters that is extra in the third model and wins</li>
 </ul>
 <p><strong>(c)</strong> Use a <span class="math inline">\(t\)</span>-test to test <span class="math inline">\(H_0: \beta_{\texttt{SV}} = 0 \ \text{vs} \ H_1: \beta_{\texttt{SV}} \neq 0\)</span> for the model you preferred in part <strong>(b)</strong>. Report the following:</p>
 <ul>
 <li>The value of the test statistic</li>
+</ul>
+<pre class="r"><code>coef(summary(fit_model_3))[&quot;SV&quot;, &quot;t value&quot;]</code></pre>
+<pre><code>## [1] -3.857739</code></pre>
+<ul>
 <li>The p-value of the test</li>
-<li>A statistical decision at <span class="math inline">\(\alpha = 0.05\)</span></li>
+</ul>
+<pre class="r"><code>coef(summary(fit_model_3))[&quot;SV&quot;, &quot;Pr(&gt;|t|)&quot;]</code></pre>
+<pre><code>## [1] 0.0001310371</code></pre>
+<ul>
+<li>A statistical decision at <span class="math inline">\(\alpha = 0.05\)</span> Since the p-value is less than alpha, we reject the null hypothesis and accept the alternate hypothesis that there is a significant linear relationship between saves and wins</li>
 </ul>
 <hr />
 </div>
@@ -502,9 +601,55 @@ Ozone = Ozone[, c(4, 6, 7, 8)]
 colnames(Ozone) = c(&quot;ozone&quot;, &quot;wind&quot;, &quot;humidity&quot;, &quot;temp&quot;)
 Ozone = Ozone[complete.cases(Ozone), ]</code></pre>
 <p><strong>(a)</strong> Obtain the estimated regression coefficients <strong>without</strong> the use of <code>lm()</code> or any other built-in functions for regression. That is, you should use only matrix operations. Store the results in a vector <code>beta_hat_no_lm</code>. To ensure this is a vector, you may need to use <code>as.vector()</code>. Return this vector as well as the results of <code>sum(beta_hat_no_lm ^ 2)</code>.</p>
+<pre class="r"><code>coeffs_no_lm &lt;- function(X, y_data){
+  
+  beta_hat_no_lm &lt;- solve(t(X) %*% X) %*% t(X) %*% y_data
+  return(list(as.vector(beta_hat_no_lm),as.vector(sum(beta_hat_no_lm^2))))
+}</code></pre>
+<pre class="r"><code># in matrix form Y= X * B
+  y_data &lt;-  as.matrix(Ozone[&quot;ozone&quot;])
+  
+  X &lt;- cbind(beta_0=rep(1, nrow(Ozone)), Ozone$wind, Ozone$humidity, Ozone$temp)
+  
+  coeffs_no_lm(X, y_data)</code></pre>
+<pre><code>## [[1]]
+## [1] -16.38178539  -0.18594444   0.08340014   0.38984294
+## 
+## [[2]]
+## [1] 268.5564</code></pre>
 <p><strong>(b)</strong> Obtain the estimated regression coefficients <strong>with</strong> the use of <code>lm()</code>. Store the results in a vector <code>beta_hat_lm</code>. To ensure this is a vector, you may need to use <code>as.vector()</code>. Return this vector as well as the results of <code>sum(beta_hat_lm ^ 2)</code>.</p>
+<pre class="r"><code>coeffs_with_lm &lt;- function(fit_model){
+  beta_hat_lm &lt;- coef(fit_model)
+  return(list(as.vector(beta_hat_lm),as.vector(sum(beta_hat_lm^2))))
+}</code></pre>
+<pre class="r"><code>fit_ozone &lt;- lm(ozone~.,data = Ozone)
+
+beta_no_lm_matrix &lt;- (as.matrix(coeffs_with_lm(fit_ozone)[[1]]))
+beta_no_lm_matrix</code></pre>
+<pre><code>##              [,1]
+## [1,] -16.38178539
+## [2,]  -0.18594444
+## [3,]   0.08340014
+## [4,]   0.38984294</code></pre>
 <p><strong>(c)</strong> Use the <code>all.equal()</code> function to verify that the results are the same. You may need to remove the names of one of the vectors. The <code>as.vector()</code> function will do this as a side effect, or you can directly use <code>unname()</code>.</p>
+<pre class="r"><code>all.equal(coeffs_no_lm(X,y_data), coeffs_with_lm(fit_ozone))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 <p><strong>(d)</strong> Calculate <span class="math inline">\(s_e\)</span> without the use of <code>lm()</code>. That is, continue with your results from <strong>(a)</strong> and perform additional matrix operations to obtain the result. Output this result. Also, verify that this result is the same as the result obtained from <code>lm()</code>.</p>
+<pre class="r"><code># To calculate the predicted results we do X*Beta.
+# We create the X matrix
+n &lt;- nrow(Ozone)
+p &lt;- 3+1
+
+y_pred &lt;- X %*% beta_no_lm_matrix
+
+e = Ozone$ozone - y_pred
+Sy &lt;- c(sqrt((t(e) %*% e)/(n-p)))
+
+#Se from multiple regression model
+Se &lt;- summary(fit_ozone)$sigma
+
+print(paste(&quot;Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm: &quot;, all.equal(Sy, Se)))</code></pre>
+<pre><code>## [1] &quot;Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm:  TRUE&quot;</code></pre>
 <p><strong>(e)</strong> Calculate <span class="math inline">\(R^2\)</span> without the use of <code>lm()</code>. That is, continue with your results from <strong>(a)</strong> and <strong>(d)</strong>, and perform additional operations to obtain the result. Output this result. Also, verify that this result is the same as the result obtained from <code>lm()</code>.</p>
 <hr />
 </div>
@@ -586,7 +731,6 @@ sample_size = 42</code></pre>
 <p><strong>(e)</strong> Calculate the mean and variance of <code>beta_hat_1</code>. Are they close to what we would expect? Plot a histogram of <code>beta_hat_1</code>. Add a curve for the true distribution of <span class="math inline">\(\hat{\beta}_1\)</span>. Does the curve seem to match the histogram?</p>
 <p><strong>(f)</strong> What proportion of the p-values stored in <code>beta_3_pval</code> is less than 0.10? Is this what you would expect?</p>
 <p><strong>(g)</strong> What proportion of the p-values stored in <code>beta_5_pval</code> is less than 0.01? Is this what you would expect?</p>
-</div>
 </div>
 
 
