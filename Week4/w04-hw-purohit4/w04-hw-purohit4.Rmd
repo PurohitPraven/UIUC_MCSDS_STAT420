@@ -65,12 +65,7 @@ $H_1$ : Atleast one of $\beta_j \neq 0, j= 1, 2, 3$ : there is a significant lin
 
 - The value of the test statistic
 ```{r}
-(fstat <- summary(fit_nutrition_1)$fstatistic)
-```
-We report the F test statistic above where value is the value of the F-statistic, numf is the p-1 or number of predictors-1, and dendf is n-p number of observations minus number of predictors.
-
-We can also report just the value parameter as below
-```{r}
+fstat <- summary(fit_nutrition_1)$fstatistic
 fstat[1]
 ```
 
@@ -87,7 +82,7 @@ Since p-value is less than .01 we reject the Null Hypothesis
 - A conclusion in the context of the problem
 In conclusion we state that atleast one of the parameters: Fat, Sugar or Sodium, has a significant linear relationship with Calories.
 
-
+<br><br>
 
 **(b)** Output only the estimated regression coefficients. Interpret all $\hat{\beta}_j$ coefficients in the context of the problem.
 ```{r}
@@ -97,12 +92,12 @@ For $\beta_0$ we see that if Fat, sugar and Sodium are all 0, then the food will
 
 For $\beta_1$ we see that for the same Sugar and Sodium content, if Fat increases by 1 gram, the calories will increase by 8.48 
 
-
 For $\beta_2$ we see that for the same Fat and Sodium content, if Sugar increases by 1 gram, the calories will increase by 3.9.
-
 
 For $\beta_3$ we see that for the same Fat and Sugar content, if Sodium increases by 1 milligram, the calories will increase by .006. 
 
+
+<br><br>
 
 **(c)** Use your model to predict the number of `Calories` in a Big Mac. According to [McDonald's publicized nutrition facts](https://www.mcdonalds.com/us/en-us/about-our-food/nutrition-calculator.html), the Big Mac contains 30g of fat, 9g of sugar, and 1010mg of sodium.
 
@@ -111,41 +106,29 @@ newdata = data.frame(Fat=30, Sugar=9, Sodium=1010)
 predict(fit_nutrition_1, newdata = newdata)
 ```
 
+<br><br>
 
 **(d)** Calculate the standard deviation, $s_y$, for the observed values in the Calories variable. Report the value of $s_e$ from your multiple regression model. Interpret both estimates in the context of this problem.
 
 ```{r results='hold'}
-# Calculate Sy
-# in matrix form Y= X * B
 y <-  as.matrix(nutrition_df["Calories"])
 
-X <- cbind(beta_0=rep(1, nrow(nutrition_df)), nutrition_df$Fat, nutrition_df$Sugar, nutrition_df$Sodium)
-
-beta_hat <- solve(t(X) %*% X) %*% t(X) %*% y
-
-y_hat <- as.matrix(X) %*% as.matrix(beta_hat)
-
-e <- y - y_hat
-
-n <- nrow(nutrition_df)
-p <- 3+1
-
-Sy <- c(sqrt((t(e) %*% e)/(n-p)))
+(Sy <- sd(y))
 
 #Se from multiple regression model
-Se <- summary(fit_nutrition_1)$sigma
-
-print(paste("Are the calculated Sy and the fitted model Se (sigma) equal ", all.equal(Sy, Se)))
-#TODO Is this done right?
+(Se <- summary(fit_nutrition_1)$sigma)
 ```
-We see that the calculated standard deviation for estimated calories and the standard deviation for the estimated calories in the model are the same. We also see that the value for this is 80.9. This implies that the real model Calories may be off by 80.9 (more or less) than the estimated calories
+Sy is standard deviation of the variable calories. Se is the variability of the residuals of the model
 
+<br><br>
 
 **(e)** Report the value of $R^2$ for the model. Interpret its meaning in the context of the problem.
 ```{r}
 summary(fit_nutrition_1)$r.squared
 ```
 $R^2$ is seen to be .7686 or 76.86%. This implies that 76.86% of the Calories in the data are explained by the model and the remaining are not
+
+<br><br>
 
 **(f)** Calculate a 90% confidence interval for $\beta_2$. Give an interpretation of the interval in the context of the problem.
 ```{r}
@@ -154,6 +137,8 @@ confint(fit_nutrition_1, parm = "Sugar", level = .9)
 
 Given the above confidence interval, we are 90% confident that for the same value of Fat and Sodium, when sugar increases by 1, the calories will increase by 3.78 to 4.01
 
+<br><br>
+
 **(g)** Calculate a 95% confidence interval for $\beta_0$. Give an interpretation of the interval in the context of the problem.
 ```{r}
 confint(fit_nutrition_1, parm = "(Intercept)", level = .95)
@@ -161,12 +146,16 @@ confint(fit_nutrition_1, parm = "(Intercept)", level = .95)
 
 Given the above confidence interval, we are 95% confident that when Fat, Sugar and Sodium are all 0 for a food, then the calories for the food is in between 97.69 and 103.21
 
+<br><br>
+
 **(h)** Use a 99% confidence interval to estimate the mean Calorie content of a food with 23g of fat, 0g of sugar, and 400mg of sodium, which is true of a large order of McDonald's french fries. Interpret the interval in context.
 ```{r}
 predict(fit_nutrition_1, newdata = data.frame("Fat"=23,"Sugar"=0, "Sodium"=400), level = .99)
 ```
 We are 99% confident that if a food has 23gms of fat, 0 gms of sugar and 400mg of sodium then its average calorie count will be 298.04. A large order of McDonals french fries has the said amount of fat, sugar and sodium, hence we can say with 99% confidence that it will have an average of 298 calories.
- 
+
+<br><br>
+
 **(i)** Use a 99% prediction interval to predict the Calorie content of a Crunchwrap Supreme, which has 21g of fat, 6g of sugar, and 1200mg of sodium according to [Taco Bell's publicized nutrition information](https://www.tacobell.com/nutrition/info). Interpret the interval in context.
 
 ```{r}
@@ -229,7 +218,7 @@ Since the p-value is smaller than alpha we reject the null hypothesis
 - The model you prefer
 Based on the rejection of the null hypothesis, we say that at least some of the model 2 betas have a significant linear relationship with Wins. Hence we prefer model 2 as a being better at explaining the wins
 
-
+<br><br>
 
 **(b)** Use an $F$-test to compare Model 3 to your preferred model from part **(a)**. Report the following:
 ```{r}
@@ -257,9 +246,9 @@ since p-value is less than alpha, we reject the null hypothesis
 
 
 - The model you prefer
-We prefer the 3rd model since based on the hypothesis test, there is a significant relationship between atleast one of the parameters that is extra in the third model and wins
+We prefer the 3rd model since based on the hypothesis test, there is a significant relationship between wins and atleast one of the parameters that is extra in the third model
 
-
+<br><br>
 
 **(c)** Use a $t$-test to test $H_0: \beta_{\texttt{SV}} = 0 \ \text{vs} \ H_1: \beta_{\texttt{SV}} \neq 0$ for the model you preferred in part **(b)**. Report the following:
 
@@ -303,15 +292,15 @@ coeffs_no_lm <- function(X, y_data){
 }
 ```
 ```{r}
-# in matrix form Y= X * B
   y_data <-  as.matrix(Ozone["ozone"])
   
   X <- cbind(beta_0=rep(1, nrow(Ozone)), Ozone$wind, Ozone$humidity, Ozone$temp)
-  
-  coeffs_no_lm(X, y_data)
+
+  #sum of squares of beta_hat_lm is also returned, but we are not storing it
+  beta_hat_no_lm <- coeffs_no_lm(X, y_data)[[1]]
 ```
 
-
+<br><br>
 
 **(b)** Obtain the estimated regression coefficients **with** the use of `lm()`. Store the results in a vector `beta_hat_lm`. To ensure this is a vector, you may need to use `as.vector()`. Return this vector as well as the results of `sum(beta_hat_lm ^ 2)`.
 ```{r}
@@ -323,53 +312,47 @@ coeffs_with_lm <- function(fit_model){
 
 ```{r}
 fit_ozone <- lm(ozone~.,data = Ozone)
+#sum of squares of beta_hat_lm is also returned, but we are not storing it
+beta_hat_lm <- (as.matrix(coeffs_with_lm(fit_ozone)[[1]]))
 
-beta_no_lm_matrix <- (as.matrix(coeffs_with_lm(fit_ozone)[[1]]))
-beta_no_lm_matrix
 ```
+
+<br><br>
 
 **(c)** Use the `all.equal()` function to verify that the results are the same. You may need to remove the names of one of the vectors. The `as.vector()` function will do this as a side effect, or you can directly use `unname()`.
 ```{r}
 all.equal(coeffs_no_lm(X,y_data), coeffs_with_lm(fit_ozone))
 ```
 
+<br><br>
 
 **(d)** Calculate $s_e$ without the use of `lm()`. That is, continue with your results from **(a)** and perform additional matrix operations to obtain the result. Output this result. Also, verify that this result is the same as the result obtained from `lm()`.
 ```{r}
 # To calculate the predicted results we do X*Beta.
-# We create the X matrix
 n <- nrow(Ozone)
 p <- 3+1
 
-y_pred <- X %*% beta_no_lm_matrix
+y_pred <- X %*% as.matrix(beta_hat_no_lm)
 
 e = Ozone$ozone - y_pred
-Sy <- c(sqrt((t(e) %*% e)/(n-p)))
+Se_nolm <- c(sqrt((t(e) %*% e)/(n-p)))
 
 #Se from multiple regression model
 Se <- summary(fit_ozone)$sigma
 
-print(paste("Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm: ", all.equal(Sy, Se)))
+print(paste("Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm: ", all.equal(Se_nolm, Se)))
 
 ```
 
+<br><br>
 
 **(e)** Calculate $R^2$ without the use of `lm()`. That is, continue with your results from **(a)** and **(d)**, and perform additional operations to obtain the result. Output this result. Also, verify that this result is the same as the result obtained from `lm()`.
 
-We use the following equation to calculate $R^2$
-$1 - {\sum{e^2} \over \sum(y_i - \bar{y})^2} $
-
-we have e and y_i. We need to calculate y_bar
-
 ```{r}
-#y_bar is predicted y for a null model where all betas except beta_0 are 0
-betas_for_null_matrix <- as.matrix(beta_no_lm*c(1,0,0,0))
-y_bar <- X %*% betas_for_null_matrix
+y_bar <- mean(y_data)
+R_square_no_lm <- 1 - (sum((y_data-y_pred)^2)/sum((y_data-y_bar)^2))
 
-R_square_no_lm <- 1 - (sum(e^2)/sum((y_data-y_bar)^2))
-
-summary(fit_ozone)$r.squared
-#TODO - what is incorrect here?
+print(paste("Are the values of R^2 same when calculated without lm and and with lm: ", all.equal(R_square_no_lm, summary(fit_ozone)$r.squared)))
 ```
 
 
@@ -405,9 +388,12 @@ However, we will now evaluate it on both the **train** set and the **test** set 
 
 Set a seed of `11`, and then split the `Auto` data into two datasets, one called `auto_trn` and one called `auto_tst`. The `auto_trn` data frame should contain 292 randomly chosen observations. The `auto_tst` data will contain the remaining observations. Hint: consider the following code:
 
-```{r, eval = FALSE}
+```{r message=FALSE}
+library("dplyr")
 set.seed(11)
 auto_trn_idx = sample(1:nrow(Auto), 292)
+auto_trn <- slice(Auto, auto_trn_idx)
+auto_tst <- slice(Auto, -1*auto_trn_idx)
 ```
 
 Fit a total of five models using the training data.
@@ -415,8 +401,41 @@ Fit a total of five models using the training data.
 - One must use all possible predictors.
 - One must use only `displacement` as a predictor.
 - The remaining three you can pick to be anything you like. One of these should be the *best* of the five for predicting the response.
+```{r}
+model_1 <- lm(mpg~displacement, data = auto_trn)
+model_2 <- lm(mpg~displacement+cylinders+weight, data = auto_trn)
+model_3 <- lm(mpg~displacement+cylinders+horsepower+weight, data = auto_trn)
+model_4 <- lm(mpg~weight+origin+year, data = auto_trn)
+model_5 <- lm(mpg~., data = auto_trn)
+```
 
 For each model report the **train** and **test** RMSE. Arrange your results in a well-formatted markdown table. Argue that one of your models is the best for predicting the response.
+```{r} 
+model_1_train_RMSE <- sqrt(sum((auto_trn["mpg"]-predict(model_1, newdata = auto_trn))^2)/nrow(auto_trn))
+
+model_1_train_RMSE2 <- sqrt(sum((residuals(model_1)^2)/nrow(auto_trn)))
+
+model_2_train_RMSE <- sqrt(sum((auto_trn["mpg"]-predict(model_2))^2)/nrow(auto_trn))
+model_3_train_RMSE <- sqrt(sum((auto_trn["mpg"]-predict(model_3))^2)/nrow(auto_trn))
+model_4_train_RMSE <- sqrt(sum((auto_trn["mpg"]-predict(model_4))^2)/nrow(auto_trn))
+model_5_train_RMSE <- sqrt(sum((auto_trn["mpg"]-predict(model_5))^2)/nrow(auto_trn))
+
+#test the model
+model_1_test_RMSE <- sqrt(sum((auto_tst["mpg"]-predict(model_1, newdata=auto_tst))^2)/nrow(auto_tst))
+
+model_2_test_RMSE <- sqrt(sum((auto_tst["mpg"]-predict(model_2, newdata=auto_tst))^2)/nrow(auto_tst))
+model_3_test_RMSE <- sqrt(sum((auto_tst["mpg"]-predict(model_3, newdata=auto_tst))^2)/nrow(auto_tst))
+model_4_test_RMSE <- sqrt(sum((auto_tst["mpg"]-predict(model_4, newdata=auto_tst))^2)/nrow(auto_tst))
+model_5_test_RMSE <- sqrt(sum((auto_tst["mpg"]-predict(model_5, newdata=auto_tst))^2)/nrow(auto_tst))
+
+
+model_comp_df <- rbind("model 1"=c(model_1_train_RMSE, model_1_test_RMSE), "model 2"=c(model_2_train_RMSE, model_2_test_RMSE),"model 3"=c(model_3_train_RMSE, model_3_test_RMSE),"model 4"=c(model_4_train_RMSE, model_4_test_RMSE),"model 5"=c(model_5_train_RMSE, model_5_test_RMSE))
+
+colnames(model_comp_df) <- c("Train_RMSE", "Test_RMSE")
+knitr::kable(model_comp_df, format="markdown")
+```
+We see that the model using weight, origin and year has the least test RMSE from all 5 models and hence we prefer that model.
+
 
 ***
 
@@ -432,7 +451,7 @@ Where $\epsilon_i \sim N(0, \sigma^2).$ Also, the parameters are known to be:
 
 - $\beta_0 = 2$
 - $\beta_1 = -0.75$
-- $\beta_2 = 1.5$
+- $\beta_2 = 1.5$ 
 - $\beta_3 = 0$
 - $\beta_4 = 0$
 - $\beta_5 = 2$
@@ -457,24 +476,121 @@ We will verify the distribution of $\hat{\beta}_2$ as well as investigate some h
 
 Report the sum of the diagonal of `C` as well as the 5th row of `sim_data`. For this exercise we will use the seed `420`. Generate the above variables in the order listed after running the code below to set a seed.
 
-```{r}
+```{r results="hold"}
 set.seed(420)
 sample_size = 42
+
+x0 <- rep(1, sample_size)
+x1 <- rnorm(sample_size, mean=0, sd=2)
+x2 <- runif(sample_size, min=0, max=4)
+x3 <- rnorm(sample_size, mean=0, sd=1)
+x4 <- runif(sample_size, min=-2, max=2)
+x5 <- rnorm(sample_size, mean=0, sd=2)
+X <- cbind(x0,x1,x2,x3,x4,x5)
+C <- solve(t(X) %*% X)
+y <- rep(0, sample_size)
+sim_data <- data.frame(cbind(y, x1, x2, x3, x4, x5))
+
+c_diag_sum <- 0
+for (i in c(1:nrow(C))){
+  c_diag_sum <- c_diag_sum + C[i,i]
+}
+
+print(paste("sum of diagonal of C = ", c_diag_sum))
+print("The 5th row for sim data is : ")
+print(sim_data[5,])
 ```
 
+
+<br><br>
+
 **(b)** Create three vectors of length `2500` that will store results from the simulation in part **(c)**. Call them `beta_hat_1`, `beta_3_pval`, and `beta_5_pval`.
+```{r}
+beta_hat_1 <- rep(0, 2500)
+beta_3_pval <- rep(0, 2500)
+beta_5_pval <- rep(0, 2500)
+```
+
+<br><br>
 
 **(c)** Simulate 2500 samples of size `n = 42` from the model above. Each time update the `y` value of `sim_data`. Then use `lm()` to fit a multiple regression model. Each time store:
 
 - The value of $\hat{\beta}_1$ in `beta_hat_1`
 - The p-value for the two-sided test of $\beta_3 = 0$ in `beta_3_pval`
 - The p-value for the two-sided test of $\beta_5 = 0$ in `beta_5_pval`
+```{r}
+beta_0 = 2
+beta_1 = -0.75
+beta_2 = 1.5
+beta_3 = 0
+beta_4 = 0
+beta_5 = 2
+sig = 5
+
+for (i in 1:2500){
+  epsilon <- rnorm(n=sample_size, mean=0, sd = sig)
+  y <- beta_0*x0 + beta_1*x1 + beta_2*x2 + beta_3*x3 + beta_4*x4 + beta_5*x5+ epsilon
+  sim_data["y"]=data.frame(y)
+  m1 <- lm(y~., data = sim_data)
+  beta_hat_1[i] <- coef(m1)[2]
+  beta_3_pval[i] <- coef(summary(m1))["x3","Pr(>|t|)"]
+  beta_5_pval[i] <- coef(summary(m1))["x5","Pr(>|t|)"]
+}
+
+```
+
+<br><br>
 
 **(d)** Based on the known values of $X$, what is the true distribution of $\hat{\beta}_1$?
 
+```{r}
+(real_beta_1_var <- sig^2*C[2,2])
+```
+
+<br><br>
+
 **(e)** Calculate the mean and variance of `beta_hat_1`. Are they close to what we would expect? Plot a histogram of `beta_hat_1`. Add a curve for the true distribution of $\hat{\beta}_1$. Does the curve seem to match the histogram?
 
-**(f)** What proportion of the p-values stored in `beta_3_pval` is less than 0.10? Is this what you would expect?
 
-**(g)** What proportion of the p-values stored in `beta_5_pval` is less than 0.01? Is this what you would expect?
+```{r results="hold"}
+print(paste("mean of beta_hat_1 = ", mean(beta_hat_1)))
+print(paste("The real beta_1 mean = ", beta_1))
+
+print(paste("Variance of beta_hat_1 = ", var(beta_hat_1)))
+print(paste("The real variance of beta_1 = ", real_beta_1_var))
+
+```
+We see that the mean and variance are very close to each other. This is what we expected.
+
+
+```{r}
+library(ggplot2)
+
+ggplot(data.frame(beta_hat_1), aes(x=beta_hat_1)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .1) +
+    ggtitle("beta_hat_1 distribution based on 2500 simulations") +
+    theme_linedraw() +
+    stat_function(fun = dnorm, args = list(mean = beta_1, sd = sqrt(real_beta_1_var)), col="red", size=2)
+
+```
+
+We see that the curve matches the histogram and hence we also see that beta_hat_1 is normally distributed.
+
+<br><br>
+
+**(f)** What proportion of the p-values stored in `beta_3_pval` is less than 0.10? Is this what you would expect?
+```{r}
+mean(beta_3_pval<.1)
+```
+We already know that beta_3 is 0. Here roughly 10% of the p-values will reject the null hypotheses which is expected with an alpha of .1. Hence this matches our expectation
+
+<br><br>
+
+**(g)** What proportion of the p-values stored in `beta_5_pval` is less than 0.01? Is this what you would expect? 
+```{r}
+mean(beta_5_pval<.01)
+```
+
+We already know that beta_5 is not 0. Hence we see that close to 79% of the observations reject the null hypothesis. Hence this matches our expectations
+
 

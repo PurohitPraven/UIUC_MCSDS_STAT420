@@ -431,12 +431,8 @@ fit_nutrition_1 &lt;- lm(Calories~Fat+Sugar+Sodium, data = nutrition_df)</code><
 <ul>
 <li>The value of the test statistic</li>
 </ul>
-<pre class="r"><code>(fstat &lt;- summary(fit_nutrition_1)$fstatistic)</code></pre>
-<pre><code>##   value   numdf   dendf 
-## 6590.94    3.00 5952.00</code></pre>
-<p>We report the F test statistic above where value is the value of the F-statistic, numf is the p-1 or number of predictors-1, and dendf is n-p number of observations minus number of predictors.</p>
-<p>We can also report just the value parameter as below</p>
-<pre class="r"><code>fstat[1]</code></pre>
+<pre class="r"><code>fstat &lt;- summary(fit_nutrition_1)$fstatistic
+fstat[1]</code></pre>
 <pre><code>##   value 
 ## 6590.94</code></pre>
 <ul>
@@ -449,6 +445,7 @@ fit_nutrition_1 &lt;- lm(Calories~Fat+Sugar+Sodium, data = nutrition_df)</code><
 <li><p>A statistical decision at <span class="math inline">\(\alpha = 0.01\)</span> Since p-value is less than .01 we reject the Null Hypothesis</p></li>
 <li><p>A conclusion in the context of the problem In conclusion we state that atleast one of the parameters: Fat, Sugar or Sodium, has a significant linear relationship with Calories.</p></li>
 </ul>
+<p><br><br></p>
 <p><strong>(b)</strong> Output only the estimated regression coefficients. Interpret all <span class="math inline">\(\hat{\beta}_j\)</span> coefficients in the context of the problem.</p>
 <pre class="r"><code>coef(fit_nutrition_1)</code></pre>
 <pre><code>##  (Intercept)          Fat        Sugar       Sodium 
@@ -457,55 +454,47 @@ fit_nutrition_1 &lt;- lm(Calories~Fat+Sugar+Sodium, data = nutrition_df)</code><
 <p>For <span class="math inline">\(\beta_1\)</span> we see that for the same Sugar and Sodium content, if Fat increases by 1 gram, the calories will increase by 8.48</p>
 <p>For <span class="math inline">\(\beta_2\)</span> we see that for the same Fat and Sodium content, if Sugar increases by 1 gram, the calories will increase by 3.9.</p>
 <p>For <span class="math inline">\(\beta_3\)</span> we see that for the same Fat and Sugar content, if Sodium increases by 1 milligram, the calories will increase by .006.</p>
+<p><br><br></p>
 <p><strong>(c)</strong> Use your model to predict the number of <code>Calories</code> in a Big Mac. According to <a href="https://www.mcdonalds.com/us/en-us/about-our-food/nutrition-calculator.html">McDonald’s publicized nutrition facts</a>, the Big Mac contains 30g of fat, 9g of sugar, and 1010mg of sodium.</p>
 <pre class="r"><code>newdata = data.frame(Fat=30, Sugar=9, Sodium=1010)
 predict(fit_nutrition_1, newdata = newdata)</code></pre>
 <pre><code>##        1 
 ## 396.2863</code></pre>
+<p><br><br></p>
 <p><strong>(d)</strong> Calculate the standard deviation, <span class="math inline">\(s_y\)</span>, for the observed values in the Calories variable. Report the value of <span class="math inline">\(s_e\)</span> from your multiple regression model. Interpret both estimates in the context of this problem.</p>
-<pre class="r"><code># Calculate Sy
-# in matrix form Y= X * B
-y &lt;-  as.matrix(nutrition_df[&quot;Calories&quot;])
+<pre class="r"><code>y &lt;-  as.matrix(nutrition_df[&quot;Calories&quot;])
 
-X &lt;- cbind(beta_0=rep(1, nrow(nutrition_df)), nutrition_df$Fat, nutrition_df$Sugar, nutrition_df$Sodium)
-
-beta_hat &lt;- solve(t(X) %*% X) %*% t(X) %*% y
-
-y_hat &lt;- as.matrix(X) %*% as.matrix(beta_hat)
-
-e &lt;- y - y_hat
-
-n &lt;- nrow(nutrition_df)
-p &lt;- 3+1
-
-Sy &lt;- c(sqrt((t(e) %*% e)/(n-p)))
+(Sy &lt;- sd(y))
 
 #Se from multiple regression model
-Se &lt;- summary(fit_nutrition_1)$sigma
-
-print(paste(&quot;Are the calculated Sy and the fitted model Se (sigma) equal &quot;, all.equal(Sy, Se)))
-#TODO Is this done right?</code></pre>
-<pre><code>## [1] &quot;Are the calculated Sy and the fitted model Se (sigma) equal  TRUE&quot;</code></pre>
-<p>We see that the calculated standard deviation for estimated calories and the standard deviation for the estimated calories in the model are the same. We also see that the value for this is 80.9. This implies that the real model Calories may be off by 80.9 (more or less) than the estimated calories</p>
+(Se &lt;- summary(fit_nutrition_1)$sigma)</code></pre>
+<pre><code>## [1] 168.05
+## [1] 80.8543</code></pre>
+<p>Sy is standard deviation of the variable calories. Se is the variability of the residuals of the model</p>
+<p><br><br></p>
 <p><strong>(e)</strong> Report the value of <span class="math inline">\(R^2\)</span> for the model. Interpret its meaning in the context of the problem.</p>
 <pre class="r"><code>summary(fit_nutrition_1)$r.squared</code></pre>
 <pre><code>## [1] 0.7686281</code></pre>
 <p><span class="math inline">\(R^2\)</span> is seen to be .7686 or 76.86%. This implies that 76.86% of the Calories in the data are explained by the model and the remaining are not</p>
+<p><br><br></p>
 <p><strong>(f)</strong> Calculate a 90% confidence interval for <span class="math inline">\(\beta_2\)</span>. Give an interpretation of the interval in the context of the problem.</p>
 <pre class="r"><code>confint(fit_nutrition_1, parm = &quot;Sugar&quot;, level = .9)</code></pre>
 <pre><code>##            5 %     95 %
 ## Sugar 3.783051 4.017983</code></pre>
 <p>Given the above confidence interval, we are 90% confident that for the same value of Fat and Sodium, when sugar increases by 1, the calories will increase by 3.78 to 4.01</p>
+<p><br><br></p>
 <p><strong>(g)</strong> Calculate a 95% confidence interval for <span class="math inline">\(\beta_0\)</span>. Give an interpretation of the interval in the context of the problem.</p>
 <pre class="r"><code>confint(fit_nutrition_1, parm = &quot;(Intercept)&quot;, level = .95)</code></pre>
 <pre><code>##                2.5 %   97.5 %
 ## (Intercept) 97.69443 103.2177</code></pre>
 <p>Given the above confidence interval, we are 95% confident that when Fat, Sugar and Sodium are all 0 for a food, then the calories for the food is in between 97.69 and 103.21</p>
+<p><br><br></p>
 <p><strong>(h)</strong> Use a 99% confidence interval to estimate the mean Calorie content of a food with 23g of fat, 0g of sugar, and 400mg of sodium, which is true of a large order of McDonald’s french fries. Interpret the interval in context.</p>
 <pre class="r"><code>predict(fit_nutrition_1, newdata = data.frame(&quot;Fat&quot;=23,&quot;Sugar&quot;=0, &quot;Sodium&quot;=400), level = .99)</code></pre>
 <pre><code>##        1 
 ## 298.0378</code></pre>
 <p>We are 99% confident that if a food has 23gms of fat, 0 gms of sugar and 400mg of sodium then its average calorie count will be 298.04. A large order of McDonals french fries has the said amount of fat, sugar and sodium, hence we can say with 99% confidence that it will have an average of 298 calories.</p>
+<p><br><br></p>
 <p><strong>(i)</strong> Use a 99% prediction interval to predict the Calorie content of a Crunchwrap Supreme, which has 21g of fat, 6g of sugar, and 1200mg of sodium according to <a href="https://www.tacobell.com/nutrition/info">Taco Bell’s publicized nutrition information</a>. Interpret the interval in context.</p>
 <pre class="r"><code>predict(fit_nutrition_1, newdata = data.frame(&quot;Fat&quot;=21,&quot;Sugar&quot;=6, &quot;Sodium&quot;=1200), level = .99)</code></pre>
 <pre><code>##        1 
@@ -557,6 +546,7 @@ anova_table_1_2$F[2]</code></pre>
 <li><p>A statistical decision at <span class="math inline">\(\alpha = 0.05\)</span> Since the p-value is smaller than alpha we reject the null hypothesis</p></li>
 <li><p>The model you prefer Based on the rejection of the null hypothesis, we say that at least some of the model 2 betas have a significant linear relationship with Wins. Hence we prefer model 2 as a being better at explaining the wins</p></li>
 </ul>
+<p><br><br></p>
 <p><strong>(b)</strong> Use an <span class="math inline">\(F\)</span>-test to compare Model 3 to your preferred model from part <strong>(a)</strong>. Report the following:</p>
 <pre class="r"><code>anova_table_2_3 &lt;- anova(fit_model_2,fit_model_3)</code></pre>
 <ul>
@@ -575,8 +565,9 @@ anova_table_1_2$F[2]</code></pre>
 </ul>
 <p>since p-value is less than alpha, we reject the null hypothesis</p>
 <ul>
-<li>The model you prefer We prefer the 3rd model since based on the hypothesis test, there is a significant relationship between atleast one of the parameters that is extra in the third model and wins</li>
+<li>The model you prefer We prefer the 3rd model since based on the hypothesis test, there is a significant relationship between wins and atleast one of the parameters that is extra in the third model</li>
 </ul>
+<p><br><br></p>
 <p><strong>(c)</strong> Use a <span class="math inline">\(t\)</span>-test to test <span class="math inline">\(H_0: \beta_{\texttt{SV}} = 0 \ \text{vs} \ H_1: \beta_{\texttt{SV}} \neq 0\)</span> for the model you preferred in part <strong>(b)</strong>. Report the following:</p>
 <ul>
 <li>The value of the test statistic</li>
@@ -606,51 +597,48 @@ Ozone = Ozone[complete.cases(Ozone), ]</code></pre>
   beta_hat_no_lm &lt;- solve(t(X) %*% X) %*% t(X) %*% y_data
   return(list(as.vector(beta_hat_no_lm),as.vector(sum(beta_hat_no_lm^2))))
 }</code></pre>
-<pre class="r"><code># in matrix form Y= X * B
-  y_data &lt;-  as.matrix(Ozone[&quot;ozone&quot;])
+<pre class="r"><code>  y_data &lt;-  as.matrix(Ozone[&quot;ozone&quot;])
   
   X &lt;- cbind(beta_0=rep(1, nrow(Ozone)), Ozone$wind, Ozone$humidity, Ozone$temp)
-  
-  coeffs_no_lm(X, y_data)</code></pre>
-<pre><code>## [[1]]
-## [1] -16.38178539  -0.18594444   0.08340014   0.38984294
-## 
-## [[2]]
-## [1] 268.5564</code></pre>
+
+  #sum of squares of beta_hat_lm is also returned, but we are not storing it
+  beta_hat_no_lm &lt;- coeffs_no_lm(X, y_data)[[1]]</code></pre>
+<p><br><br></p>
 <p><strong>(b)</strong> Obtain the estimated regression coefficients <strong>with</strong> the use of <code>lm()</code>. Store the results in a vector <code>beta_hat_lm</code>. To ensure this is a vector, you may need to use <code>as.vector()</code>. Return this vector as well as the results of <code>sum(beta_hat_lm ^ 2)</code>.</p>
 <pre class="r"><code>coeffs_with_lm &lt;- function(fit_model){
   beta_hat_lm &lt;- coef(fit_model)
   return(list(as.vector(beta_hat_lm),as.vector(sum(beta_hat_lm^2))))
 }</code></pre>
 <pre class="r"><code>fit_ozone &lt;- lm(ozone~.,data = Ozone)
-
-beta_no_lm_matrix &lt;- (as.matrix(coeffs_with_lm(fit_ozone)[[1]]))
-beta_no_lm_matrix</code></pre>
-<pre><code>##              [,1]
-## [1,] -16.38178539
-## [2,]  -0.18594444
-## [3,]   0.08340014
-## [4,]   0.38984294</code></pre>
+#sum of squares of beta_hat_lm is also returned, but we are not storing it
+beta_hat_lm &lt;- (as.matrix(coeffs_with_lm(fit_ozone)[[1]]))</code></pre>
+<p><br><br></p>
 <p><strong>(c)</strong> Use the <code>all.equal()</code> function to verify that the results are the same. You may need to remove the names of one of the vectors. The <code>as.vector()</code> function will do this as a side effect, or you can directly use <code>unname()</code>.</p>
 <pre class="r"><code>all.equal(coeffs_no_lm(X,y_data), coeffs_with_lm(fit_ozone))</code></pre>
 <pre><code>## [1] TRUE</code></pre>
+<p><br><br></p>
 <p><strong>(d)</strong> Calculate <span class="math inline">\(s_e\)</span> without the use of <code>lm()</code>. That is, continue with your results from <strong>(a)</strong> and perform additional matrix operations to obtain the result. Output this result. Also, verify that this result is the same as the result obtained from <code>lm()</code>.</p>
 <pre class="r"><code># To calculate the predicted results we do X*Beta.
-# We create the X matrix
 n &lt;- nrow(Ozone)
 p &lt;- 3+1
 
-y_pred &lt;- X %*% beta_no_lm_matrix
+y_pred &lt;- X %*% as.matrix(beta_hat_no_lm)
 
 e = Ozone$ozone - y_pred
-Sy &lt;- c(sqrt((t(e) %*% e)/(n-p)))
+Se_nolm &lt;- c(sqrt((t(e) %*% e)/(n-p)))
 
 #Se from multiple regression model
 Se &lt;- summary(fit_ozone)$sigma
 
-print(paste(&quot;Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm: &quot;, all.equal(Sy, Se)))</code></pre>
+print(paste(&quot;Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm: &quot;, all.equal(Se_nolm, Se)))</code></pre>
 <pre><code>## [1] &quot;Is the calculated standard error Sy same as the the sigma returned by the fitted model using lm:  TRUE&quot;</code></pre>
+<p><br><br></p>
 <p><strong>(e)</strong> Calculate <span class="math inline">\(R^2\)</span> without the use of <code>lm()</code>. That is, continue with your results from <strong>(a)</strong> and <strong>(d)</strong>, and perform additional operations to obtain the result. Output this result. Also, verify that this result is the same as the result obtained from <code>lm()</code>.</p>
+<pre class="r"><code>y_bar &lt;- mean(y_data)
+R_square_no_lm &lt;- 1 - (sum((y_data-y_pred)^2)/sum((y_data-y_bar)^2))
+
+print(paste(&quot;Are the values of R^2 same when calculated without lm and and with lm: &quot;, all.equal(R_square_no_lm, summary(fit_ozone)$r.squared)))</code></pre>
+<pre><code>## [1] &quot;Are the values of R^2 same when calculated without lm and and with lm:  TRUE&quot;</code></pre>
 <hr />
 </div>
 <div id="exercise-4-regression-for-prediction" class="section level2">
@@ -675,15 +663,82 @@ Auto = subset(Auto, select = -c(name))</code></pre>
 <li>Test RMSE: Model fit with <em>train</em> data. Evaluate on <strong>test</strong> data.</li>
 </ul>
 <p>Set a seed of <code>11</code>, and then split the <code>Auto</code> data into two datasets, one called <code>auto_trn</code> and one called <code>auto_tst</code>. The <code>auto_trn</code> data frame should contain 292 randomly chosen observations. The <code>auto_tst</code> data will contain the remaining observations. Hint: consider the following code:</p>
-<pre class="r"><code>set.seed(11)
-auto_trn_idx = sample(1:nrow(Auto), 292)</code></pre>
+<pre class="r"><code>library(&quot;dplyr&quot;)
+set.seed(11)
+auto_trn_idx = sample(1:nrow(Auto), 292)
+auto_trn &lt;- slice(Auto, auto_trn_idx)
+auto_tst &lt;- slice(Auto, -1*auto_trn_idx)</code></pre>
 <p>Fit a total of five models using the training data.</p>
 <ul>
 <li>One must use all possible predictors.</li>
 <li>One must use only <code>displacement</code> as a predictor.</li>
 <li>The remaining three you can pick to be anything you like. One of these should be the <em>best</em> of the five for predicting the response.</li>
 </ul>
+<pre class="r"><code>model_1 &lt;- lm(mpg~displacement, data = auto_trn)
+model_2 &lt;- lm(mpg~displacement+cylinders+weight, data = auto_trn)
+model_3 &lt;- lm(mpg~displacement+cylinders+horsepower+weight, data = auto_trn)
+model_4 &lt;- lm(mpg~weight+origin+year, data = auto_trn)
+model_5 &lt;- lm(mpg~., data = auto_trn)</code></pre>
 <p>For each model report the <strong>train</strong> and <strong>test</strong> RMSE. Arrange your results in a well-formatted markdown table. Argue that one of your models is the best for predicting the response.</p>
+<pre class="r"><code>model_1_train_RMSE &lt;- sqrt(sum((auto_trn[&quot;mpg&quot;]-predict(model_1, newdata = auto_trn))^2)/nrow(auto_trn))
+
+model_1_train_RMSE2 &lt;- sqrt(sum((residuals(model_1)^2)/nrow(auto_trn)))
+
+model_2_train_RMSE &lt;- sqrt(sum((auto_trn[&quot;mpg&quot;]-predict(model_2))^2)/nrow(auto_trn))
+model_3_train_RMSE &lt;- sqrt(sum((auto_trn[&quot;mpg&quot;]-predict(model_3))^2)/nrow(auto_trn))
+model_4_train_RMSE &lt;- sqrt(sum((auto_trn[&quot;mpg&quot;]-predict(model_4))^2)/nrow(auto_trn))
+model_5_train_RMSE &lt;- sqrt(sum((auto_trn[&quot;mpg&quot;]-predict(model_5))^2)/nrow(auto_trn))
+
+#test the model
+model_1_test_RMSE &lt;- sqrt(sum((auto_tst[&quot;mpg&quot;]-predict(model_1, newdata=auto_tst))^2)/nrow(auto_tst))
+
+model_2_test_RMSE &lt;- sqrt(sum((auto_tst[&quot;mpg&quot;]-predict(model_2, newdata=auto_tst))^2)/nrow(auto_tst))
+model_3_test_RMSE &lt;- sqrt(sum((auto_tst[&quot;mpg&quot;]-predict(model_3, newdata=auto_tst))^2)/nrow(auto_tst))
+model_4_test_RMSE &lt;- sqrt(sum((auto_tst[&quot;mpg&quot;]-predict(model_4, newdata=auto_tst))^2)/nrow(auto_tst))
+model_5_test_RMSE &lt;- sqrt(sum((auto_tst[&quot;mpg&quot;]-predict(model_5, newdata=auto_tst))^2)/nrow(auto_tst))
+
+
+model_comp_df &lt;- rbind(&quot;model 1&quot;=c(model_1_train_RMSE, model_1_test_RMSE), &quot;model 2&quot;=c(model_2_train_RMSE, model_2_test_RMSE),&quot;model 3&quot;=c(model_3_train_RMSE, model_3_test_RMSE),&quot;model 4&quot;=c(model_4_train_RMSE, model_4_test_RMSE),&quot;model 5&quot;=c(model_5_train_RMSE, model_5_test_RMSE))
+
+colnames(model_comp_df) &lt;- c(&quot;Train_RMSE&quot;, &quot;Test_RMSE&quot;)
+knitr::kable(model_comp_df, format=&quot;markdown&quot;)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Train_RMSE</th>
+<th align="right">Test_RMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">model 1</td>
+<td align="right">4.553319</td>
+<td align="right">4.853014</td>
+</tr>
+<tr class="even">
+<td align="left">model 2</td>
+<td align="right">4.178172</td>
+<td align="right">4.571256</td>
+</tr>
+<tr class="odd">
+<td align="left">model 3</td>
+<td align="right">4.133628</td>
+<td align="right">4.474876</td>
+</tr>
+<tr class="even">
+<td align="left">model 4</td>
+<td align="right">3.274669</td>
+<td align="right">3.518997</td>
+</tr>
+<tr class="odd">
+<td align="left">model 5</td>
+<td align="right">3.223650</td>
+<td align="right">3.572856</td>
+</tr>
+</tbody>
+</table>
+<p>We see that the model using weight, origin and year has the least test RMSE from all 5 models and hence we prefer that model.</p>
 <hr />
 </div>
 <div id="exercise-5-simulating-multiple-regression" class="section level2">
@@ -719,18 +774,95 @@ Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \beta_4 x_{i4
 </ul>
 <p>Report the sum of the diagonal of <code>C</code> as well as the 5th row of <code>sim_data</code>. For this exercise we will use the seed <code>420</code>. Generate the above variables in the order listed after running the code below to set a seed.</p>
 <pre class="r"><code>set.seed(420)
-sample_size = 42</code></pre>
+sample_size = 42
+
+x0 &lt;- rep(1, sample_size)
+x1 &lt;- rnorm(sample_size, mean=0, sd=2)
+x2 &lt;- runif(sample_size, min=0, max=4)
+x3 &lt;- rnorm(sample_size, mean=0, sd=1)
+x4 &lt;- runif(sample_size, min=-2, max=2)
+x5 &lt;- rnorm(sample_size, mean=0, sd=2)
+X &lt;- cbind(x0,x1,x2,x3,x4,x5)
+C &lt;- solve(t(X) %*% X)
+y &lt;- rep(0, sample_size)
+sim_data &lt;- data.frame(cbind(y, x1, x2, x3, x4, x5))
+
+c_diag_sum &lt;- 0
+for (i in c(1:nrow(C))){
+  c_diag_sum &lt;- c_diag_sum + C[i,i]
+}
+
+print(paste(&quot;sum of diagonal of C = &quot;, c_diag_sum))
+print(&quot;The 5th row for sim data is : &quot;)
+print(sim_data[5,])</code></pre>
+<pre><code>## [1] &quot;sum of diagonal of C =  0.179244291362869&quot;
+## [1] &quot;The 5th row for sim data is : &quot;
+##   y        x1        x2        x3        x4         x5
+## 5 0 0.7959582 0.4283331 0.6079313 0.4994189 -0.9018014</code></pre>
+<p><br><br></p>
 <p><strong>(b)</strong> Create three vectors of length <code>2500</code> that will store results from the simulation in part <strong>(c)</strong>. Call them <code>beta_hat_1</code>, <code>beta_3_pval</code>, and <code>beta_5_pval</code>.</p>
+<pre class="r"><code>beta_hat_1 &lt;- rep(0, 2500)
+beta_3_pval &lt;- rep(0, 2500)
+beta_5_pval &lt;- rep(0, 2500)</code></pre>
+<p><br><br></p>
 <p><strong>(c)</strong> Simulate 2500 samples of size <code>n = 42</code> from the model above. Each time update the <code>y</code> value of <code>sim_data</code>. Then use <code>lm()</code> to fit a multiple regression model. Each time store:</p>
 <ul>
 <li>The value of <span class="math inline">\(\hat{\beta}_1\)</span> in <code>beta_hat_1</code></li>
 <li>The p-value for the two-sided test of <span class="math inline">\(\beta_3 = 0\)</span> in <code>beta_3_pval</code></li>
 <li>The p-value for the two-sided test of <span class="math inline">\(\beta_5 = 0\)</span> in <code>beta_5_pval</code></li>
 </ul>
+<pre class="r"><code>beta_0 = 2
+beta_1 = -0.75
+beta_2 = 1.5
+beta_3 = 0
+beta_4 = 0
+beta_5 = 2
+sig = 5
+
+for (i in 1:2500){
+  epsilon &lt;- rnorm(n=sample_size, mean=0, sd = sig)
+  y &lt;- beta_0*x0 + beta_1*x1 + beta_2*x2 + beta_3*x3 + beta_4*x4 + beta_5*x5+ epsilon
+  sim_data[&quot;y&quot;]=data.frame(y)
+  m1 &lt;- lm(y~., data = sim_data)
+  beta_hat_1[i] &lt;- coef(m1)[2]
+  beta_3_pval[i] &lt;- coef(summary(m1))[&quot;x3&quot;,&quot;Pr(&gt;|t|)&quot;]
+  beta_5_pval[i] &lt;- coef(summary(m1))[&quot;x5&quot;,&quot;Pr(&gt;|t|)&quot;]
+}</code></pre>
+<p><br><br></p>
 <p><strong>(d)</strong> Based on the known values of <span class="math inline">\(X\)</span>, what is the true distribution of <span class="math inline">\(\hat{\beta}_1\)</span>?</p>
+<pre class="r"><code>(real_beta_1_var &lt;- sig^2*C[2,2])</code></pre>
+<pre><code>## [1] 0.1892102</code></pre>
+<p><br><br></p>
 <p><strong>(e)</strong> Calculate the mean and variance of <code>beta_hat_1</code>. Are they close to what we would expect? Plot a histogram of <code>beta_hat_1</code>. Add a curve for the true distribution of <span class="math inline">\(\hat{\beta}_1\)</span>. Does the curve seem to match the histogram?</p>
+<pre class="r"><code>print(paste(&quot;mean of beta_hat_1 = &quot;, mean(beta_hat_1)))
+print(paste(&quot;The real beta_1 mean = &quot;, beta_1))
+
+print(paste(&quot;Variance of beta_hat_1 = &quot;, var(beta_hat_1)))
+print(paste(&quot;The real variance of beta_1 = &quot;, real_beta_1_var))</code></pre>
+<pre><code>## [1] &quot;mean of beta_hat_1 =  -0.746120932330972&quot;
+## [1] &quot;The real beta_1 mean =  -0.75&quot;
+## [1] &quot;Variance of beta_hat_1 =  0.185351490414705&quot;
+## [1] &quot;The real variance of beta_1 =  0.189210179493658&quot;</code></pre>
+<p>We see that the mean and variance are very close to each other. This is what we expected.</p>
+<pre class="r"><code>library(ggplot2)
+
+ggplot(data.frame(beta_hat_1), aes(x=beta_hat_1)) + 
+    geom_histogram(aes(y=stat(density),color=I(&quot;orange&quot;)), binwidth = .1) +
+    ggtitle(&quot;beta_hat_1 distribution based on 2500 simulations&quot;) +
+    theme_linedraw() +
+    stat_function(fun = dnorm, args = list(mean = beta_1, sd = sqrt(real_beta_1_var)), col=&quot;red&quot;, size=2)</code></pre>
+<p><img src="data:image/png;base64,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" width="672" /></p>
+<p>We see that the curve matches the histogram and hence we also see that beta_hat_1 is normally distributed.</p>
+<p><br><br></p>
 <p><strong>(f)</strong> What proportion of the p-values stored in <code>beta_3_pval</code> is less than 0.10? Is this what you would expect?</p>
+<pre class="r"><code>mean(beta_3_pval&lt;.1)</code></pre>
+<pre><code>## [1] 0.096</code></pre>
+<p>We already know that beta_3 is 0. Here roughly 10% of the p-values will reject the null hypotheses which is expected with an alpha of .1. Hence this matches our expectation</p>
+<p><br><br></p>
 <p><strong>(g)</strong> What proportion of the p-values stored in <code>beta_5_pval</code> is less than 0.01? Is this what you would expect?</p>
+<pre class="r"><code>mean(beta_5_pval&lt;.01)</code></pre>
+<pre><code>## [1] 0.7956</code></pre>
+<p>We already know that beta_5 is not 0. Hence we see that close to 79% of the observations reject the null hypothesis. Hence this matches our expectations</p>
 </div>
 
 
