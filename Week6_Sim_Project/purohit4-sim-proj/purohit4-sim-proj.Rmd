@@ -117,7 +117,8 @@ sim_data <- function(sample_size, mu, sig, beta_0, beta_1, beta_2, beta_3, num_s
   sim_f_stats <- rep(0,num_simul)
   sim_pvals <- rep(0,num_simul)
   sim_r2s <- rep(0,num_simul)
-  
+  fstat_df1 <- 0
+  fstat_df2 <- 0
   for (i in 1:num_simul){
     epsilon <- rnorm(sample_size, mean=mu, sd=sig)
     x_predictors_df$y <- beta_0 + x_predictors_df$x1*beta_1 + x_predictors_df$x2*beta_2 + x_predictors_df$x3*beta_3 + epsilon
@@ -125,7 +126,9 @@ sim_data <- function(sample_size, mu, sig, beta_0, beta_1, beta_2, beta_3, num_s
     sim_f_stats[i] <- glance(m)$statistic
     sim_pvals[i] <- glance(m)$p.value
     sim_r2s[i] <- glance(m)$r.squared
+  
   }
+  
   return(data.frame("f_stat"=sim_f_stats, "pval"=sim_pvals, "r2"=sim_r2s))
 
 }
@@ -143,79 +146,184 @@ beta_0 <- 3
 beta_1 <- 1
 beta_2 <- 1
 beta_3 <- 1
+```
+
+```{r}
 
 sig <- 1
-Sigificant_sigma1_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+Significant_sigma_1_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+
 
 sig <- 5
-Sigificant_sigma5_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+Significant_sigma_5_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+
 
 sig <- 10
-Sigificant_sigma10_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+Significant_sigma_10_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+```
 
-
+```{r}
 #Non Significant model
 beta_0 <- 3
 beta_1 <- 0
 beta_2 <- 0
 beta_3 <- 0
+```
 
+```{r} 
 sig <- 1
-Nonsigificant_sigma1_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+Nonsignificant_sigma_1_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+
 
 sig <- 5
-Nonsigificant_sigma5_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+Nonsignificant_sigma_5_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
 
 sig <- 10
-Nonsigificant_sigma10_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
+Nonsignificant_sigma_10_df <- sim_data(sample_size = n, mu = mu, sig = sig, beta_0 = beta_0, beta_1 = beta_1, beta_2 = beta_2, beta_3 = beta_3, num_simul = num_simul, x_predictors_df = x_predictors_df)
 
-
-all_df <- cbind(Sig_sigma_1 = Sigificant_sigma1_df, 
-                Sig_sigma_5 = Sigificant_sigma5_df, 
-                Sig_sigma_10 = Sigificant_sigma10_df,
-                Nonsig_sigma_1 = Nonsigificant_sigma1_df,
-                Nonsig_sigma_5 = Nonsigificant_sigma5_df, 
-                Nonsig_sigma_10 = Nonsigificant_sigma10_df)
 
 ```
-```{r fig.width=11, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE}
 library(ggplot2)
 library(gridExtra)
+```
 
 
-s_s1 <- ggplot(data = all_df, aes(x=Sig_sigma_1.f_stat)) + 
-    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
-  ggtitle("fstat-Significant model-sigma 1") +
-  theme_linedraw()
+```{r fig.width=15}
+s_s1 <- 
+  ggplot(data = Significant_sigma_1_df, aes(x=f_stat)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("fstat-Significant model-sigma 1") +
+    theme_linedraw() 
 
-s_s5 <- ggplot(data = all_df, aes(x=Sig_sigma_5.f_stat)) + 
-    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
-  ggtitle("fstat-Significant model- sigma 5") +
-  theme_linedraw()
+s_s5 <- 
+  ggplot(data = Significant_sigma_5_df, aes(x=f_stat)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("fstat-Significant model-sigma 5") +
+    theme_linedraw() 
 
-s_s10 <- ggplot(data = all_df, aes(x=Sig_sigma_10.f_stat)) + 
-    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
-  ggtitle("fstat-Significant model- sigma 10") +
-  theme_linedraw()
 
-ns_s1 <- ggplot(data = all_df, aes(x=Nonsig_sigma_1.f_stat)) +
-    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
-  ggtitle("fstat-Non-Significant model- sigma 1") +
-  theme_linedraw()
+s_s10 <- 
+  ggplot(data = Significant_sigma_10_df, aes(x=f_stat)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("fstat-Significant model-sigma 10") +
+    theme_linedraw() 
 
-ns_s5 <- ggplot(data = all_df, aes(x=Nonsig_sigma_5.f_stat)) + 
-    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
-  ggtitle("fstat-Non-Significant model- sigma 5") +
-  theme_linedraw()
 
-ns_s10 <- ggplot(data = all_df, aes(x=Nonsig_sigma_10.f_stat)) +
-    geom_histogram(aes(y=stat(density),color=I("orange")), binwidth = .2) +
-  ggtitle("fstat-Non-Significant model- sigma 10") +
-  theme_linedraw()
+ns_s1 <- 
+  ggplot(data = Nonsignificant_sigma_1_df, aes(x=f_stat)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("fstat-Non Significant model-sigma 1") +
+    theme_linedraw()
+
+ns_s5 <- 
+  ggplot(data = Nonsignificant_sigma_5_df, aes(x=f_stat)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("fstat-Non Significant model-sigma 5") +
+    theme_linedraw()
+
+ns_s10 <- 
+  ggplot(data = Nonsignificant_sigma_10_df, aes(x=f_stat)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("fstat-Non Significant model-sigma 10") +
+    theme_linedraw()
 
 grid.arrange(s_s1, s_s5, s_s10, ns_s1, ns_s5, ns_s10, ncol=3, nrow=2)
 
 ```
+
+
+Plot pval
+
+```{r fig.width=15}
+s_s1 <- 
+  ggplot(data = Significant_sigma_1_df, aes(x=pval)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("pval-Significant model-sigma 1") +
+    theme_linedraw() 
+
+
+s_s5 <- 
+  ggplot(data = Significant_sigma_5_df, aes(x=pval)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("pval-Significant model-sigma 5") +
+    theme_linedraw()
+
+
+s_s10 <- 
+  ggplot(data = Significant_sigma_10_df, aes(x=pval)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("pval-Significant model-sigma 10") +
+    theme_linedraw() 
+
+ns_s1 <- 
+  ggplot(data = Nonsignificant_sigma_1_df, aes(x=pval)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("pval-Non Significant model-sigma 1") +
+    theme_linedraw() 
+
+ns_s5 <- 
+  ggplot(data = Nonsignificant_sigma_5_df, aes(x=pval)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("pval-Non Significant model-sigma 5") +
+    theme_linedraw()
+
+ns_s10 <- 
+  ggplot(data = Nonsignificant_sigma_10_df, aes(x=pval)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("pval-Non Significant model-sigma 10") +
+    theme_linedraw()
+
+grid.arrange(s_s1, s_s5, s_s10, ns_s1, ns_s5, ns_s10, ncol=3, nrow=2)
+
+```
+
+
+Plot R^2
+
+```{r fig.width=15}
+s_s1 <- 
+  ggplot(data = Significant_sigma_1_df, aes(x=r2)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("R2-Significant model-sigma 1") +
+    theme_linedraw() 
+
+
+s_s5 <- 
+  ggplot(data = Significant_sigma_5_df, aes(x=r2)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("R2-Significant model-sigma 5") +
+    theme_linedraw()
+
+
+s_s10 <- 
+  ggplot(data = Significant_sigma_10_df, aes(x=r2)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("R2-Significant model-sigma 10") +
+    theme_linedraw() 
+
+ns_s1 <- 
+  ggplot(data = Nonsignificant_sigma_1_df, aes(x=r2)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("R2-Non Significant model-sigma 1") +
+    theme_linedraw() 
+
+ns_s5 <- 
+  ggplot(data = Nonsignificant_sigma_5_df, aes(x=r2)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("R2-Non Significant model-sigma 5") +
+    theme_linedraw()
+
+ns_s10 <- 
+  ggplot(data = Nonsignificant_sigma_10_df, aes(x=r2)) + 
+    geom_histogram(aes(y=stat(density),color=I("orange"))) +
+    ggtitle("R2-Non Significant model-sigma 10") +
+    theme_linedraw()
+
+grid.arrange(s_s1, s_s5, s_s10, ns_s1, ns_s5, ns_s10, ncol=3, nrow=2)
+
+```
+
 #  Under one of the models we can come up with a name. How do the distributions behave.
 Teh statistics behave differently based on significant or non significant models. F statistic may follow F distribution regarding which model - significnat or non significant?
 For R2 say things about skewness and symetry. Distribution of p value for one of the 2 models will look fimiliar
@@ -345,6 +453,12 @@ For simplicity, we will let $\beta_0 = 0$, thus $\beta_1$ is essentially control
 We will hold the significance level constant at $\alpha = 0.05$.
 
 Use the following code to generate the predictor values, `x`: values for different sample sizes.
+
+#Todo -genereate new values of y, fit nethose models and calculate RMSEs of those models. Do that inside a function. All these need to be done a 1000 times. Sample size is 500. Within that 500 250 is training and 250 is test. You have to generate a new set of y values every time. When you create y values, create a 500 of them and then when you do that again calculate y again.
+There will always be 500 y values. Build a comparision table for comparing RMSE values
+Create a scatter plot that shows how avg. RMSE (y axis) changes as a function of model size (x axis). Two plots for train and test RMSE and also how that changes through sigma
+
+
 
 ```{r eval=FALSE}
 x_values = seq(0, 5, length = n)
