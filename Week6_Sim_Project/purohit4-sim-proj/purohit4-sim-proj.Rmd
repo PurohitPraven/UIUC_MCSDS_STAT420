@@ -21,26 +21,21 @@ library(knitr)
 opts_chunk$set(cache = TRUE, autodep = TRUE)
 ```
 
-We set the seed to ensure reproducible results for the below sumulation studies
-```{r}
-birthday = 19730321
-set.seed(birthday)
-```
-
 # Simulation Study 1: Significance of Regression
 
 ## Introduction
 
 In this simulation study we will investigate the significance of regression test. We will simulate from two different models: Significant model \[Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \epsilon_i\] and a corresponding Non Significant     model \[Y_i = \beta_0 + \epsilon_i\]
 
-In this study we will look at two things
+We will look at two things
 
-1) We will look at a  and see how the F-statistic, p-value and $R^2$ changes across the above two models
+1) Investigate how the F-statistic, p-value and $R^2$ changes across the above two models
 
-2) We will see how changing the sigma value from 1 to 5 to 10, changes the F-statistic, p-value and $R^2$ within the same model, and across the Significant and non significant model
+2) Investigte how changing the sigma value from 1 to 5 to 10, changes the F-statistic, p-value and $R^2$ within the same model, and across the Significant and non significant model
 
-We will observe the results of our simulation and try and conclude what effects the absence of beta parameters and changing noise has on the predictibility of the response variable
+Based on the above investigations we will try and draw conclusions on what effect the changes to beta parameters and sigma have on the F-statistic, p-value
 
+We will share the steps taken to do the analysis in the Mehods section, the results of our steps in the Results section and thoughts and conclusion in the Discussion section
 
 
 
@@ -57,7 +52,14 @@ library(dplyr)
 library(statsr)
 ```
 
-```{r include=FALSE}
+We set the seed to ensure reproducible results
+```{r}
+birthday = 19730321
+set.seed(birthday)
+```
+
+```{r}
+
 x_predictors_df <- read.csv("study_1.csv")
 
 n <- 25
@@ -70,29 +72,25 @@ beta_1 <- 1
 beta_2 <- 1
 beta_3 <- 1
 
-#Non Significant model
-null_beta_0 <- 3
-null_beta_1 <- 0
-null_beta_2 <- 0
-null_beta_3 <- 0
 ```
 
 Library loading and variable initialization not shown for brevity of report. Please refer to Rmd file if required. We initialize the betas to 3,1,1,1. The number of simulations to 2000. mu to 0 and sample size (n) to 25.
 
-We create a function that will simulate the data 2000 times and return the f_stat, p-value and $R^2$ for each simulation as a dataframe
+We create a function that will simulate the data 2000 times and return the f_statistic, p-value and $R^2$ for each simulation as a dataframe
 
 ```{r}
 sim_data <- function(sample_size, mu, sig, num_simul, x_predictors_df, non_sig_model){
-  
+  #initialize the vectors so that we dont grow them in the for loop
   sim_f_stats <- rep(0,num_simul)
   sim_pvals <- rep(0,num_simul)
   sim_r2s <- rep(0,num_simul)
 
   
   for (i in 1:num_simul){
+    #create random noise based on a normal distribution
     epsilon <- rnorm(sample_size, mean=mu, sd=sig)
     if(non_sig_model==TRUE)
-      x_predictors_df$y <- beta_0 + epsilon
+      x_predictors_df$y <- beta_0 + epsilon #For non significant model all predictor betas are 0 hence only beta_0 has an impact
     else
       x_predictors_df$y <- beta_0 + x_predictors_df$x1*beta_1 + x_predictors_df$x2*beta_2 + x_predictors_df$x3*beta_3 + epsilon
     
@@ -102,7 +100,7 @@ sim_data <- function(sample_size, mu, sig, num_simul, x_predictors_df, non_sig_m
     sim_pvals[i] <- glance(m)$p.value
     sim_r2s[i] <- glance(m)$r.squared
   }
-  
+  #retuen a dataframe with f-statistic, p-value and R2 from our simulation
   return(data.frame("f_stat"=sim_f_stats, "pval"=sim_pvals, "r2"=sim_r2s))
 }
 ```
@@ -116,7 +114,7 @@ Significant_sigma_1_df <- sim_data(sample_size = n, mu = mu, sig = sig, num_simu
 Nonsignificant_sigma_1_df <- sim_data(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, non_sig_model=TRUE)
 ```
 
-Now we Simulate Significant and Non significant models for $\sigma = 5$
+We Simulate Significant and Non significant models for $\sigma = 5$
 
 ```{r}
 
@@ -136,13 +134,14 @@ Significant_sigma_10_df <- sim_data(sample_size = n, mu = mu, sig = sig, num_sim
 Nonsignificant_sigma_10_df <- sim_data(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, non_sig_model=TRUE)
 ```
 
+
 ## Results
 
 In this section we will look at the results of the simulation and compare them.
 
 Let us look at each of the model and sigma simulations to see how many times the Null Hypothesis got rejected based on $\alpha = .05$
 
-```{r}
+```{r statcomp}
 
 comp_df <- rbind("Sigma = 1"=c(mean(Significant_sigma_1_df$pval<.05), mean(Nonsignificant_sigma_1_df$pval<.05)),
                  "Sigma = 5"=c(mean(Significant_sigma_5_df$pval<.05), mean(Nonsignificant_sigma_5_df$pval<.05)),
@@ -154,8 +153,7 @@ colnames(comp_df) <- c("Significant model", "Non-Significant model")
 knitr::kable(data.frame(comp_df), caption = "Comparison of Proportion of times $H_0$ was rejected")
 ```
 
-Based on the Table 1.1 and  we see that the null Hypothesis gets rejected all the time for Significant modle when Sigma is 1. This implies that there is a strong relationship between the explamatory varaiables and predictor when the noise is minimum (sigma=1). We see that the rejection ratio becomes smaller, or said differently, the relationship starts becoming less strong as the variability of the predictor ($\sigma$) increases. 
-
+We will discuss the implications of the above table in the Discussions section
 
 We now plot the distributions of the F-statistic returned from our 6 different simulations. The label for each graph talks about what the graph represents
 
@@ -190,12 +188,13 @@ curve( df(x, df1 = 4 - 1, df2 = 25 -4), col = "darkorange", add = TRUE, lwd = 3)
 
 ```
 
-We will discuss the finidings from the above graphs in the discussion section below
+
+We will discuss the findings from the above graphs in the discussion section below
 
 
 Now we plot the distributions of the p-value returned from our 6 different simulations. The label for each graph talks about what the graph represents
 
-```{r pvalcom, fig.height=7, fig.width=15, fig.cap="Figure 1.2 - Comparison of p-value across Significant and Non-Significant model with Sigma in (1,5,10)"}
+```{r pvalcomp, fig.height=7, fig.width=15, fig.cap="Figure 1.2 - Comparison of p-value across Significant and Non-Significant model with Sigma in (1,5,10)"}
 par(mfrow = c(2,3))
 
 hist(Significant_sigma_1_df$pval, main = "p-value distribution for Significant model - sigma 1", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Significant_sigma_1_df$pval)))
@@ -250,6 +249,7 @@ hist(Nonsignificant_sigma_10_df$r2, main = "$R^2$ distribution for Non-Significa
 ```
 
 
+
 ```{r}
 
 ```
@@ -263,11 +263,70 @@ DOnt need to say why the distribution is certain way. Dont need to know the name
 
 ## Potential discussions:
 
+The above simulations and the charts are telling on what impact the noise (sigma) and signal (significant parameters) have on our ability to predict.
+
+At the high level, it is clear that as the sigma increases, noise (epsilon) increases. The more the noise, the lesser impact the signal has on our ability to predict.
+
+### Impact of signal changing
+
+Let us first examine the impact of signal on our ability to predict. Assuming that the Significant model is true. The signal here is defined as beta parameters in the significant model. 
+
+We will assume that sigma or noise is constant in this discussion so that we can clearly see the impact of the beta parameters
+
+In all the three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp) and Figure \@ref(fig:R2comp), we will compare the top and bottom charts for this discussion, since the difference between the top and bottom charts is that the top charts, all the beta parameters are in play and in the bottom charts, none of them are. 
+
+It is easiest to compare the charts of sigma = 1 for this discussion, that that noise does not clutter our findings. Hence we look at them first
+
+When we compare the significant (top) and Non-sgnificant (bottom) chart for sigma =1, in Figure \@ref(fig:fstatcomp), we make the below observations
+
+* F-statistic is higher for the significant model. 
+Now F-statistic can be thought of as 
+
+$F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$
+
+Hence F-statistic will be high if either the predictors are able to explain the regression OR if the error is high. Since we have fixed $\sigma=1$, we know error or variance is not high. Hence the only explanation for the F-statistic being high in the Significant model is that the model is able to explain the regression. Said differently we can say that for $\sigma=1$ we see that atleast one of the predictors has a significant relationship with the response variable.
+
+
+* If we look at Table \@ref(tab:statcomp) we see that for the Significant model, for sigma 1, the Null Hypothesis was rejected 100% of times. This conclusion is the same that we have drawn after looking at the F-statistic chart above
+
+
+* Let us now see if the p-value chart in Figure \@ref(fig:pvalcomp) corroborates the above finding. Looking at the top left chart, we see that p-value is 0 for all our simulation runs (significant model, sigma=1). This implies that the Null Hypothesis should be rejected. This implies that we accept the alternate Hypothesis that there is a significant linear relationship between atleast one of the predictors and the response variable
+
+* If the above three theories are correct then our chart for $R^2$ should show $R^2$ value to be very high as most of the variability in the Significant model should be explained by our model when sigma=1. When looking at Figure \@ref(fig:R2comp) we find that to be the case in the top left chart where sigma=1 for the Significant model.
+
+
+
+### Impact of noise changing ($\sigma$ change impact)
+
+Now we will focus on the change we see when we move from left to right in the charts in our three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp) and Figure \@ref(fig:R2comp). As we move from left to right the signal increaes
+
+sdjASLKJDFklasjfklSJFKLasjflkASJDKLsjadklJASD
+
+
+### Correlation between Signal and Noise (Significant vs. Non Significant model for Noise in (1,2,4))
+
+asdfsadfsaf
+
+### Distribution cruves
+asdfsdfa
+
+
+
+Based on the Table 1.1 and  we see that the null Hypothesis gets rejected all the time for Significant model when Sigma is 1. This implies that there is a strong relationship between the explamatory varaiables and predictor when the noise is minimum (sigma=1). We see that the rejection ratio becomes smaller, or said differently, the relationship starts becoming less strong as the variability of the predictor ($\sigma$) increases. This can also be seen as that as the noise increases, our ability to detect the signal and make useful predictions decreases.
+
+
+
+
+
+
+
+
+
 $F = {\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$
 
 Here $\hat{y}_{1i}$ can be defined as the estimated y of the Full/larger model and $\bar{y}$ can be defined as y of the null model. Now the further apart the values of these 2 y values, the larger the F statistic will be and the smaller the p-value will be. We will reject the null Hypothesis for large values of F.
 
-
+we reject for large values of 𝐹 . A large value of the statistic corresponds to a large portion of the variance being explained by the regression
 
 Figure \@ref(fig:fstatcomp) 
 
@@ -346,6 +405,12 @@ Potential discussions:
 To be filled
 
 ## Methods
+
+We set the seed to ensure reproducible results
+```{r}
+birthday = 19730321
+set.seed(birthday)
+```
 
 ```{r}
 x_predictors_df <- read.csv("study_2.csv")
@@ -461,37 +526,94 @@ m9_sig4_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul 
 ```{r}
 x=seq(1:9)
 
-df_train_RMSE <- as.data.frame(rbind("model 1" = c(mean(m1_sig1_df$train_RMSE),mean(m1_sig2_df$train_RMSE),mean(m1_sig4_df$train_RMSE)),
-                       "model 2" = c(mean(m2_sig1_df$train_RMSE),mean(m2_sig2_df$train_RMSE),mean(m2_sig4_df$train_RMSE)),
-                       "model 3" = c(mean(m3_sig1_df$train_RMSE),mean(m3_sig2_df$train_RMSE),mean(m3_sig4_df$train_RMSE)),
-                       "model 4" = c(mean(m4_sig1_df$train_RMSE),mean(m4_sig2_df$train_RMSE),mean(m4_sig4_df$train_RMSE)),
-                       "model 5" = c(mean(m5_sig1_df$train_RMSE),mean(m5_sig2_df$train_RMSE),mean(m5_sig4_df$train_RMSE)),
-                       "model 6" = c(mean(m6_sig1_df$train_RMSE),mean(m6_sig2_df$train_RMSE),mean(m6_sig4_df$train_RMSE)),
-                       "model 7" = c(mean(m7_sig1_df$train_RMSE),mean(m7_sig2_df$train_RMSE),mean(m7_sig4_df$train_RMSE)),
-                       "model 8" = c(mean(m8_sig1_df$train_RMSE),mean(m8_sig2_df$train_RMSE),mean(m8_sig4_df$train_RMSE)),
-                       "model 9" = c(mean(m9_sig1_df$train_RMSE),mean(m9_sig2_df$train_RMSE),mean(m9_sig4_df$train_RMSE))))
 
-colnames(df_train_RMSE) <- c("Sigma = 1", "Sigma = 2", "Sigma = 4")
+df_train_RMSE <- as.data.frame(rbind(c("Model 1", mean(m1_sig1_df$train_RMSE),mean(m1_sig2_df$train_RMSE),mean(m1_sig4_df$train_RMSE)),
+                                     c("Model 2", mean(m2_sig1_df$train_RMSE),mean(m2_sig2_df$train_RMSE),mean(m2_sig4_df$train_RMSE)),
+                                     c("Model 3", mean(m3_sig1_df$train_RMSE),mean(m3_sig2_df$train_RMSE),mean(m3_sig4_df$train_RMSE)),
+                                     c("Model 4", mean(m4_sig1_df$train_RMSE),mean(m4_sig2_df$train_RMSE),mean(m4_sig4_df$train_RMSE)),
+                                     c("Model 5", mean(m5_sig1_df$train_RMSE),mean(m5_sig2_df$train_RMSE),mean(m5_sig4_df$train_RMSE)),
+                                     c("Model 6", mean(m6_sig1_df$train_RMSE),mean(m6_sig2_df$train_RMSE),mean(m6_sig4_df$train_RMSE)),
+                                     c("Model 7", mean(m7_sig1_df$train_RMSE),mean(m7_sig2_df$train_RMSE),mean(m7_sig4_df$train_RMSE)),
+                                     c("Model 8", mean(m8_sig1_df$train_RMSE),mean(m8_sig2_df$train_RMSE),mean(m8_sig4_df$train_RMSE)),
+                                     c("Model 9", mean(m9_sig1_df$train_RMSE),mean(m9_sig2_df$train_RMSE),mean(m9_sig4_df$train_RMSE))))
 
-
-df_test_RMSE <- as.data.frame(rbind("model 1" = c(mean(m1_sig1_df$test_RMSE),mean(m1_sig2_df$test_RMSE),mean(m1_sig4_df$test_RMSE)),
-                      "model 2" = c(mean(m2_sig1_df$test_RMSE),mean(m2_sig2_df$test_RMSE),mean(m2_sig4_df$test_RMSE)),
-                      "model 3" = c(mean(m3_sig1_df$test_RMSE),mean(m3_sig2_df$test_RMSE),mean(m3_sig4_df$test_RMSE)),
-                      "model 4" = c(mean(m4_sig1_df$test_RMSE),mean(m4_sig2_df$test_RMSE),mean(m4_sig4_df$test_RMSE)),
-                      "model 5" = c(mean(m5_sig1_df$test_RMSE),mean(m5_sig2_df$test_RMSE),mean(m5_sig4_df$test_RMSE)),
-                      "model 6" = c(mean(m6_sig1_df$test_RMSE),mean(m6_sig2_df$test_RMSE),mean(m6_sig4_df$test_RMSE)),
-                      "model 7" = c(mean(m7_sig1_df$test_RMSE),mean(m7_sig2_df$test_RMSE),mean(m7_sig4_df$test_RMSE)),
-                      "model 8" = c(mean(m8_sig1_df$test_RMSE),mean(m8_sig2_df$test_RMSE),mean(m8_sig4_df$test_RMSE)),
-                      "model 9" = c(mean(m9_sig1_df$test_RMSE),mean(m9_sig2_df$test_RMSE),mean(m9_sig4_df$test_RMSE))))
+colnames(df_train_RMSE) <- c("Model number", "RMSE for Sigma = 1", "RMSE for Sigma = 2", "RMSE for Sigma = 4")
+df_train_RMSE$`RMSE for Sigma = 1` <- as.numeric(df_train_RMSE$`RMSE for Sigma = 1`)
+df_train_RMSE$`RMSE for Sigma = 2` <- as.numeric(df_train_RMSE$`RMSE for Sigma = 2`)
+df_train_RMSE$`RMSE for Sigma = 4` <- as.numeric(df_train_RMSE$`RMSE for Sigma = 4`)
 
 
-colnames(df_test_RMSE) <- c("Sigma = 1", "Sigma = 2", "Sigma = 4")
+df_test_RMSE <- as.data.frame(rbind(c("Model 1", mean(m1_sig1_df$test_RMSE),mean(m1_sig2_df$test_RMSE),mean(m1_sig4_df$test_RMSE)),
+                                    c("Model 2", mean(m2_sig1_df$test_RMSE),mean(m2_sig2_df$test_RMSE),mean(m2_sig4_df$test_RMSE)),
+                                    c("Model 3", mean(m3_sig1_df$test_RMSE),mean(m3_sig2_df$test_RMSE),mean(m3_sig4_df$test_RMSE)),
+                                    c("Model 4", mean(m4_sig1_df$test_RMSE),mean(m4_sig2_df$test_RMSE),mean(m4_sig4_df$test_RMSE)),
+                                    c("Model 5", mean(m5_sig1_df$test_RMSE),mean(m5_sig2_df$test_RMSE),mean(m5_sig4_df$test_RMSE)),
+                                    c("Model 6", mean(m6_sig1_df$test_RMSE),mean(m6_sig2_df$test_RMSE),mean(m6_sig4_df$test_RMSE)),
+                                    c("Model 7", mean(m7_sig1_df$test_RMSE),mean(m7_sig2_df$test_RMSE),mean(m7_sig4_df$test_RMSE)),
+                                    c("Model 8", mean(m8_sig1_df$test_RMSE),mean(m8_sig2_df$test_RMSE),mean(m8_sig4_df$test_RMSE)),
+                                    c("Model 9", mean(m9_sig1_df$test_RMSE),mean(m9_sig2_df$test_RMSE),mean(m9_sig4_df$test_RMSE))))
+
+
+colnames(df_test_RMSE) <- c("Model number", "RMSE for Sigma = 1", "RMSE for Sigma = 2", "RMSE for Sigma = 4")
+df_test_RMSE$`RMSE for Sigma = 1` <- as.numeric(df_test_RMSE$`RMSE for Sigma = 1`)
+df_test_RMSE$`RMSE for Sigma = 2` <- as.numeric(df_test_RMSE$`RMSE for Sigma = 2`)
+df_test_RMSE$`RMSE for Sigma = 4` <- as.numeric(df_test_RMSE$`RMSE for Sigma = 4`)
 ```
 
 
 
-```{r fig.height=7}
-ggplot(data = df_train_RMSE, aes(x=row.names(df_train_RMSE), y=df_train_RMSE$`Sigma = 1`, group = 1))+geom_point()+geom_line()+geom_line(data = df_test_RMSE, aes(x=row.names(df_test_RMSE), y=df_test_RMSE$`Sigma = 1`, group = 1, color=I("Orange")))+geom_point(data = df_test_RMSE, aes(x=row.names(df_test_RMSE), y=df_test_RMSE$`Sigma = 1`, group = 1, color=I("Orange")))
+```{r RMSEcomp, fig.height = 7, fig.width = 15, fig.cap = "Comparison of RMSE change across Test and Train datasets For Sigmas 1, 2 and 4" }
+df_train_RMSE$`Train or Test` <- "Training RMSE"
+df_test_RMSE$`Train or Test` <- "Testing RMSE"
+
+combined_df <- rbind(df_train_RMSE, df_test_RMSE)
+
+g1 <- ggplot(data = combined_df, aes(x=`Model number`, y=`RMSE for Sigma = 1`, group = `Train or Test`, color=`Train or Test`)) + 
+  geom_point(size=2)+
+  geom_line() +
+  theme(legend.position = c(.7, .9)) +
+  ggtitle("RMSE changes for sigma = 1")
+
+g2 <- ggplot(data = combined_df, aes(x=`Model number`, y=`RMSE for Sigma = 2`, group = `Train or Test`, color=`Train or Test`)) + 
+  geom_point(size=2)+
+  geom_line() +
+  theme(legend.position = c(.7, .9)) +
+  ggtitle("RMSE changes for sigma = 2")
+
+g3 <- ggplot(data = combined_df, aes(x=`Model number`, y=`RMSE for Sigma = 4`, group = `Train or Test`, color=`Train or Test`)) + 
+  geom_point(size=2)+
+  geom_line() +
+  theme(legend.position = c(.7, .9)) +
+  ggtitle("RMSE changes for sigma = 4")
+
+grid.arrange(g1, g2, g3, ncol=3)
+  
+
+```
+
+
+
+```{r Sigmacomp, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 15, fig.cap = "Comparison of RMSE change across as sigma changes for Training and Testing datasets" }
+library(reshape2)
+melted_df <- melt(combined_df)
+colnames(melted_df) <- c(colnames(melted_df)[1:3], "RMSE")
+
+g1 <- ggplot(data = melted_df[melted_df$`Train or Test`=="Training RMSE",], aes(x=`Model number`, y=`RMSE`, group = `variable`, color=`variable`)) +
+  geom_point(size=2)+
+  geom_line() +
+  theme(legend.position = c(.7, .9)) +
+  ggtitle("RMSE changes for Training dataset")
+
+g2 <- ggplot(data = melted_df[melted_df$`Train or Test`=="Testing RMSE",], aes(x=`Model number`, y=`RMSE`, group = `variable`, color=`variable`)) +
+  geom_point(size=2)+
+  geom_line() +
+  theme(legend.position = c(.7, .9)) +
+  ggtitle("RMSE changes for Testing dataset")
+
+
+grid.arrange(g1, g2, ncol=2)
+  
+
 ```
 
 
@@ -553,18 +675,100 @@ There will always be 500 y values. Build a comparision table for comparing RMSE 
 Create a scatter plot that shows how avg. RMSE (y axis) changes as a function of model size (x axis). Two plots for train and test RMSE and also how that changes through sigma
 
 
-
-```{r eval=FALSE}
-x_values = seq(0, 5, length = n)
+We set the seed to ensure reproducible results
+```{r}
+birthday = 19730321
+set.seed(birthday)
 ```
 
-For each possible $\beta_1$ and $\sigma$ combination, simulate from the true model at least $1000$ times. Each time, perform the significance of the regression test. To estimate the power with these simulations, and some $\alpha$, use
+```{r}
+betas <- seq(-2, 2, .1)
+sigmas <- c(1,2,4)
+ns <- c(10,20,30)
+mu <- 0
+alpha <- .05
+num_simul <- 1000
+```
+```{r}
 
-\[
-\hat{\text{Power}} = \hat{P}[\text{Reject } H_0 \mid H_1 \text{ True}] = \frac{\text{# Tests Rejected}}{\text{# Simulations}}
-\]
+sim_data_calc_Power <- function(sample_size, mu, sig, beta_1, num_simul, x_values, alpha=alpha){
+  #sig=1
+  #x_values = seq(0, 5, length = n)
+  #beta_1=-1.9
+  #sample_size=10
+  
+  sim_pval <- rep(0, num_simul)
+  for (i in 1:num_simul){
+    epsilon <- rnorm(sample_size, mean=mu, sd=sig)
+    
+    y <- x_values*beta_1 + epsilon
+    
+    m <- lm(y ~ x1, data = data.frame(y, x1=x_values))
+    sim_pval[i] <- glance(m)$p.value
+  }
+  Power <- mean(sim_pval<alpha)
+  return(Power)
+}
+```
 
-It is *possible* to derive an expression for power mathematically, but often this is difficult, so instead, we rely on simulation.
+```{r message=FALSE}
+
+library(data.table)
+```
+
+```{r}
+
+Power_df <- CJ(sigmas, ns, betas)
+
+Power_df$Power <- rep(0, nrow(Power_df))
+
+for(sigma in sigmas)
+{
+  for(n in ns)
+  {
+      x_values = seq(0, 5, length = n)
+      for(beta in betas)
+      {
+        Power_df[Power_df$sigmas==sigma & Power_df$ns==n & Power_df$betas==beta]$Power <- 
+                    sim_data_calc_Power(sample_size=n, mu=mu, sig=sigma, beta_1=beta, num_simul=num_simul, x_values=x_values, alpha=alpha)
+    }
+  }
+}
+
+
+```
+
+
+```{r Powercomp, message = FALSE, warning = FALSE, fig.height = 7, fig.width = 20, fig.cap = "Comparison of Power curves for diffrent sample sizes. Sigma increases from left to right"}
+
+g1 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
+  geom_point(size=2) +
+  geom_line() +
+  theme(legend.position = c(.9, .5)) +
+  ggtitle("Power curves for different values of sample size for Sigma 1 ") + 
+  labs(color = "Sample Size") +
+  scale_color_manual(values=c('red','blue','violet'))
+
+g2 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
+  geom_point(size=2) +
+  geom_line() +
+  theme(legend.position = c(.9, .5)) +
+  ggtitle("Power curves for different values of sample size for Sigma 1 ") + 
+  labs(color = "Sample Size") +
+  scale_color_manual(values=c('red','blue','violet'))
+
+g3 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
+  geom_point(size=2) +
+  geom_line() +
+  theme(legend.position = c(.9, .5)) +
+  ggtitle("Power curves for different values of sample size for Sigma 1 ") + 
+  labs(color = "Sample Size") +
+  scale_color_manual(values=c('red','blue','violet'))
+
+grid.arrange(g1, g2, g3, ncol=3)
+
+```
+
 
 Create three plots, one for each value of $\sigma$. Within each of these plots, add a “power curve” for each value of $n$ that shows how power is affected by signal strength, $\beta_1$.
 
