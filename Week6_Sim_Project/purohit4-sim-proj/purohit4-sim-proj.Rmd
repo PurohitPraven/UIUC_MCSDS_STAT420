@@ -199,29 +199,26 @@ par(mfrow = c(2,3))
 
 hist(Significant_sigma_1_df$pval, main = "p-value distribution for Significant model - sigma 1", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Significant_sigma_1_df$pval)))
 x <- Significant_sigma_1_df$pval
-curve( dunif(x, min = min(x), max=max(x)), col = "darkorange", add = TRUE, lwd = 3)
 
 hist(Significant_sigma_5_df$pval, main = "p-value distribution for Significant model - sigma 5", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Significant_sigma_5_df$pval)))
 x <- Significant_sigma_5_df$pval
-curve( dunif(x, min = min(x), max=max(x)), col = "darkorange", add = TRUE, lwd = 3)
 
 hist(Significant_sigma_10_df$pval, main = "p-value distribution for Significant model - sigma 10", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Significant_sigma_10_df$pval)))
 x <- Significant_sigma_10_df$pval
-curve( dunif(x, min = min(x), max=max(x)), col = "darkorange", add = TRUE, lwd = 3)
 
 # Non Significant Model curves
 
 hist(Nonsignificant_sigma_1_df$pval, main = "p-value distribution for Non-Significant model - sigma 1", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Nonsignificant_sigma_1_df$pval)))
 x <- Nonsignificant_sigma_1_df$pval
-curve( dunif(x, min = min(x), max=max(x)), col = "darkorange", add = TRUE, lwd = 3)
+curve( dunif(x, min = min(x), max=max(x)), col = "red", add = TRUE, lwd = 3)
 
 hist(Nonsignificant_sigma_5_df$pval, main = "p-value distribution for Non-Significant model - sigma 5", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Nonsignificant_sigma_5_df$pval)))
 x <- Nonsignificant_sigma_5_df$pval
-curve( dunif(x, min = min(x), max=max(x)), col = "darkorange", add = TRUE, lwd = 3)
+curve( dunif(x, min = min(x), max=max(x)), col = "red", add = TRUE, lwd = 3)
 
 hist(Nonsignificant_sigma_10_df$pval, main = "p-value distribution for Non-Significant model - sigma 10", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(Nonsignificant_sigma_10_df$pval)))
 x <- Nonsignificant_sigma_10_df$pval
-curve( dunif(x, min = min(x), max=max(x)), col = "darkorange", add = TRUE, lwd = 3)
+curve( dunif(x, min = min(x), max=max(x)), col = "red", add = TRUE, lwd = 3)
 ```
 
 Please see the Discussion section below for analysis of the above graphs
@@ -229,6 +226,10 @@ Please see the Discussion section below for analysis of the above graphs
 As a final step in our Methods section, we plot the distribution of $R^2$ for the 6 models that we have simulated above.
 
 ```{r R2comp, fig.height=7, fig.width=15, fig.cap="Figure 1.3 - Comparison of $R^2$ across Significant and Non-Significant model with Sigma in (1,5,10)"}
+
+# Todo should we hide the code for charts and tables?
+# Todo is having no discussion in the charts section ok? I am saying we will discuss in the Discussion section and am referencing the charts there
+
 par(mfrow = c(2,3))
 
 hist(Significant_sigma_1_df$r2, main = "$R^2$ distribution for Significant model - sigma 1", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "$R^2$", xlim = c(0,max(Significant_sigma_1_df$r2)))
@@ -267,24 +268,19 @@ The above simulations and the charts are telling on what impact the noise (sigma
 
 At the high level, it is clear that as the sigma increases, noise (epsilon) increases. The more the noise, the lesser impact the signal has on our ability to predict.
 
-### Impact of signal changing
+### Impact of signal changing with $\sigma = 1$
 
-Let us first examine the impact of signal on our ability to predict. Assuming that the Significant model is true. The signal here is defined as beta parameters in the significant model. 
+Let us first examine the impact of signal on our ability to predict. 
 
-We will assume that sigma or noise is constant in this discussion so that we can clearly see the impact of the beta parameters
+We will assume that sigma or noise is constant in this discussion so that we can clearly see the impact of the beta parameters in the significant model compared to the Non-significant model
 
-In all the three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp) and Figure \@ref(fig:R2comp), we will compare the top and bottom charts for this discussion, since the difference between the top and bottom charts is that the top charts, all the beta parameters are in play and in the bottom charts, none of them are. 
+In all the three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp) and Figure \@ref(fig:R2comp), we will compare the top and bottom charts for this discussion, since the difference between the top and bottom charts is that the top charts, all the beta parameters are in play and in the bottom charts, only the intercept beta is in play. 
 
-It is easiest to compare the charts of sigma = 1 for this discussion, that that noise does not clutter our findings. Hence we look at them first
+It is easiest to compare the charts of sigma = 1 for this discussion, so that noise($\sigma$) does not clutter our findings. Hence we look at them first
 
 When we compare the significant (top) and Non-sgnificant (bottom) chart for sigma =1, in Figure \@ref(fig:fstatcomp), we make the below observations
 
-* F-statistic is higher for the significant model. 
-Now F-statistic can be thought of as 
-
-$F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$
-
-Hence F-statistic will be high if either the predictors are able to explain the regression OR if the error is high. Since we have fixed $\sigma=1$, we know error or variance is not high. Hence the only explanation for the F-statistic being high in the Significant model is that the model is able to explain the regression. Said differently we can say that for $\sigma=1$ we see that atleast one of the predictors has a significant relationship with the response variable.
+* F-statistic is higher for the significant model. Now F-statistic can be thought of as $F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$. Hence F-statistic will be high if either the predictors are able to explain the regression OR if the error is high. Since we have fixed $\sigma=1$, we know error or variance is not high. Hence the only explanation for the F-statistic being high in the Significant model is that the model is able to explain the regression. Said differently we can say that for $\sigma=1$ we see that atleast one of the predictors has a significant relationship with the response variable.We will discuss the comparison for other sigmas in section 1.4.2
 
 
 * If we look at Table \@ref(tab:statcomp) we see that for the Significant model, for sigma 1, the Null Hypothesis was rejected 100% of times. This conclusion is the same that we have drawn after looking at the F-statistic chart above
@@ -298,51 +294,38 @@ Hence F-statistic will be high if either the predictors are able to explain the 
 
 ### Impact of noise changing ($\sigma$ change impact)
 
-Now we will focus on the change we see when we move from left to right in the charts in our three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp) and Figure \@ref(fig:R2comp). As we move from left to right the signal increaes
+Now we will focus on the change we see when we move from left to right in the charts in our three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp) and Figure \@ref(fig:R2comp). As we move from left to right the noise increases and the impact of signal decreases. This implies that our ability to reject the Null Hypothesis, even if it not true, decreases. To summarize, noise (high $\sigma$) is bad for our ability to predict :)
 
-sdjASLKJDFklasjfklSJFKLasjflkASJDKLsjadklJASD
+Let us see if the charts and tables support the above statement.
 
+* If we look at Table \@ref(tab:statcomp) we see that as the sigma increases for the significant model, the Power or the %age of times we reject the Null Hypothesis decreases. Implying if we knew that the Significant model was true, and we simulated the data, our ability to reject the Null hypothesis for the significant model would reduce as sigma increased. Hence for higher levels of sigma, we would make more Type II errors by not rejecting the Null Hypothesis even though the Alternate Hypothesis is true. 
 
-### Correlation between Signal and Noise (Significant vs. Non Significant model for Noise in (1,2,4))
+For the Non significant model, if we assume the Model to be true, then it does not change the Power by much since we are starting off by saying that there is no relationship between the predictors and response variables.
 
-asdfsadfsaf
+* The above theory seems to hold ground when we look at sigma changing from left to right in Figure \@ref(fig:fstatcomp). $F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$. Now as sigma increases, the denominator increases and the hence the F-statistic becomes smaller. This is seen in the graph. Hence even if the Significant model was true, we would fail to detect it from the F-statistic for higher values of Sigma. We can see that the F-statistic graph for the significant model with sigma = 10 looks almost the same as the Non Significant model F-statistic for sigma = 1. For the Non-significant models we see that F-statistic doesnt change by much since the non-sgnificant model is stating the the Unexplained is high, hence the denominator in the equation above is high, hence F-statistic is low and similar irrespective of sigma.
 
-### Distribution cruves
-asdfsdfa
+* Now we analyze the impact of sigma on the p-value by looking at the graphs in Figure \@ref(fig:pvalcomp). For the Significant model, we assume that we know that the model is true, and in our Hypothesis test we should reject the Null Hypothesis. But we see that as the noise increases our ability to reject the Null Hypothesis decreases and the p-value graph starts to tend towards the non-significant model graph and our Type II errors increase with noise. For the non-significant models we see that p-value is uniformaly distributes as if attributed purely to chance. Hence all the graphs of p-value for Non significant model are similar.
 
-
-
-Based on the Table 1.1 and  we see that the null Hypothesis gets rejected all the time for Significant model when Sigma is 1. This implies that there is a strong relationship between the explamatory varaiables and predictor when the noise is minimum (sigma=1). We see that the rejection ratio becomes smaller, or said differently, the relationship starts becoming less strong as the variability of the predictor ($\sigma$) increases. This can also be seen as that as the noise increases, our ability to detect the signal and make useful predictions decreases.
+* Based on what we have observed above, it goes to reason that $R^2$ should also decrease with noise since the variability will increase. That is what we see when we look at Figure \@ref(fig:R2comp). We see that the impact to $R^2$ is pretty severe even by a slight increase in $\sigma$. $R^2 = 1 - {\text{Sum of Squares Error} \over \text{Sum of Squares Total}} = 1 - {\sum{e^2} \over \sum{(y_i - \bar y)^2}}$. Based on the above equation it goes to reason that as the error increases due to sigma, the impact to $R^2$ is square of the error, hence more extreme. This corroborates what we are seeing in the significant model graph as we move from left to right. For the non significant model we see no impact since we are saying that the model does not explain the response hence $R^2$ is low throughout
 
 
+### Distributions of the graphs
+Now we analyze if the F-statistic, p-value and $R^2$ graphs follow any standard distributions. 
+
+* Looking at Figure \@ref(fig:fstatcomp) to see if F-statistic follows a distribution, we overlay the F-distribution curve on top of each of the graphs. Now we know that a distribution will follow the F-statistic curve if the Null Hypothesis is true. We see that for the Significant model, where we know that the Null Hypothesis is rejected for $\sigma$ 1, the distribution falls towards the extreme tail of the F-curve. As the F-statistic decreases with the increase in $\sigma$, the distribution starts getting more aligned to the F-curve. For the non-significant model, where the null hypothesis that there is no relationship between predictor and response, is true all the time, the distribution follows the F-curve irrespective of $\sigma$.
+
+* When we look at Figure \@ref(fig:pvalcomp) we see that for the significant model, the distribution starts as a single bar when $\sigma$ is 1, and then starts getting more right skewed as $\sigma$ increases. For the non significant model, we see that p-value follows a uniform distribution implying that p-value is driven by pure chance when there is no relationship. We have overlaid the uniform curve (flat line) on top of the non significant model charts.
+
+* For Figure \@ref(fig:R2comp), we observe that when $R^2$ is high, the distribution of $R^2$ is left skewed. As the variability increases with increasing $\sigma$, as the value of $R^2$ decreases, the distribution starts getting right skewed. For the non-significant model where $R^2$ is low, the distribution is right skewed.
 
 
-
-
-
-
-
-$F = {\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$
-
-Here $\hat{y}_{1i}$ can be defined as the estimated y of the Full/larger model and $\bar{y}$ can be defined as y of the null model. Now the further apart the values of these 2 y values, the larger the F statistic will be and the smaller the p-value will be. We will reject the null Hypothesis for large values of F.
-
-we reject for large values of 𝐹 . A large value of the statistic corresponds to a large portion of the variance being explained by the regression
-
-Figure \@ref(fig:fstatcomp) 
-
-
-- Do we know the true distribution of any of these values?
-- How do the empirical distributions from the simulations compare to the true distributions? (You could consider adding a curve for the true distributions if you know them.)
-- How are each of the $F$ statistic, the p-value, and $R^2$ related to $\sigma$? Are any of those relationships the same for the significant and non-significant models?
-
-Additional things to consider:
-
-- Organize the plots in a grid for easy comparison.
+## Conclusion
+We conclude that for a model which has a signal that is useful for prediction, where atleast one of the beta parameters has a significant linear relationship, increase in noise level or $\sigma$ decreases our ability to accurately predict. When doing a Hypothesis test, higher sigma also increases the chances of Type II errors since there is a higher probability of us not rejecting the Null Hypothesis even when the alternate Hypothesis is true
 
 
 # Simulation Study 2: Using RMSE for Selection?
 
-In homework we saw how Test RMSE can be used to select the “best” model. In this simulation study we will investigate how well this procedure works. Since splitting the data is random, we don’t expect it to work correctly each time. We could get unlucky. But averaged over many attempts, we should expect it to select the appropriate model.
+In homework we saw how Test RMSE can be used to select the “best” model. In this simula tion study we will investigate how well this procedure works. Since splitting the data is random, we don’t expect it to work correctly each time. We could get unlucky. But averaged over many attempts, we should expect it to select the appropriate model.
 
 We will simulate from the model
 
@@ -749,19 +732,19 @@ g1 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas, y=Power, group=as
   labs(color = "Sample Size") +
   scale_color_manual(values=c('red','blue','violet'))
 
-g2 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
+g2 <- ggplot(data = Power_df[Power_df$sigmas==2], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
   geom_point(size=2) +
   geom_line() +
   theme(legend.position = c(.9, .5)) +
-  ggtitle("Power curves for different values of sample size for Sigma 1 ") + 
+  ggtitle("Power curves for different values of sample size for Sigma 2 ") + 
   labs(color = "Sample Size") +
   scale_color_manual(values=c('red','blue','violet'))
 
-g3 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
+g3 <- ggplot(data = Power_df[Power_df$sigmas==4], aes(x=betas, y=Power, group=as.factor(ns), color=as.factor(ns))) +
   geom_point(size=2) +
   geom_line() +
   theme(legend.position = c(.9, .5)) +
-  ggtitle("Power curves for different values of sample size for Sigma 1 ") + 
+  ggtitle("Power curves for different values of sample size for Sigma 4 ") + 
   labs(color = "Sample Size") +
   scale_color_manual(values=c('red','blue','violet'))
 
