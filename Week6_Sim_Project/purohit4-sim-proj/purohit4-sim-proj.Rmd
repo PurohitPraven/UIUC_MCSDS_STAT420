@@ -27,15 +27,24 @@ opts_chunk$set(cache = TRUE, autodep = TRUE)
 
 In this simulation study we will investigate the significance of regression test. We will simulate from two different models: Significant model \[Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \epsilon_i\] and a corresponding Non Significant     model \[Y_i = \beta_0 + \epsilon_i\]
 
+
+For both, we will consider a sample size of $25$ and three values of $\sigma$ $\in (1, 5, 10)$
+
+We will use simulation to obtain an empirical distribution for each of the following values, for each of the three values of $\sigma$, for both models.
+
+- The **$F$ statistic** for the significance of regression test.
+- The **p-value** for the significance of regression test
+- **$R^2$**
+
 We will look at two things
 
 1) Investigate how the F-statistic, p-value and $R^2$ changes across the above two models
 
-2) Investigte how changing the sigma value from 1 to 5 to 10, changes the F-statistic, p-value and $R^2$ within the same model, and across the Significant and non significant model
+2) Investigate how changing the sigma value from 1 to 5 to 10, changes the F-statistic, p-value and $R^2$ within the same model, and across the Significant and non significant model
 
-Based on the above investigations we will try and draw conclusions on what effect the changes to beta parameters and sigma have on the F-statistic, p-value
+Based on the above investigations we will try and draw conclusions on what effect the changes to beta parameters and sigma have on the F-statistic, p-value, $R^2$
 
-We will share the steps taken to do the analysis in the Mehods section, the results of our steps in the Results section and thoughts and conclusion in the Discussion section
+We will share the steps taken to do the analysis in the Methods section, the results of our steps in the Results section and thoughts and observations in the Discussion section
 
 
 
@@ -58,6 +67,8 @@ birthday = 19730321
 set.seed(birthday)
 ```
 
+We initialize the variables used in our study
+
 ```{r}
 
 x_predictors_df <- read.csv("study_1.csv")
@@ -73,8 +84,6 @@ beta_2 <- 1
 beta_3 <- 1
 
 ```
-
-Library loading and variable initialization not shown for brevity of report. Please refer to Rmd file if required. We initialize the betas to 3,1,1,1. The number of simulations to 2000. mu to 0 and sample size (n) to 25.
 
 We create a function that will simulate the data 2000 times and return the f_statistic, p-value and $R^2$ for each simulation as a dataframe
 
@@ -100,7 +109,7 @@ sim_data <- function(sample_size, mu, sig, num_simul, x_predictors_df, non_sig_m
     sim_pvals[i] <- glance(m)$p.value
     sim_r2s[i] <- glance(m)$r.squared
   }
-  #retuen a dataframe with f-statistic, p-value and R2 from our simulation
+  #return a dataframe with f-statistic, p-value and R2 from our simulation
   return(data.frame("f_stat"=sim_f_stats, "pval"=sim_pvals, "r2"=sim_r2s))
 }
 ```
@@ -188,9 +197,10 @@ curve( df(x, df1 = 4 - 1, df2 = 25 -4), col = "darkorange", add = TRUE, lwd = 3)
 
 ```
 
+<br>
 
-We will discuss the findings from the above graphs in the discussion section below
-
+We will discuss the findings from the above graphs in the discussion section below. One quick note here: the reason the top left graph (Significant model, $\sigma=1$) shows the curve squished and before the histogram is that the distribution will fall under the curve when Null hypothesis is true. When Null hypothesis is rejected, with a large F-statistic, the histogram distribution will fall on the tail of the F-curve, as it is seen here.
+This is discussed in the Discussion section.
 
 Now we plot the distributions of the p-value returned from our 6 different simulations. The label for each graph talks about what the graph represents
 
@@ -221,15 +231,13 @@ x <- Nonsignificant_sigma_10_df$pval
 curve( dunif(x, min = min(x), max=max(x)), col = "red", add = TRUE, lwd = 3)
 ```
 
+<br>
+
 Please see the Discussion section below for analysis of the above graphs
 
 As a final step in our Methods section, we plot the distribution of $R^2$ for the 6 models that we have simulated above.
 
 ```{r R2comp, fig.height=7, fig.width=15, fig.cap="Figure 1.3 - Comparison of $R^2$ across Significant and Non-Significant model with Sigma in (1,5,10)"}
-
-# Todo should we hide the code for charts and tables?
-# Todo is having no discussion in the charts section ok? I am saying we will discuss in the Discussion section and am referencing the charts there
-
 par(mfrow = c(2,3))
 
 hist(Significant_sigma_1_df$r2, main = "$R^2$ distribution for Significant model - sigma 1", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "$R^2$", xlim = c(0,max(Significant_sigma_1_df$r2)))
@@ -249,20 +257,9 @@ hist(Nonsignificant_sigma_10_df$r2, main = "$R^2$ distribution for Non-Significa
 
 ```
 
+<br>
 
-
-```{r}
-
-```
-
-
-Under one of the models we can come up with a name. How do the distributions behave.
-Teh statistics behave differently based on significant or non significant models. F statistic may follow F distribution regarding which model - significnat or non significant?
-For R2 say things about skewness and symmetry. Distribution of p value for one of the 2 models will look fimiliar
-DOnt need to say why the distribution is certain way. Dont need to know the names of the distributsion. See if vectors or dataframes is better
-
-
-## Potential discussions:
+## Discussion
 
 The above simulations and the charts are telling on what impact the noise (sigma) and signal (significant parameters) have on our ability to predict.
 
@@ -278,7 +275,7 @@ In all the three figures, Figure \@ref(fig:fstatcomp), Figure \@ref(fig:pvalcomp
 
 It is easiest to compare the charts of sigma = 1 for this discussion, so that noise($\sigma$) does not clutter our findings. Hence we look at them first
 
-When we compare the significant (top) and Non-sgnificant (bottom) chart for sigma =1, in Figure \@ref(fig:fstatcomp), we make the below observations
+When we compare the significant (top) and Non-significant (bottom) chart for sigma =1, in Figure \@ref(fig:fstatcomp), we make the below observations
 
 * F-statistic is higher for the significant model. Now F-statistic can be thought of as $F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$. Hence F-statistic will be high if either the predictors are able to explain the regression OR if the error is high. Since we have fixed $\sigma=1$, we know error or variance is not high. Hence the only explanation for the F-statistic being high in the Significant model is that the model is able to explain the regression. Said differently we can say that for $\sigma=1$ we see that atleast one of the predictors has a significant relationship with the response variable.We will discuss the comparison for other sigmas in section 1.4.2
 
@@ -302,9 +299,9 @@ Let us see if the charts and tables support the above statement.
 
 For the Non significant model, if we assume the Model to be true, then it does not change the Power by much since we are starting off by saying that there is no relationship between the predictors and response variables.
 
-* The above theory seems to hold ground when we look at sigma changing from left to right in Figure \@ref(fig:fstatcomp). $F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$. Now as sigma increases, the denominator increases and the hence the F-statistic becomes smaller. This is seen in the graph. Hence even if the Significant model was true, we would fail to detect it from the F-statistic for higher values of Sigma. We can see that the F-statistic graph for the significant model with sigma = 10 looks almost the same as the Non Significant model F-statistic for sigma = 1. For the Non-significant models we see that F-statistic doesnt change by much since the non-sgnificant model is stating the the Unexplained is high, hence the denominator in the equation above is high, hence F-statistic is low and similar irrespective of sigma.
+* The above theory seems to hold ground when we look at sigma changing from left to right in Figure \@ref(fig:fstatcomp). $F=$  $\text{Mean Square Explained} \over \text{Mean Square Unexplained}$  $=$  $\text{Mean Square Regression} \over \text{Mean Square Error}$  $=$  ${\sum_{i=1}^{𝑛} (\hat{y}_{1i} - \bar{y})^2/p-1 \over \sum_{i=1}^{𝑛} (y_i - \hat{y}_{1i})^2/n-p}$. Now as sigma increases, the denominator increases and the hence the F-statistic becomes smaller. This is seen in the graph. Hence even if the Significant model was true, we would fail to detect it from the F-statistic for higher values of Sigma. We can see that the F-statistic graph for the significant model with sigma = 10 looks almost the same as the Non Significant model F-statistic for sigma = 1. For the Non-significant models we see that F-statistic doesnt change by much since the non-significant model is stating the the Unexplained is high, hence the denominator in the equation above is high, hence F-statistic is low and similar irrespective of sigma.
 
-* Now we analyze the impact of sigma on the p-value by looking at the graphs in Figure \@ref(fig:pvalcomp). For the Significant model, we assume that we know that the model is true, and in our Hypothesis test we should reject the Null Hypothesis. But we see that as the noise increases our ability to reject the Null Hypothesis decreases and the p-value graph starts to tend towards the non-significant model graph and our Type II errors increase with noise. For the non-significant models we see that p-value is uniformaly distributes as if attributed purely to chance. Hence all the graphs of p-value for Non significant model are similar.
+* Now we analyze the impact of sigma on the p-value by looking at the graphs in Figure \@ref(fig:pvalcomp). For the Significant model, we assume that we know that the model is true, and in our Hypothesis test we should reject the Null Hypothesis. But we see that as the noise increases our ability to reject the Null Hypothesis decreases and the p-value graph starts to tend towards the non-significant model graph and our Type II errors increase with noise. For the non-significant models we see that p-value is uniformly distributes as if attributed purely to chance. Hence all the graphs of p-value for Non significant model are similar.
 
 * Based on what we have observed above, it goes to reason that $R^2$ should also decrease with noise since the variability will increase. That is what we see when we look at Figure \@ref(fig:R2comp). We see that the impact to $R^2$ is pretty severe even by a slight increase in $\sigma$. $R^2 = 1 - {\text{Sum of Squares Error} \over \text{Sum of Squares Total}} = 1 - {\sum{e^2} \over \sum{(y_i - \bar y)^2}}$. Based on the above equation it goes to reason that as the error increases due to sigma, the impact to $R^2$ is square of the error, hence more extreme. This corroborates what we are seeing in the significant model graph as we move from left to right. For the non significant model we see no impact since we are saying that the model does not explain the response hence $R^2$ is low throughout
 
@@ -320,72 +317,51 @@ Now we analyze if the F-statistic, p-value and $R^2$ graphs follow any standard 
 
 
 ## Conclusion
-We conclude that for a model which has a signal that is useful for prediction, where atleast one of the beta parameters has a significant linear relationship, increase in noise level or $\sigma$ decreases our ability to accurately predict. When doing a Hypothesis test, higher sigma also increases the chances of Type II errors since there is a higher probability of us not rejecting the Null Hypothesis even when the alternate Hypothesis is true
+We draw the following two conclusions
+
+1. For a model which has a signal that is useful for prediction, where atleast one of the beta parameters has a significant linear relationship, increase in noise level or $\sigma$ decreases our ability to accurately predict. When doing a Hypothesis test, higher sigma also increases the chances of Type II errors since there is a higher probability of us not rejecting the Null Hypothesis even when the alternate Hypothesis is true.
+
+2. For a model that does not have a useful signal to help us predict, increasing the noise makes no difference in the probability of accepting the Null Hypothesis
+
+*****
 
 
 # Simulation Study 2: Using RMSE for Selection?
 
-In homework we saw how Test RMSE can be used to select the “best” model. In this simula tion study we will investigate how well this procedure works. Since splitting the data is random, we don’t expect it to work correctly each time. We could get unlucky. But averaged over many attempts, we should expect it to select the appropriate model.
+## Introduction
 
-We will simulate from the model
+In this simulation study we will evaluate if RMSE is a good statistic to choose a best model among a set of nested models. We will also evaluate the effect of $\sigma$ on RMSE
 
-\[
-Y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3} + \beta_4 x_{i4} + \beta_5 x_{i5} + \beta_6 x_{i6} + \epsilon_i
-\]
+We will use the below model as the true model 
 
-where $\epsilon_i \sim N(0, \sigma^2)$ and
+$Y_i=β_0+β_1x_{i1}+β_2x_{i2}+β_3x_{i3}+β_4x_i4+β_5x_{i5}+β_6x_{i6}+ϵ_i$
 
-- $\beta_0 = 0$,
-- $\beta_1 = 3$,
-- $\beta_2 = -4$,
-- $\beta_3 = 1.6$,
-- $\beta_4 = -1.1$,
-- $\beta_5 = 0.7$,
-- $\beta_6 = 0.5$.
+where $ϵ_i ∼ N(0,σ^2)$
 
-We will consider a sample size of $500$ and three possible levels of noise. That is, three values of $\sigma$.
+We will then simulate data 1000 times. For each simulation we will split the sample into two, where the 1st half will be used to train the data and the 2nd half to test the model prediction.
 
-- $n = 500$
-- $\sigma \in (1, 2, 4)$
+Then for each simulation, for each training data we will fit the below nine models
 
-Use the data found in [`study_2.csv`](study_2.csv) for the values of the predictors. These should be kept constant for the entirety of this study. The `y` values in this data are a blank placeholder.
+```
+y ~ x1
+y ~ x1 + x2
+y ~ x1 + x2 + x3
+y ~ x1 + x2 + x3 + x4
+y ~ x1 + x2 + x3 + x4 + x5
+y ~ x1 + x2 + x3 + x4 + x5 + x6 #the correct form of the model as noted above
+y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7
+y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
+y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9
+```
 
-Each time you simulate the data, randomly split the data into train and test sets of equal sizes (250 observations for training, 250 observations for testing).
-
-For each, fit **nine** models, with forms:
-
-- `y ~ x1`
-- `y ~ x1 + x2`
-- `y ~ x1 + x2 + x3`
-- `y ~ x1 + x2 + x3 + x4`
-- `y ~ x1 + x2 + x3 + x4 + x5`
-- `y ~ x1 + x2 + x3 + x4 + x5 + x6`, the correct form of the model as noted above
-- `y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7`
-- `y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8`
-- `y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9`
-
-Todo - comment from office hours - parameters for x7, x8, x9 the parameters will be 0
-
-
-For each model, calculate Train and Test RMSE.
+For each model, we will calculate Train and Test RMSE.
 
 \[
 \text{RMSE}(\text{model, data}) = \sqrt{\frac{1}{n} \sum_{i = 1}^{n}(y_i - \hat{y}_i)^2}
 \]
 
-Repeat this process with $1000$ simulations for each of the $3$ values of $\sigma$. For each value of $\sigma$, create a plot that shows how average Train RMSE and average Test RMSE changes as a function of model size. Also show the number of times the model of each size was chosen for each value of $\sigma$.
+We will repeat this process with $1000$ simulations for each of the $3$ values of $\sigma$. For each value of $\sigma$, we will create a plot that shows how average Train RMSE and average Test RMSE changes as a function of model size. We will also show the number of times the model of each size was chosen for each value of $\sigma$.
 
-Done correctly, you will have simulated the $y$ vector $3×1000=3000$ times. You will have fit $9×3×1000=27000$ models. A minimal result would use $3$ plots. Additional plots may also be useful.
-
-Potential discussions:
-
-- Does the method **always** select the correct model? On average, does is select the correct model?
-- How does the level of noise affect the results?
-
-
-## Introduction
-
-To be filled
 
 ## Methods
 
@@ -394,6 +370,8 @@ We set the seed to ensure reproducible results
 birthday = 19730321
 set.seed(birthday)
 ```
+
+We initialize the variables
 
 ```{r}
 x_predictors_df <- read.csv("study_2.csv")
@@ -412,6 +390,7 @@ beta_6 <- 0.5
 
 ```
 
+We define a function that simulates the data, calculates the RMSE for training and testing datasets and return the RMSE
 
 ```{r}
 sim_data_calc_RMSE <- function(sample_size, mu, sig, num_simul, x_predictors_df, num_parameters){
@@ -421,17 +400,18 @@ sim_data_calc_RMSE <- function(sample_size, mu, sig, num_simul, x_predictors_df,
   sim_test_RMSE <- rep(0,num_simul)
 
   for (i in 1:num_simul){
+    #randomly generate error based on normal distribution
     epsilon <- rnorm(sample_size, mean=mu, sd=sig)
-    
+    # Calculate y
     x_predictors_df$y <- beta_0 + x_predictors_df$x1*beta_1 + x_predictors_df$x2*beta_2 + x_predictors_df$x3*beta_3 + 
                           x_predictors_df$x4*beta_4 + x_predictors_df$x5*beta_5 + x_predictors_df$x6*beta_6 + epsilon
     
-    
+    # Split data into train and test data - 250 samples each
     trn_idx = sample(1:nrow(x_predictors_df), 250)
     trn <- slice(x_predictors_df, trn_idx)
     tst <- slice(x_predictors_df, -1*trn_idx)
     
-    
+    # Fit training data to model based on number of parameters
     if(num_parameters==2){
       m <- lm(y ~ x1, data = trn)
     } else if(num_parameters==3){
@@ -451,18 +431,17 @@ sim_data_calc_RMSE <- function(sample_size, mu, sig, num_simul, x_predictors_df,
     } else{
       m <- lm(y ~ x1+x2+x3+x4+x5+x6+x7+x8+x9, data = trn)
     }
-    
-    
-
+    # calculate RMSE
     sim_train_RMSE[i] <- sqrt(sum((trn["y"]-predict(m))^2)/nrow(trn))
+    # Predict y based on testing data and then calculate RMSE
     sim_test_RMSE[i] <- sqrt(sum((tst["y"]-predict(m, newdata = tst))^2)/nrow(tst))
   }
-  
+  # return training and testing RMSE for each simulation
   return(data.frame("train_RMSE"=sim_train_RMSE, "test_RMSE"=sim_test_RMSE))
 }
 ```
 
-
+For sigma 1, we calculate the training and testing RMSE for each model and store it in a separate dataframe for each model
 
 ```{r}
 sig <- 1
@@ -476,8 +455,12 @@ m6_sig1_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul 
 m7_sig1_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 8)
 m8_sig1_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 9)
 m9_sig1_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 10)
+```
 
 
+For sigma 2, we calculate the training and testing RMSE for each model and store it in a separate dataframe for each model
+
+```{r}
 sig <- 2
 
 m1_sig2_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 2)
@@ -489,7 +472,11 @@ m6_sig2_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul 
 m7_sig2_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 8)
 m8_sig2_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 9)
 m9_sig2_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 10)
+```
 
+For sigma 4, we calculate the training and testing RMSE for each model and store it in a separate dataframe for each model
+
+```{r}
 sig <- 4
 
 m1_sig4_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 2)
@@ -501,49 +488,94 @@ m6_sig4_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul 
 m7_sig4_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 8)
 m8_sig4_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 9)
 m9_sig4_df <- sim_data_calc_RMSE(sample_size = n, mu = mu, sig = sig, num_simul = num_simul, x_predictors_df = x_predictors_df, num_parameters = 10)
+```
 
+Now we calculate how many times a model was selected in the simulations for each sigma
 
+```{r}
+sig1_test_RMSE <- cbind("m1"=m1_sig1_df[,2], "m2"=m2_sig1_df[,2], "m3"=m3_sig1_df[,2], "m4"=m4_sig1_df[,2], "m5"=m5_sig1_df[,2], "m6"=m6_sig1_df[,2], "m7"=m7_sig1_df[,2], "m8"=m8_sig1_df[,2], "m9"=m9_sig1_df[,2])
+
+sig1_selected <- colnames(sig1_test_RMSE)[apply(sig1_test_RMSE,1,which.min)]
+
+sig2_test_RMSE <- cbind("m1"=m1_sig2_df[,2], "m2"=m2_sig2_df[,2], "m3"=m3_sig2_df[,2], "m4"=m4_sig2_df[,2], "m5"=m5_sig2_df[,2], "m6"=m6_sig2_df[,2], "m7"=m7_sig2_df[,2], "m8"=m8_sig2_df[,2], "m9"=m9_sig2_df[,2])
+
+sig2_selected <- colnames(sig2_test_RMSE)[apply(sig2_test_RMSE,1,which.min)]
+
+sig4_test_RMSE <- cbind("m1"=m1_sig4_df[,2], "m2"=m2_sig4_df[,2], "m3"=m3_sig4_df[,2], "m4"=m4_sig4_df[,2], "m5"=m5_sig4_df[,2], "m6"=m6_sig4_df[,2], "m7"=m7_sig4_df[,2], "m8"=m8_sig4_df[,2], "m9"=m9_sig4_df[,2])
+
+sig4_selected <- colnames(sig4_test_RMSE)[apply(sig4_test_RMSE,1,which.min)]
+
+sel_df <- data.frame(cbind(sig1_selected, sig2_selected, sig4_selected))
+
+s1 <- table(sel_df$sig1_selected)
+s2 <- table(sel_df$sig2_selected)
+s4 <- table(sel_df$sig4_selected)
+
+sigma_model_count <- data.frame(cbind("models"=c("m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9"), "sigma1"=rep(0,9), "sigma2"=rep(0,9), "sigma3"=rep(0,9)))
+
+for(i in 1:9){
+ a <- sprintf("m%d",i)
+ sigma_model_count[sigma_model_count$models== a,][1,2]=s1[a]
+ sigma_model_count[sigma_model_count$models== a,][1,3]=s2[a]
+ sigma_model_count[sigma_model_count$models== a,][1,4]=s4[a]
+}
+sigma_model_count$models <- c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", "Model 6", "Model 7", "Model 8", "Model 9")
 
 ```
 
+
+We create two dataframes, one for Training RMSE data and one for Testing RMSE data. In each of these dataframes we store the mean RMSE for each model for each Sigma. At the end of this chunk, each of the two dataframes will have 9 rows, one for each model and 3 columns, one for each value of sigma. The data values in this table will be the mean RMSE for those models and sigma.
+
 ```{r}
-x=seq(1:9)
-
-
-df_train_RMSE <- as.data.frame(rbind(c("Model 1", mean(m1_sig1_df$train_RMSE),mean(m1_sig2_df$train_RMSE),mean(m1_sig4_df$train_RMSE)),
-                                     c("Model 2", mean(m2_sig1_df$train_RMSE),mean(m2_sig2_df$train_RMSE),mean(m2_sig4_df$train_RMSE)),
-                                     c("Model 3", mean(m3_sig1_df$train_RMSE),mean(m3_sig2_df$train_RMSE),mean(m3_sig4_df$train_RMSE)),
-                                     c("Model 4", mean(m4_sig1_df$train_RMSE),mean(m4_sig2_df$train_RMSE),mean(m4_sig4_df$train_RMSE)),
-                                     c("Model 5", mean(m5_sig1_df$train_RMSE),mean(m5_sig2_df$train_RMSE),mean(m5_sig4_df$train_RMSE)),
-                                     c("Model 6", mean(m6_sig1_df$train_RMSE),mean(m6_sig2_df$train_RMSE),mean(m6_sig4_df$train_RMSE)),
-                                     c("Model 7", mean(m7_sig1_df$train_RMSE),mean(m7_sig2_df$train_RMSE),mean(m7_sig4_df$train_RMSE)),
-                                     c("Model 8", mean(m8_sig1_df$train_RMSE),mean(m8_sig2_df$train_RMSE),mean(m8_sig4_df$train_RMSE)),
-                                     c("Model 9", mean(m9_sig1_df$train_RMSE),mean(m9_sig2_df$train_RMSE),mean(m9_sig4_df$train_RMSE))))
+# create dataframe for Training RMSE
+df_train_RMSE <- as.data.frame(rbind(c("Model 1", mean(m1_sig1_df$train_RMSE),mean(m1_sig2_df$train_RMSE), mean(m1_sig4_df$train_RMSE)),
+                c("Model 2", mean(m2_sig1_df$train_RMSE),mean(m2_sig2_df$train_RMSE), mean(m2_sig4_df$train_RMSE)),
+                c("Model 3", mean(m3_sig1_df$train_RMSE),mean(m3_sig2_df$train_RMSE), mean(m3_sig4_df$train_RMSE)),
+                c("Model 4", mean(m4_sig1_df$train_RMSE),mean(m4_sig2_df$train_RMSE), mean(m4_sig4_df$train_RMSE)),
+                c("Model 5", mean(m5_sig1_df$train_RMSE),mean(m5_sig2_df$train_RMSE), mean(m5_sig4_df$train_RMSE)),
+                c("Model 6", mean(m6_sig1_df$train_RMSE),mean(m6_sig2_df$train_RMSE), mean(m6_sig4_df$train_RMSE)),
+                c("Model 7", mean(m7_sig1_df$train_RMSE),mean(m7_sig2_df$train_RMSE), mean(m7_sig4_df$train_RMSE)),
+                c("Model 8", mean(m8_sig1_df$train_RMSE),mean(m8_sig2_df$train_RMSE), mean(m8_sig4_df$train_RMSE)),
+                c("Model 9", mean(m9_sig1_df$train_RMSE),mean(m9_sig2_df$train_RMSE), mean(m9_sig4_df$train_RMSE))))
 
 colnames(df_train_RMSE) <- c("Model number", "RMSE for Sigma = 1", "RMSE for Sigma = 2", "RMSE for Sigma = 4")
+# change RMSE value to numeric
 df_train_RMSE$`RMSE for Sigma = 1` <- as.numeric(df_train_RMSE$`RMSE for Sigma = 1`)
 df_train_RMSE$`RMSE for Sigma = 2` <- as.numeric(df_train_RMSE$`RMSE for Sigma = 2`)
 df_train_RMSE$`RMSE for Sigma = 4` <- as.numeric(df_train_RMSE$`RMSE for Sigma = 4`)
 
 
-df_test_RMSE <- as.data.frame(rbind(c("Model 1", mean(m1_sig1_df$test_RMSE),mean(m1_sig2_df$test_RMSE),mean(m1_sig4_df$test_RMSE)),
-                                    c("Model 2", mean(m2_sig1_df$test_RMSE),mean(m2_sig2_df$test_RMSE),mean(m2_sig4_df$test_RMSE)),
-                                    c("Model 3", mean(m3_sig1_df$test_RMSE),mean(m3_sig2_df$test_RMSE),mean(m3_sig4_df$test_RMSE)),
-                                    c("Model 4", mean(m4_sig1_df$test_RMSE),mean(m4_sig2_df$test_RMSE),mean(m4_sig4_df$test_RMSE)),
-                                    c("Model 5", mean(m5_sig1_df$test_RMSE),mean(m5_sig2_df$test_RMSE),mean(m5_sig4_df$test_RMSE)),
-                                    c("Model 6", mean(m6_sig1_df$test_RMSE),mean(m6_sig2_df$test_RMSE),mean(m6_sig4_df$test_RMSE)),
-                                    c("Model 7", mean(m7_sig1_df$test_RMSE),mean(m7_sig2_df$test_RMSE),mean(m7_sig4_df$test_RMSE)),
-                                    c("Model 8", mean(m8_sig1_df$test_RMSE),mean(m8_sig2_df$test_RMSE),mean(m8_sig4_df$test_RMSE)),
-                                    c("Model 9", mean(m9_sig1_df$test_RMSE),mean(m9_sig2_df$test_RMSE),mean(m9_sig4_df$test_RMSE))))
-
+# create dataframe for testing RMSE
+df_test_RMSE <- as.data.frame(rbind(c("Model 1", mean(m1_sig1_df$test_RMSE),mean(m1_sig2_df$test_RMSE), mean(m1_sig4_df$test_RMSE)),
+                c("Model 2", mean(m2_sig1_df$test_RMSE),mean(m2_sig2_df$test_RMSE), mean(m2_sig4_df$test_RMSE)),
+                c("Model 3", mean(m3_sig1_df$test_RMSE),mean(m3_sig2_df$test_RMSE), mean(m3_sig4_df$test_RMSE)),
+                c("Model 4", mean(m4_sig1_df$test_RMSE),mean(m4_sig2_df$test_RMSE), mean(m4_sig4_df$test_RMSE)),
+                c("Model 5", mean(m5_sig1_df$test_RMSE),mean(m5_sig2_df$test_RMSE), mean(m5_sig4_df$test_RMSE)),
+                c("Model 6", mean(m6_sig1_df$test_RMSE),mean(m6_sig2_df$test_RMSE), mean(m6_sig4_df$test_RMSE)),
+                c("Model 7", mean(m7_sig1_df$test_RMSE),mean(m7_sig2_df$test_RMSE), mean(m7_sig4_df$test_RMSE)),
+                c("Model 8", mean(m8_sig1_df$test_RMSE),mean(m8_sig2_df$test_RMSE), mean(m8_sig4_df$test_RMSE)),
+                c("Model 9", mean(m9_sig1_df$test_RMSE),mean(m9_sig2_df$test_RMSE), mean(m9_sig4_df$test_RMSE))))
 
 colnames(df_test_RMSE) <- c("Model number", "RMSE for Sigma = 1", "RMSE for Sigma = 2", "RMSE for Sigma = 4")
+# create dataframe for testing RMSE
 df_test_RMSE$`RMSE for Sigma = 1` <- as.numeric(df_test_RMSE$`RMSE for Sigma = 1`)
 df_test_RMSE$`RMSE for Sigma = 2` <- as.numeric(df_test_RMSE$`RMSE for Sigma = 2`)
 df_test_RMSE$`RMSE for Sigma = 4` <- as.numeric(df_test_RMSE$`RMSE for Sigma = 4`)
 ```
 
+## Results
 
+We first show how many times each model was selected for each $\sigma$
+
+
+```{r modelCount}
+
+knitr::kable(data.frame(sigma_model_count), caption = "Number of times each model was selected based on minimum RMSE in the 1000 simulations for each sigma")
+```
+
+
+
+We now create three charts. Each chart visualizes the mean RMSE for each of the 9 models for both the training and testing datasets. This allows us to compare how the RMSE varies across models for training and testing datasets
 
 ```{r RMSEcomp, fig.height = 7, fig.width = 15, fig.cap = "Comparison of RMSE change across Test and Train datasets For Sigmas 1, 2 and 4" }
 df_train_RMSE$`Train or Test` <- "Training RMSE"
@@ -570,11 +602,15 @@ g3 <- ggplot(data = combined_df, aes(x=`Model number`, y=`RMSE for Sigma = 4`, g
   ggtitle("RMSE changes for sigma = 4")
 
 grid.arrange(g1, g2, g3, ncol=3)
-  
-
 ```
 
+<br>
 
+Based on the RMSE observed from the testing dataset, we choose model 6 since it has the lowest testing RMSE
+
+We will discuss the above chart in the Discussions section
+
+In order to a visualize this a bit differently, we will create 2 charts, one each for training and testing RMSE, and plot all three sigma values on it
 
 ```{r Sigmacomp, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 15, fig.cap = "Comparison of RMSE change across as sigma changes for Training and Testing datasets" }
 library(reshape2)
@@ -593,14 +629,78 @@ g2 <- ggplot(data = melted_df[melted_df$`Train or Test`=="Testing RMSE",], aes(x
   theme(legend.position = c(.7, .9)) +
   ggtitle("RMSE changes for Testing dataset")
 
-
 grid.arrange(g1, g2, ncol=2)
-  
-
 ```
+<br>
+
+We will discuss the above chart in the Discussions section
+
+
+## Discussion
+
+In order to understand the study we will look at it from four different aspects
+
+### Selecting the correct model based on RMSE
+
+Looking at Table \@ref(tab:modelCount) we see that when sigma is low, due to low noise the impact of signal is clear and model 6 or higher gets selected. It is model 6 or higher, since based on the RMSE formula, there is no penalty for using more parameters.
+
+As the noise increases, we see that some models with less parameters get selected. We can attribute this to chance. The reason we are doing the simulation is to make sure that chance does not effect our model selection.
+
+The correct model doesnt always get selected since RMSE does not punish the model for having more parameters. Hence while picking the model with the least RMSE is important, we should visually examine if there is a model with lesser parameters that has RMSE close to the lowest, even if it is not the lowest, and pick that.
+
+### Variation betweem Test amd Train RMSE due to number of model parameters
+
+We look at the Figure \@ref(fig:RMSEcomp). We see that in all three graphs here, as the model parameters increase, the RMSE drops. This trend continues until the number of parameters matches the true model (6), and after that, adding additional parameters doesnt help. In fact, we can see that the additional parameters result in overfitting of the linear model, and hence the testing RMSE slightly worsens on adding additional parameters.
+We can define RMSE as 
+
+$RMSE = {\sum\limits_{i=1}^n(y_i - \hat y)  \over \sqrt{n}}$
+
+based on the equation we see that the closer the predicted value of y is to the actual value, the smaller the RMSE. Hence we can say that RMSE can be a good indicator of how good our prediction model is. Based on that we can say that adding parameters until $\beta_6$ increases our ability to predict accurately and hence decreases the RMSE. After that, adding more parameters, will not reduce the accuracy, but is a waste, and may even result in overfitting of the data. The overfitting will show as reduced RMSE when using the testing dataset.
+
+
+### Variation betweem Test amd Train RMSE due to $\sigma$ increasing
+
+As $\sigma$ increases, the noise increases, and hence reduces the impact of signal in the prediction. The end result is that our predictions are less accurate due to more noise. This can be seen in Figure \@ref(fig:RMSEcomp) as we go from left to right. As the noise is increasing we see the variation between the test and train RMSE increases. This clearly shows that our predictions become less accurate with higher $\sigma$.   
+
+This can also be seen mathematically in the equation 
+
+$RMSE = {\sum\limits_{i=1}^n(y_i - \hat y)  \over \sqrt{n}}$
+
+Implying the closer the predicted value to the actual data, the lesser the RMSE. 
+
+Hence as the $\sigma$ increases, the error increases, the predicted value (test data) is further away from the actual value, and RMSE for the same model parameter increases when compared to the training data.
+
+
+### Impact to RMSE (either train or test) due to $\sigma$ increasing
+
+We will look at Figure \@ref(fig:Sigmacomp) to isolate the impact of sigma on the RMSE.
+
+We know that RMSE is defined as
+
+$RMSE = \sqrt{\text {Sum of Squares Error} / n}$
+
+Based on the above equation we see that as the error increases, RMSE increases. This is clearly seen in the plot where we see RMSE for both test and train plots increase significantly as the noise level increases. 
+
+This corroborates what we said in the above point, that our ability to predict well reduces with increasing sigma, since the difference between the predicted y and actual y increases.
+
+## Conclusion
+
+We draw the following conclusions based on the above observations
+
+* The method of selecting the model that has the least RMSE with the least number of parameters seems like a fair way of selecting a good model. It doesnt always give us the best model as discussed in the Section 2.4.1 above, but on average it does well as a method.
+
+* Adding too many parameters to a model may result in overfitting, hence we should aim to add the least possible parameters that can maintain the RMSE
+
+* As $\sigma$ increases, the error or the noise component increases. This impacts the prediction and hence the RMSE of the test dataset increases, and consequently diverges from the RMSE of the training dataset for the worse
+
+
+*****
 
 
 # Simulation Study 3: Power
+
+
+## Introduction
 
 In this simulation study we will investigate the **power** of the significance of regression test for simple linear regression. 
 
@@ -608,32 +708,11 @@ In this simulation study we will investigate the **power** of the significance o
 H_0: \beta_{1} = 0 \ \text{vs} \ H_1: \beta_{1} \neq 0
 \]
 
-Recall, we had defined the *significance* level, $\alpha$, to be the probability of a Type I error.
-
-\[
-\alpha = P[\text{Reject } H_0 \mid H_0 \text{ True}] = P[\text{Type I Error}]
-\]
-
-Similarly, the probability of a Type II error is often denoted using $\beta$; however, this should not be confused with a regression parameter.
-
-\[
-\beta = P[\text{Fail to Reject } H_0 \mid H_1 \text{ True}] = P[\text{Type II Error}]
-\]
-
-*Power* is the probability of rejecting the null hypothesis when the null is not true, that is, the alternative is true and $\beta_{1}$ is non-zero.
-
-\[
-\text{Power} = 1 - \beta = P[\text{Reject } H_0 \mid H_1 \text{ True}]
-\]
-
-Essentially, power is the probability that a signal of a particular strength will be detected. Many things affect the power of a test. In this case, some of those are:
+Many things affect the power of a test. In this case, we will investigate these three:
 
 - Sample Size, $n$
 - Signal Strength, $\beta_1$
 - Noise Level, $\sigma$
-- Significance Level, $\alpha$
-
-We'll investigate the first three.
 
 To do so we will simulate from the model
 
@@ -651,18 +730,17 @@ For simplicity, we will let $\beta_0 = 0$, thus $\beta_1$ is essentially control
 
 We will hold the significance level constant at $\alpha = 0.05$.
 
-Use the following code to generate the predictor values, `x`: values for different sample sizes.
+## Methods
 
-#Todo -genereate new values of y, fit nethose models and calculate RMSEs of those models. Do that inside a function. All these need to be done a 1000 times. Sample size is 500. Within that 500 250 is training and 250 is test. You have to generate a new set of y values every time. When you create y values, create a 500 of them and then when you do that again calculate y again.
-There will always be 500 y values. Build a comparision table for comparing RMSE values
-Create a scatter plot that shows how avg. RMSE (y axis) changes as a function of model size (x axis). Two plots for train and test RMSE and also how that changes through sigma
-
+We go about doing the above simulation study using the following method
 
 We set the seed to ensure reproducible results
 ```{r}
 birthday = 19730321
 set.seed(birthday)
 ```
+
+We initialize the variables
 
 ```{r}
 betas <- seq(-2, 2, .1)
@@ -672,16 +750,16 @@ mu <- 0
 alpha <- .05
 num_simul <- 1000
 ```
-```{r}
 
+We define a function that simulates data, and then calculates and returns the power
+
+```{r}
 sim_data_calc_Power <- function(sample_size, mu, sig, beta_1, num_simul, x_values, alpha=alpha){
-  #sig=1
-  #x_values = seq(0, 5, length = n)
-  #beta_1=-1.9
-  #sample_size=10
   
   sim_pval <- rep(0, num_simul)
+  
   for (i in 1:num_simul){
+    # generate error based on a random normal distribution
     epsilon <- rnorm(sample_size, mean=mu, sd=sig)
     
     y <- x_values*beta_1 + epsilon
@@ -689,22 +767,25 @@ sim_data_calc_Power <- function(sample_size, mu, sig, beta_1, num_simul, x_value
     m <- lm(y ~ x1, data = data.frame(y, x1=x_values))
     sim_pval[i] <- glance(m)$p.value
   }
+  #calculate power
   Power <- mean(sim_pval<alpha)
   return(Power)
 }
 ```
 
-```{r message=FALSE}
+Initialize library so that we can use Cross Join function
 
+```{r message=FALSE}
 library(data.table)
 ```
 
-```{r}
 
+
+```{r}
 Power_df <- CJ(sigmas, ns, betas)
 
 Power_df$Power <- rep(0, nrow(Power_df))
-
+# for each sigma, for each n for each beta, simulate data and calculate Power
 for(sigma in sigmas)
 {
   for(n in ns)
@@ -713,14 +794,16 @@ for(sigma in sigmas)
       for(beta in betas)
       {
         Power_df[Power_df$sigmas==sigma & Power_df$ns==n & Power_df$betas==beta]$Power <- 
-                    sim_data_calc_Power(sample_size=n, mu=mu, sig=sigma, beta_1=beta, num_simul=num_simul, x_values=x_values, alpha=alpha)
+            sim_data_calc_Power(sample_size=n, mu=mu, sig=sigma, beta_1=beta, num_simul=num_simul, x_values=x_values, alpha=alpha)
     }
   }
 }
 
-
 ```
 
+## Results
+
+We draw three graphs, one for each $\sigma$. Each graph has a power curve for the three different sample sizes (10,20,30). Here we will show how the Power is effected by the value of $\beta$
 
 ```{r Powercomp, message = FALSE, warning = FALSE, fig.height = 7, fig.width = 20, fig.cap = "Comparison of Power curves for diffrent sample sizes. Sigma increases from left to right"}
 
@@ -752,10 +835,93 @@ grid.arrange(g1, g2, g3, ncol=3)
 
 ```
 
+<br>
 
-Create three plots, one for each value of $\sigma$. Within each of these plots, add a “power curve” for each value of $n$ that shows how power is affected by signal strength, $\beta_1$.
+We will discuss the above plot in the Discussion section
 
-Potential discussions:
 
-- How do $n$, $\beta_1$, and $\sigma$ affect power? Consider additional plots to demonstrate these effects.
-- Are $1000$ simulations sufficient?
+We now see how the power curve is impacted by signal to noise ratio.
+
+
+```{r Powercomp2, message = FALSE, warning = FALSE, fig.height = 7, fig.width = 20, fig.cap = "Comparison of Power curves vs. Signal to Noise Ratio for diffrent sample sizes. Sigma increases from left to right"}
+
+g1 <- ggplot(data = Power_df[Power_df$sigmas==1], aes(x=betas/sigmas[1], y=Power, group=as.factor(ns), color=as.factor(ns))) +
+  geom_point(size=2) +
+  geom_line() +
+  theme(legend.position = c(.9, .5)) +
+  ggtitle("Power curves for different values of sample size for Sigma 1 ") + 
+  labs(color = "Sample Size") +
+  scale_color_manual(values=c('red','blue','violet')) +
+  xlim(-2,2)+
+  xlab("Signal to Noise ratio")
+
+g2 <- ggplot(data = Power_df[Power_df$sigmas==2], aes(x=betas/sigmas[2], y=Power, group=as.factor(ns), color=as.factor(ns))) +
+  geom_point(size=2) +
+  geom_line() +
+  theme(legend.position = c(.9, .5)) +
+  ggtitle("Power curves for different values of sample size for Sigma 2 ") + 
+  labs(color = "Sample Size") +
+  scale_color_manual(values=c('red','blue','violet')) +
+  xlim(-2,2)+
+  xlab("Signal to Noise ratio")
+
+g3 <- ggplot(data = Power_df[Power_df$sigmas==4], aes(x=betas/sigmas[3], y=Power, group=as.factor(ns), color=as.factor(ns))) +
+  geom_point(size=2) +
+  geom_line() +
+  theme(legend.position = c(.9, .5)) +
+  ggtitle("Power curves for different values of sample size for Sigma 4 ") + 
+  labs(color = "Sample Size") +
+  scale_color_manual(values=c('red','blue','violet')) +
+  xlim(-2,2)+
+  xlab("Signal to Noise ratio")
+
+grid.arrange(g1, g2, g3, ncol=3)
+
+```
+<br>
+
+We will discuss the above plot in the discussion section
+
+## Discussion
+
+We will look at the above graphs from four different angles
+
+### Effect of Sample size on Power curve
+
+Looking at Figure \@ref(fig:Powercomp) we see that as the sample size increases, for the same value of $\beta$ and $\sigma$, if amplitude of $\beta$ is less than sigma, we reject more Null Hypothesis given that Alternate Hypothesis is true. Implying we have less Type II errors for higher sample size. This also tells us that the ideal sample size of 30 that we have been told in class has a reason, and with less sample size we will end up with more cases of Type II errors if $\beta$ is less than sigma.
+
+Said differently, this implies that if signal is less than noise
+
+This sample size advantage of 30 diminishes as the amplitude of $\beta$ nears sigma, or becomes greater than sigma.
+
+
+### Effect of Sigma on Power curve
+
+Looking at Figure \@ref(fig:Powercomp), when we look from left to right, we see that $\sigma$ is increasing. Here we observe that as the noise increases, given the same beta and sample size, we fail to reject more proportions of Null Hypothesis, and our Type II errors increase.
+
+### Effect of signal on Power curve
+
+Looking at Figure \@ref(fig:Powercomp), we see that as the amplitude of signal increases, and becomes more than noise, our probability of introducing Type II errors decreases. For lesser values of signal, there are more Type II errors introduced
+
+### Effect of signal to noise ratio ($\beta \over \sigma$) on Power curve
+
+Looking at Figure \@ref(fig:Powercomp2) we see that when measuring the Power curve against signal to noise ratio, the curves for different sample sizes appear a lot closer together. We see that for the same signal to noise ratio, the impact of sample size is minimal. We also note that for the same signal to noise ratio, we will have the same proportion of Type II errors. Additionally we see that as the amplitude of signal to Noise ratio becomes 1 or more, the probability of Type II errors become almost 0
+
+### Number of Simulations
+
+We observe that since we did a 1000 simulations, our curves in Figure \@ref(fig:Powercomp) are not smooth. It looks like if we did more simulations the curve would be smooth but 1000 simulations seems to be sufficient
+
+## Conclusion
+
+Based on the above, we conclude that
+
+* If amplitude of signal is less than noise, a larger sample size is better. For lesser sample size than 30, we have the probability of more Type II errors when doing Hypothesis testing. Less sample size = More Type II errors
+
+* As $\sigma$ increases, the probability of us introducing more Type II errors increases. More noise = More Type II errors
+
+* As signal becomes less than noise, Type II errors increase
+
+* As the amplitude of signal to noise ratio become 1 or more, the probability of Type II errors becomes 0
+
+****
+

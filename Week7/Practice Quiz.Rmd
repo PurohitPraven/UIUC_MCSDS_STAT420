@@ -1,0 +1,101 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+For each of the following questions, use the built-in ToothGrowth dataset in R. We will use len as the response variable, which we will refer to as the tooth length. Use ?ToothGrowth to learn more about the dataset.
+For Questions 1-3, consider the dose variable a numeric variable. Fit the regression model
+
+$Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_1 x_2 + \epsilon$
+where
+
+Y is tooth length
+$x_1$ is the dose in milligrams per day
+$x_2$ is a dummy variable that takes the value 1 when the supplement type is ascorbic acid    
+
+Q1. Use this model to obtain an estimate of the change in mean tooth length for a dose increase of 1 milligram per day, when the supplement type is orange juice.
+
+```{r}
+m <- lm(len~dose*supp,data = ToothGrowth)
+coef(m)[2]
+
+```
+
+
+Q2. Use the model from Question 1 to obtain an estimate of the change in mean tooth length for an dose increase of 1 milligram per day, when the supplement type is ascorbic acid.
+
+Hint: Hint: Supplement type ascorbic acid corresponds to supp == VC and x_2=1
+Hint: The answer is the sum of the estimates for two of the model parameters.
+```{r}
+m <- lm(len~dose*supp,data = ToothGrowth)
+coef(m)[2]+coef(m)[4]
+```
+
+Q3. The answers to the two previous questions should be different, but are these results significant? Test for interaction between dose and supplement type. Report the p-value of the test.
+
+```{r}
+
+coef(summary(m))["dose:suppVC","Pr(>|t|)"]
+
+```
+
+Q4. Note that there are only three unique values for the dosages. For Questions 4 and 5, consider the dose variable a categorical variable.
+
+The previous model, using dose as numeric, assumed that the difference between a dose of 0.5 and 1.0 is the same as the difference between a dose of 1.0 and 1.5, but allowed us to make predictions for any dosage.
+
+Considering dose a categorical variable, we will only be able to make predictions at the three existing dosages, but no longer is the relationship between dose and response constrained to be linear.
+
+Fit the regression model
+
+$Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 + \epsilon$
+where
+
+Y is tooth length
+x_1 is a dummy variable that takes the value 1 when the dose is 1.0 milligrams per day
+x_2 is a dummy variable that takes the value 1 when the dose is 2.0 milligrams per day
+x_3 is a dummy variable that takes the value 1 when the supplement type is ascorbic acid
+
+
+Use this model to obtain an estimate of the difference in mean tooth length for dosages of 1.0 and 2.0 milligrams per day for both supplement types. (Since we are not considering interactions, the supplement type does not matter.)
+
+Hint: Coerce the dose variable to be a factor variable.
+Hint: The value should be negative. Subtract the quantity for 2.0 mg/day from the quantity for 1.0 mg/day.
+
+```{r}
+m <- lm(len~as.factor(dose)+supp, data = ToothGrowth)
+m
+```
+
+
+```{r}
+
+m <- lm(len~ 0 + supp+as.factor(dose):supp, data = ToothGrowth)
+coef(m)[3]-coef(m)[2]
+```
+
+Q5, Suppose we wrote the the previous model with a different parameterization
+
+$Y = \gamma_1 x_1 + \gamma_2 x_2 + \gamma_3 x_3 + \gamma_4 x_4 + \epsilon$
+where
+
+Y is tooth length
+x_1 is a dummy variable that takes the value 1 when the dose is 0.5 milligrams per day
+x_2 is a dummy variable that takes the value 1 when the dose is 1.0 milligrams per day
+x_3 is a dummy variable that takes the value 1 when the dose is 2.0 milligrams per day
+x_4 is a dummy variable that takes the value 1 when the supplement type is ascorbic acid
+Calculate an estimate of $\gamma_3$
+
+Hint: This can be done using the model from Question 4.
+Hint: Alternately, this model could be fit directly by suppressing an intercept in lm().
+Hint: \gamma_3 = \beta_0 + \beta_2
+
+```{r}
+lm(len~0+supp + as.factor(dose):supp, data = ToothGrowth)
+
+```
+
+
+
+
+
