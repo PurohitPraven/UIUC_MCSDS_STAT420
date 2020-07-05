@@ -63,8 +63,8 @@ Hint: Coerce the dose variable to be a factor variable.
 Hint: The value should be negative. Subtract the quantity for 2.0 mg/day from the quantity for 1.0 mg/day.
 
 ```{r}
-m <- lm(len~as.factor(dose)+supp, data = ToothGrowth)
-m
+ m <- lm(len~as.factor(dose)+as.factor(supp), data=ToothGrowth)
+ coef(m)[2]-coef(m)[3]
 ```
 
 
@@ -91,7 +91,8 @@ Hint: Alternately, this model could be fit directly by suppressing an intercept 
 Hint: \gamma_3 = \beta_0 + \beta_2
 
 ```{r}
-lm(len~0+supp + as.factor(dose):supp, data = ToothGrowth)
+m <- lm(len~ 0 + as.factor(dose)+as.factor(supp), data = ToothGrowth)
+coef(m)[3]
 
 ```
 
