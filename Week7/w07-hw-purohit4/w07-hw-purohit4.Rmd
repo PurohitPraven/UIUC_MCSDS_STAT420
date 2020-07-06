@@ -47,11 +47,18 @@ We will attempt to model `CO2` using both `horse` and `type`. In practice, we wo
 
 Load the data, and check its structure using `str()`. Verify that `type` is a factor; if not, coerce it to be a factor.
 
-```{r}
+```{r results="hold"}
 epa_df <- read.csv("epa2017.csv")
+print(paste("Is type a factor = ", is.factor(epa_df$type)))
 epa_df$type <- as.factor(epa_df$type)
+
+print(paste("Is type a factor = ", is.factor(epa_df$type)))
+
+print("Structure of the epa data set after conversion is as below ")
 str(epa_df)
+
 ```
+
 ```{r message=FALSE}
 library(ggplot2)
 library(dplyr)
@@ -93,7 +100,7 @@ newdata <- data.frame(horse=c(148), type=c("Both"))
 predict(m_co2_horse, newdata = newdata, interval = c("prediction"), level = .9)
 
 ```
-Note: It doesnt matter if we use type in newdata or skip it completely. Since type is not part of our model, it will not make a difference
+Note: It doesnt matter if we use type in newdata or skip it completely. Since type is not part of our model, it will not make a difference. It is being included since the question mentions it
 
 **(b)** Do the following:
 
@@ -104,26 +111,30 @@ g2
 ```
 - Fit an additive multiple regression model with `CO2` as the response and `horse` and `type` as the predictors.
 ```{r}
-m_co2_horse_type_add <- lm(formula = CO2~horse+type, data = epa_df)
+m_co2_horse_type_add_param <- lm(formula = CO2~0 + type + horse, data = epa_df)
+coef(m_co2_horse_type_add_param)
 ```
 
 - Add the fitted regression "lines" to the scatterplot with the same colors as their respective points (one line for each vehicle type). Comment on how well this line models the data. 
 ```{r fig.height=7, fig.width=15, message=FALSE}
-g2 + stat_smooth(method = lm, se=FALSE, size=2)
+g2 + 
+  geom_abline(aes(intercept = coef(m_co2_horse_type_add_param)[1], slope = coef(m_co2_horse_type_add_param)[4], color='Both', size=I(1.5))) +
+  geom_abline(aes(intercept = coef(m_co2_horse_type_add_param)[2], slope = coef(m_co2_horse_type_add_param)[4], color='Car', size=I(1.5)))  + 
+  geom_abline(aes(intercept = coef(m_co2_horse_type_add_param)[3], slope = coef(m_co2_horse_type_add_param)[4], color='Truck', size=I(1.5))) + ggtitle("Scatter Plot of CO2 vs horsepower from epa2017 dataset with fitted regression lines by type of vehicle")
 ```
-The lines seem to fit the model well and much better than a line with a single intercept
+The lines seem to fit the model well and much better than a line with a single intercept but we still see that for cars and trucks the lines dont seem to intersect the points perfectly
 
 
 - Give an estimate for the average change in `CO2` for a one foot-pound per second increase in `horse` for a vehicle of type `car`. 
 ```{r}
-paste("Average change in CO2 for a one foot-pound per second increase is horse for type car is", coef(m_co2_horse_type_add)[2])
+paste("Average change in CO2 for a one foot-pound per second increase is horse for type car is", coef(m_co2_horse_type_add_param)[4])
 ```
 
 - Give a 90% prediction interval using this model for the `CO2` of a Subaru Impreza Wagon, which is a vehicle with 148 horsepower and is considered type `Both`. 
 
 ```{r}
 newdata <- data.frame(horse=c(148), type=c("Both"))
-predict(m_co2_horse_type_add, newdata = newdata, interval = c("prediction"), level = .9)
+predict(m_co2_horse_type_add_param, newdata = newdata, interval = c("prediction"), level = .9)
 ```
 
 
@@ -131,12 +142,48 @@ predict(m_co2_horse_type_add, newdata = newdata, interval = c("prediction"), lev
 
 - Make a scatterplot of `CO2` versus `horse`. Use a different color point for each vehicle `type`. 
 
+```{r fig.height=7, fig.width=15, message=FALSE}
+g3 <- ggplot(data=epa_df, aes(x=horse, y= CO2, group=type, col=type)) + geom_point() + ggtitle("Scatter Plot of CO2 vs horsepower from epa2017 dataset")
+g3
+```
+
 - Fit an interaction multiple regression model with `CO2` as the response and `horse` and `type` as the predictors.
+```{r}
+m_co2_horse_type_int_param <- lm(formula = CO2~0 + type + horse:type, data = epa_df)
+coef(m_co2_horse_type_int_param)
+```
 - Add the fitted regression "lines" to the scatterplot with the same colors as their respective points (one line for each vehicle type). Comment on how well this line models the data. 
+
+```{r fig.height=7, fig.width=15, message=FALSE}
+g3 + 
+  geom_abline(aes(intercept = coef(m_co2_horse_type_int_param)[1], slope = coef(m_co2_horse_type_int_param)[4], color='Both', size=I(1.5))) +
+  geom_abline(aes(intercept = coef(m_co2_horse_type_int_param)[2], slope = coef(m_co2_horse_type_int_param)[5], color='Car', size=I(1.5)))  + 
+  geom_abline(aes(intercept = coef(m_co2_horse_type_int_param)[3], slope = coef(m_co2_horse_type_int_param)[6], color='Truck', size=I(1.5))) + ggtitle("Scatter Plot of CO2 vs horsepower from epa2017 dataset with fitted regression lines by type of vehicle")
+```
+We see that these lines seem to fit better for cars and trucks
+
+
 - Give an estimate for the average change in `CO2` for a one foot-pound per second increase in `horse` for a vehicle of type `car`. 
+ 
+```{r}
+paste("Average change in CO2 for a one foot-pound per second increase is horse for type car is", coef(m_co2_horse_type_int_param)[5])
+```
+
+
 - Give a 90% prediction interval using this model for the `CO2` of a Subaru Impreza Wagon, which is a vehicle with 148 horsepower and is considered type `Both`. 
 
+```{r}
+newdata <- data.frame(horse=c(148), type=c("Both"))
+predict(m_co2_horse_type_int_param, newdata = newdata, interval = c("prediction"), level = .9)
+```
+
 **(d)** Based on the previous plots, you probably already have an opinion on the best model. Now use an ANOVA $F$-test to compare the additive and interaction models. Based on this test and a significance level of $\alpha = 0.10$, which model is preferred?
+
+```{r}
+anova(m_co2_horse_type_add_param,m_co2_horse_type_int_param)$`Pr(>F)`[2]
+```
+Since the probability is less than $\alpha$, we prefer the interactive model
+
 
 ***
 
@@ -161,8 +208,28 @@ For this exercise, we will use the data stored in [`hospital.csv`](hospital.csv)
 For this exercise, we will use `Age`, `Education`, `Income`, and `Sex` in an attempt to model `Blood`. Essentially, we are attempting to model white blood cell count using only demographic information.
 
 **(a)** Load the data, and check its structure using `str()`. Verify that `Education`, `Income`, and `Sex` are factors; if not, coerce them to be factors. What are the levels of `Education`, `Income`, and `Sex`?
+```{r results="hold"}
+hsp_df <- read.csv("hospital.csv")
+print("Structure of dataset before coercing type is below ")
+str(hsp_df)
+
+hsp_df$Education <- as.factor(hsp_df$Education)
+hsp_df$Income <- as.factor(hsp_df$Income)
+hsp_df$Sex <- as.factor(hsp_df$Sex)
+
+
+print("Structure of dataset after coercing type of Education, Income and sex to factor is below ")
+str(hsp_df)
+
+```
+
 
 **(b)** Fit an additive multiple regression model with `Blood` as the response using `Age`, `Education`, `Income`, and `Sex` as predictors. What does `R` choose as the reference level for `Education`, `Income`, and `Sex`?
+```{r}
+m_hsp_add <- lm(formula = Blood~Age+Education+Income+Sex, data=hsp_df) 
+coef(m_hsp_add)
+```
+
 
 **(c)** Fit a multiple regression model with `Blood` as the response. Use the main effects of `Age`, `Education`, `Income`, and `Sex`, as well as the interaction of `Sex` with `Age` and the interaction of `Sex` and `Income`. Use a statistical test to compare this model to the additive model using a significance level of $\alpha = 0.10$. Which do you prefer?
 
