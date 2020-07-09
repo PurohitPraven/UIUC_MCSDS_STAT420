@@ -70,7 +70,7 @@ anova(simple_m, additive_m)$`Pr(>F)`[2]
 additive_m <- lm(Hwt~Bwt+Sex, data = cats)
 anova(simple_m, interactive_m)$`Pr(>F)`[2]
 anova(additive_m, interactive_m)$`Pr(>F)`[2]
-# to do Why is the answer Interactive
+# todo Why is the answer Interactive
 ```
 Answer Simple # Wrong answer
 Correct Answer: interactive
