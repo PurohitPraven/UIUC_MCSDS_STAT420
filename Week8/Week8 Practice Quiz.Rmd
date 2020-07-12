@@ -1,0 +1,26 @@
+---
+title: "Week8 Practice Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Q1. Consider the model $Y = 5 - 2 x + \epsilon$
+
+where $\epsilon \sim N(0, \sigma^2 = \frac{|x|}{4})$
+
+That is $\text{Var}[Y \mid X = x] = \frac{|x|}{4}$
+
+Calculate $P[Y > 1 \mid X = 3]$
+
+```{r}
+# Y = 5 -6 + \epsilon
+# P(Y= -1 + epsilon)
+# sigma = sqrt(3/4)
+# Considering a normal distribution
+
+hatvalues()
+```
+

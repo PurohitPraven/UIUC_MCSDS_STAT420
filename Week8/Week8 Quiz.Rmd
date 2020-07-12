@@ -1,0 +1,237 @@
+---
+title: "Week8 Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+data_1 <- read.csv("data1.csv")
+data_2 <- read.csv("data2.csv")
+library(ggplot2)
+```
+
+1.Question 1
+
+The above code block has access to two data frames named data_1 and data_2, both with variables y and x. Here, we use y as the response.
+
+Fit a simple linear regression to both datasets. For both fitted regressions, create a Normal Q-Q plot.
+
+
+```{r}
+m1 <- lm(y~x, data = data_1)
+m2 <- lm(y~x, data = data_2)
+
+```
+```{r}
+ggplot(data = data_1, aes(sample=y)) + stat_qq() + stat_qq_line()
+```
+
+```{r}
+ggplot(data = data_2, aes(sample=y)) + stat_qq() + stat_qq_line()
+```
+
+
+Based on the plots which is true:
+
+* The normality assumption is more suspect for the model fit to data_1.
+* The normality assumption is more suspect for the model fit to data_2. - ANSWER
+
+
+2.Question 2
+The above code block has access to two data frames named data_1 and data_2, both with variables y and x. Here, we use y as the response.
+
+Fit a simple linear regression to both datasets. For both fitted regressions, create a Fitted versus Residuals plot.
+
+Based on the plots which is true:
+```{r}
+ggplot(data = m1, aes(x = fitted(m1), y = resid(m1))) +
+  geom_point(size = 2) + geom_hline(yintercept=0)
+```
+
+```{r}
+ggplot(data = m2, aes(x = fitted(m2), y = resid(m2))) +
+  geom_point(size = 2) + geom_hline(yintercept=0)
+```
+
+* The equal variance assumption is more suspect for the model fit to data_1. - ANSWER
+* The equal variance assumption is more suspect for the model fit to data_2.
+
+
+
+3.Question 3
+Consider the model $Y = 2 + 4 x + \epsilon$
+where $\epsilon \sim N(0, \sigma^2 = x ^ 2)$
+
+That is $\text{Var}[Y \mid X = x] = x ^ 2$
+
+Calculate $P[Y < -12 \mid X = -3]$
+```{r}
+# fit x=-3 to calculate y
+y=2+4*-3
+sd=sqrt((-3)^2)
+pnorm(-12, mean = y, sd=sd)
+
+```
+
+
+4.Question 4
+For Questions 4-9, use the LifeCycleSavings dataset that is built into R.
+
+Fit a multiple linear regression model with sr as the response and the remaining variables as predictors. What proportion of observations have a standardized residual less than 2 in magnitude?
+
+
+```{r}
+m <- lm(formula = sr ~ . , data=LifeCycleSavings)
+mean(abs(rstandard(m))<2)
+```
+
+
+
+5.Question 5
+
+Continue using the model fit in Question 4. Note that each observation is about a particular country. Which country (observation) has the standardized residual with the largest magnitude?
+
+```{r}
+which.max(rstandard(m))
+```
+
+
+6.Question 6
+
+Continue using the model fit in Question 4. How many observations have “high” leverage? Use twice the average leverage as the cutoff for “high.”
+
+```{r}
+sum(hatvalues(m)>2*mean(hatvalues(m)))
+
+```
+
+
+
+7.Question 7
+
+Continue using the model fit in Question 4. Which country (observation) has the largest leverage?
+```{r}
+which.max(hatvalues(m))
+```
+
+
+
+8.Question 8
+
+Continue using the model fit in Question 4. Report the largest Cook’s distance for observations in this dataset.
+
+```{r}
+max(cooks.distance(m))
+```
+
+
+9.Question 9
+
+Continue using the model fit in Question 4. Find the observations that are influential. Use $\frac{4}{n} $
+  as the cutoff for labeling an observation influential.
+
+Create a subset of the original data that excludes these influential observations and refit the same model to this new data. Report the sum of the estimated $\beta$ coefficients.
+
+```{r}
+influentials <- names(cooks.distance(m)[(cooks.distance(m)>4/nrow(m$model))])
+LifeCycleSavings$country <- rownames(LifeCycleSavings)
+LifeCycleSavings_wo_influentials <- LifeCycleSavings[!(LifeCycleSavings$country %in% influentials),]
+LifeCycleSavings_wo_influentials <- subset(LifeCycleSavings_wo_influentials, select = -c(country) )
+
+m_noinf <- lm(formula = sr ~ . , data = LifeCycleSavings_wo_influentials)
+sum(coef(m_noinf))
+```
+
+
+10.Question 10
+For Questions 10-15, use the airquality dataset that is built into R. For simplicity, we will remove any observations with missing data. We will use Ozone as the response and Temp as a single predictor.
+
+```{r}
+airquality <- na.omit(airquality)
+```
+
+
+$Y = \beta_0 + \beta_1 x + \beta_2 x^2 + \epsilon$
+Test for the significance of the quadratic term. Report the p-value of this test.
+
+```{r}
+m <- lm(formula = Ozone~Temp + I(Temp^2), data = airquality)
+coef(summary(m))["I(Temp^2)", "Pr(>|t|)"]
+```
+
+
+11.Question 11
+Fit the model
+
+$Y = \beta_0 + \beta_1 x + \beta_2 x^2 + \beta_3 x^3 + \beta_4 x^4 + \epsilon$
+
+Test to compare this model to the model fit in Question 10. Report the p-value of this test.
+
+```{r}
+m2 <- lm(formula = Ozone~ Temp + I(Temp^2) + I(Temp^3) + I(Temp^4), data = airquality)
+anova(m, m2)$"Pr(>F)"[2]
+```
+
+
+
+12.Question 12
+
+Use the Shapiro-Wilk test to asses the normality assumption for the model in Question 11. Use $\alpha = 0.01$
+Select the correct decision and interpretation:
+
+```{r}
+shapiro.test(resid(m2))
+```
+
+
+* Fail to reject H_0 - Normality assumption is suspect.
+* Fail to reject H_0 - Normality assumption is not suspect.
+* Reject H_0 - Normality assumption is suspect. - ANSWER
+* Reject H_0 - Normality assumption is not suspect.
+
+
+13.Question 13
+Fit the model
+
+$\log(y) = \beta_0 + \beta_1 x + \epsilon$
+
+Use the Shapiro-Wilk test to asses the normality assumption for this model. Use $\alpha = 0.01$
+
+```{r}
+m3 <- lm(formula = log(Ozone)~Temp, data = airquality)
+shapiro.test(resid(m3))
+```
+
+Select the correct decision and interpretation:
+
+* Fail to reject H_0 - Normality assumption is suspect.
+* Fail to reject H_0 - Normality assumption is not suspect.- ANSWER
+* Reject H_0 - Normality assumption is suspect.
+* Reject H_0 - Normality assumption is not suspect.
+
+
+14.Question 14
+Use the model from Question 13 to create a 90% prediction interval for Ozone when the temperate is 84 degrees Fahrenheit. Report the upper bound of this interval.
+
+```{r}
+# NOTE THAT YOU HAVE TO CONVERT THE PREDICT BACK INTO EXP
+exp(predict(m3, interval = c("prediction"), newdata = data.frame(Temp=c(84)), level = .9))
+```
+
+
+15.Question 15
+Using the model from Question 13, calculate the ratio of:
+
+* The sample variance of residuals for observations with a fitted value less than 3.5
+* The sample variance of residuals for observations with a fitted value greater than 3.5
+
+(While not a formal test for the equal variance assumption, we would hope that this value is close to 1.)
+
+```{r}
+var(m3$residuals[m3$fitted.values<3.5])/var(m3$residuals[m3$fitted.values>3.5])
+
+
+```
+
