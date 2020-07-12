@@ -26,6 +26,7 @@ m2 <- lm(y~x, data = data_2)
 ```
 ```{r}
 ggplot(data = data_1, aes(sample=y)) + stat_qq() + stat_qq_line()
+ggplot(data = m1, aes(sample=m1$model$y)) + stat_qq() + stat_qq_line()
 ```
 
 ```{r}
