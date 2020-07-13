@@ -42,28 +42,26 @@ Consider using this function to help with the remainder of the assignment as wel
 
 ```{r fig.width=15}
 diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha = .05, plotit = TRUE, testit = TRUE){
+  
+  if(plotit == TRUE){
+    g1 <- ggplot(data = model, aes(sample=model$model[as.character(formula(model)[2])][[1]])) + 
+      stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
+      ggtitle("Normal QQ Plot") +  theme_light() 
     
+    g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
+      geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
+      xlab("Fitted") + ylab("Residuals") + ggtitle("Residuals vs Fitted Plot") + theme_light() 
+    
+    grid.arrange(g1, g2, ncol=2)
+  }
+  
   if(testit == TRUE){
     pval <- shapiro.test(resid(model))$"p.value"
     decision <- "Fail to Reject."
     if(pval < alpha){
       decision <- "Reject"
     }
-    list(p_val=pval, decision=decision)
-  }
-  
-  if(plotit == TRUE){
-    g1 <- ggplot(data = model, aes(sample=model$model$y)) + 
-      stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
-      ggtitle("Normal QQ Plot") +  theme_linedraw() 
-    
-    
-    g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
-      geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
-      xlab("Fitted") + ylab("Residuals") + ggtitle("Residuals vs Fitted Plot") + theme_linedraw() 
-    
-    grid.arrange(g1, g2, ncol=2)
-    
+    return(list(p_val=pval, decision=decision))
   }
 }
 ```
@@ -90,13 +88,14 @@ fit_3 = lm(y ~ x, data = data_3)
 ```
 
 
-```{r fig.width=15}
+```{r fig.width=15, hold = "FALSE"}
 diagnostics(fit_1, plotit = FALSE)$p_val
 diagnostics(fit_2, plotit = FALSE)$decision
 diagnostics(fit_1, testit = FALSE, pcol = "black", lcol = "black")
 diagnostics(fit_2, testit = FALSE, pcol = "grey", lcol = "green")
 diagnostics(fit_3)
 ```
+
 
 ***
 
@@ -106,21 +105,99 @@ For this exercise, we will use the `prostate` data, which can be found in the `f
 
 ```{r, message = FALSE, warning = FALSE}
 library(faraway)
+library(lmtest)
 ```
 
+```{r}
+# Add BP_Test to above function and add better discription to result
+diagnostics2 <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', 
+                         alpha = .05, plotit = TRUE, testit = TRUE)
+{
+  if(testit == TRUE){
+    shapiro_Normalcy_test_result <- diagnostics(model, pcol, lcol, alpha, plotit, testit)
+  
+    bptest(model)
+    pval <-  bptest(model)$"p.value"
+    decision <- "Fail to Reject."
+    if(pval < alpha){
+      decision <- "Reject"
+    }
+    bptest_Const_Variance_test_result <- list(p_val=pval, decision=decision)
+    df1 <- rbind(shapiro_Normalcy_test_result, bptest_Const_Variance_test_result)
+    
+    return(df1)
+  }
+  else{
+    diagnostics(model, pcol, lcol, alpha, plotit, testit)
+  }
+}
+```
+
+
 **(a)** Fit an additive multiple regression model with `lpsa` as the response and the remaining variables in the `prostate` dataset as predictors. Report the $R^2$ value for this model.
+```{r}
+m1 <- lm(formula = lpsa ~ . , data = prostate)
+summary(m1)$"r.squared"
+```
 
 **(b)** Check the constant variance assumption for this model. Do you feel it has been violated? Justify your answer.
+```{r fig.width=15}
+diagnostics2(m1)
+```
+Based on the above Residuals vs Fitted plot, and the BP_test p-value and decision we feel that the constant variance assumption has not been violated. If we look at the graph, we see that the variance at any value of x seems to be approximately the same even though the number of points in the middle are more, the variance seems to be the same
+
 
 **(c)** Check the normality assumption for this model. Do you feel it has been violated? Justify your answer.
+```{r}
+
+diagnostics2(m1, plotit = FALSE)
+```
+
+Based on the above QQ plot above, we observe that most of the points fall on line. We do observe that it has fat tails, but the number of points on the tails are very less. Hence it is hard to say that the normality condition is met or violated by simply looking at the graph. To be sure we look at the BP_test results in the above table. Based on the BP_test we Fail to reject the Null Hypothesis that normality assumptions are not voilated. Hence we say that the Normality assumptions are met.
 
 **(d)** Check for any high leverage observations. Report any observations you determine to have high leverage.
+```{r}
+prostate[names(hatvalues(m1)[(hatvalues(m1)>2*mean(hatvalues(m1)))]),]
+```
+The above observations have high leverage
 
 **(e)** Check for any influential observations. Report any observations you determine to be influential.
+```{r}
+(prostate_influentials <- prostate[names(which(cooks.distance(m1)>4/nrow(prostate))),])
+```
+
+The above observations seem to have high cook's distance (greater than 4/sample_size) and hence can be considered to have high influence
 
 **(f)** Refit the additive multiple regression model without any points you identified as influential. Compare the coefficients of this fitted model to the previously fitted model.
+```{r}
+prostrate_wo_influentials <- prostate[(names(which(cooks.distance(m1)<=4/nrow(prostate)))),]
+m2 <- lm(formula = lpsa ~ . , data = prostrate_wo_influentials)
+
+df1 <- rbind(coef(m1), coef(m2))
+rownames(df1) <- c("original prostate dataset", "prostate dataset without infludential points")
+knitr::kable(df1)
+
+```
+
+We see that there is slight change in all slopes, but nothing major. We also note that the sign of the intercept changes, which is a major change
+
 
 **(g)** Create a data frame that stores the observations that were "removed" because they were influential. Use the two models you have fit to make predictions with these observations. Comment on the difference between these two sets of predictions.
+
+```{r}
+df1 <- predict(m1, newdata = prostate_influentials)
+df2 <- predict(m2, newdata = prostate_influentials)
+df3 <- rbind(df1,df2)
+row.names(df3) <- c("prediction of lpsa with influential points included", "prediction of lpsa with no influential points")
+
+knitr::kable(df3)
+
+```
+
+
+We see that the predicted values show minor change but no drastic changes are observed. This would imply that we would do nothing with the influential points and will keep them in the dataset
+
+todo - is the above assessment correct
 
 ***
 
