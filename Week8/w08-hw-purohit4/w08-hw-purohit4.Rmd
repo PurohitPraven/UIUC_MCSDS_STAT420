@@ -195,7 +195,7 @@ knitr::kable(df3)
 ```
 
 
-We see that the predicted values show minor change but no drastic changes are observed. This would imply that we would do nothing with the influential points and will keep them in the dataset
+We see that the predicted values show minor change but no drastic changes are observed. This would imply that we would do nothing with the influential points and will keep them in the dataset 
 
 todo - is the above assessment correct
 
@@ -251,7 +251,7 @@ bptest(fit_2)
 num_sims = 2500
 p_val_1 = rep(0, num_sims)
 p_val_2 = rep(0, num_sims)
-birthday = 19081014
+birthday = 19730321
 set.seed(birthday)
 ```
 
@@ -263,7 +263,47 @@ Repeat the above process of generating `y_1` and `y_2` as defined above, and fit
 
 using both models, in the appropriate variables defined above. (You do not need to use a data frame as we have in the past. Although, feel free to modify the code to instead use a data frame.)
 
+```{r}
+for(i in 1:num_sims){
+  y_1 = 4 + 1 * x_1 + 0 * x_2 + rnorm(n = n, mean = 0, sd = 1)
+  fit_1 = lm(y_1 ~ x_1 + x_2)
+  p_val_1[i] <-  coef(summary(fit_1))["x_2", "Pr(>|t|)"]
+  
+  
+  y_2 = 4 + 1 * x_1 + 0 * x_2 + rnorm(n = n, mean = 0, sd = abs(x_2))
+  fit_2 = lm(y_2 ~ x_1 + x_2)
+  p_val_2[i] <- coef(summary(fit_2))["x_2", "Pr(>|t|)"]
+}
+```
+
+
 **(b)** What proportion of the `p_val_1` values is less than 0.01? Less than 0.05? Less than 0.10? What proportion of the `p_val_2` values is less than 0.01? Less than 0.05? Less than 0.10? Arrange your results in a table. Briefly explain these results.
+
+```{r fig.width=15}
+
+p_val_1_proportions <- c(mean(p_val_1<.01), mean(p_val_1<.05), mean(p_val_1<.10))
+p_val_2_proportions <- c(mean(p_val_2<.01), mean(p_val_2<.05), mean(p_val_2<.10))
+
+df1 <- rbind(p_val_1_proportions, p_val_2_proportions)
+colnames(df1) <- c("Proportion pval<.01", "Proportion pval<.05", "Proportion pval<.10")
+rownames(df1) <- c("p_val for model 1 where sd = 1", "p_val for model 2 where sd = abs(x_2)")
+
+knitr::kable(df1)
+
+```
+
+
+The p-value proportions here signify how many simulations gave significance to $\beta_2$, which is $0$ in the model. Now if the linear model assumptions are met, we would expect that the t-test would result in the the proportion to be same as the the $\alpha$. We see that in model1 where the proportion of p-values is very close to $\alpha$. In model 2 we see that the proportion is more than $\alpha$ which tells us that some model assumptions are violated. 
+
+For the 2nd model, we draw the qq plot and residuals vs fit plot below along with their respective tests
+
+```{r fig.width=15}
+diagnostics2(fit_2)
+```
+
+Based on the above BP test we see that for the 2nd model the constant variance assumption is suspect hence we see a disproportionately higher proportion of p-values above $\alpha$
+
+todo - is this correct?
 
 ***
 
