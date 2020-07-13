@@ -43,12 +43,10 @@ Consider using this function to help with the remainder of the assignment as wel
 ```{r fig.width=15}
 diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha = .05, plotit = TRUE, testit = TRUE){
   
-  
   if(plotit == TRUE){
     g1 <- ggplot(data = model, aes(sample=.resid)) + 
       stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
       ggtitle("Normal QQ Plot") +  theme_light() 
-    
     
     g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
       geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
@@ -344,7 +342,7 @@ library(faraway)
 ```{r fig.width=15, message=FALSE}
 m1 <- lm(formula = loss~Fe, data = corrosion)
 
-ggplot(data = m1, aes(y=loss, x=Fe)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between loss and Iron content from corrosion dataset")
+ggplot(data = m1, aes(y=loss, x=Fe)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between loss and Iron content from corrosion dataset") +  theme_light()
 
 diagnostics2(m1, pcol = "black")
 
@@ -445,10 +443,27 @@ library(ggplot2)
 
 **(a)** Fit a linear model with `price` as the response variable $y$, and `carat` as the predictor $x$. Return the summary information of this model.
 
+```{r}
+m1 <- lm(formula = price~carat, data = diamonds)
+summary(m1)
+```
+
 <br><br>
 
 **(b)** Plot a scatterplot of price versus carat and add the line for the fitted model in part **(a)**. Using a fitted versus residuals plot and/or a Q-Q plot, comment on the diagnostics. 
 
+```{r fig.width=15}
+ggplot(data = m1, aes(y=price, x=carat)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between price and carat from diamonds dataset") +  theme_light()
+
+diagnostics2(m1, pcol = "black", testit = FALSE)
+
+```
+
+Based on the above plots we make the following observations
+
+1) The linear line does not seem to be fitting the data very well
+2) The normality assumption seems suspect based on the QQ plot
+3) The Equal variance assumptions seems to be voilated when looking at the residuals vs fit plot
 
 <br><br>
 
@@ -457,14 +472,38 @@ library(ggplot2)
 ```{r}
 qplot(price, data = diamonds, bins = 30)
 ```
+```{r fig.width=15, message=FALSE}
+m2 <- lm(formula = log(price)~carat, data = diamonds)
 
+ggplot(data = m2, aes(y=`log(price)`, x=carat)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between log(price) and carat from diamonds dataset") +  theme_light()
+
+diagnostics2(m2, pcol = "black", testit = FALSE)
+
+```
+
+looking at the diagnostic charts, the QQ and residual vs fitted charts, we see that both Normality and equal variance assumptions are suspect. We do notice that the lower tail of the QQ plot has improved after converting price to log
 
 <br><br>
 
 **(d)** Try adding log transformation of the predictor. Fit a model with a logged response and logged predictor, plot a scatterplot of log-price versus log-carat and add the line for the fitted model, then use a fitted versus residuals plot and/or a Q-Q plot to comment on the diagnostics of the model.
 
+```{r fig.width=15, message=FALSE}
+m3 <- lm(formula = log(price)~log(carat), data = diamonds)
+
+ggplot(data = m3, aes(y=`log(price)`, x=`log(price)`)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between log(price) and log(carat) from diamonds dataset") +  theme_light()
+
+diagnostics2(m3, pcol = "black", testit = FALSE)
+
+```
+
+The diagnostics of the model have improved a lot from the original dataset where the Normal assumption seems less suspect with both the tails coming in, and the constant variance plot seems a lot better.
 
 <br><br>
 
 **(e)** Use the model from part **(d)** to predict the price (in dollars) of a 3-carat diamond. Construct a 99% prediction interval for the price (in dollars).
+
+```{r}
+newdata <- data.frame("carat"=c(3))
+exp(predict(m3, newdata = newdata, interval = c("predict"), level = .99))
+```
 
