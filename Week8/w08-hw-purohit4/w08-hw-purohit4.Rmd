@@ -43,10 +43,12 @@ Consider using this function to help with the remainder of the assignment as wel
 ```{r fig.width=15}
 diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha = .05, plotit = TRUE, testit = TRUE){
   
+  
   if(plotit == TRUE){
-    g1 <- ggplot(data = model, aes(sample=model$model[as.character(formula(model)[2])][[1]])) + 
+    g1 <- ggplot(data = model, aes(sample=.resid)) + 
       stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
       ggtitle("Normal QQ Plot") +  theme_light() 
+    
     
     g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
       geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
@@ -65,6 +67,8 @@ diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha
   }
 }
 ```
+
+<br><br>
 
 **(b)** Run the following code.
 
@@ -140,12 +144,15 @@ m1 <- lm(formula = lpsa ~ . , data = prostate)
 summary(m1)$"r.squared"
 ```
 
+<br><br>
+
 **(b)** Check the constant variance assumption for this model. Do you feel it has been violated? Justify your answer.
 ```{r fig.width=15}
 diagnostics2(m1)
 ```
 Based on the above Residuals vs Fitted plot, and the BP_test p-value and decision we feel that the constant variance assumption has not been violated. If we look at the graph, we see that the variance at any value of x seems to be approximately the same even though the number of points in the middle are more, the variance seems to be the same
 
+<br><br>
 
 **(c)** Check the normality assumption for this model. Do you feel it has been violated? Justify your answer.
 ```{r}
@@ -155,11 +162,16 @@ diagnostics2(m1, plotit = FALSE)
 
 Based on the above QQ plot above, we observe that most of the points fall on line. We do observe that it has fat tails, but the number of points on the tails are very less. Hence it is hard to say that the normality condition is met or violated by simply looking at the graph. To be sure we look at the BP_test results in the above table. Based on the BP_test we Fail to reject the Null Hypothesis that normality assumptions are not voilated. Hence we say that the Normality assumptions are met.
 
+<br><br>
+
 **(d)** Check for any high leverage observations. Report any observations you determine to have high leverage.
 ```{r}
 prostate[names(hatvalues(m1)[(hatvalues(m1)>2*mean(hatvalues(m1)))]),]
 ```
 The above observations have high leverage
+
+
+<br><br>
 
 **(e)** Check for any influential observations. Report any observations you determine to be influential.
 ```{r}
@@ -167,6 +179,9 @@ The above observations have high leverage
 ```
 
 The above observations seem to have high cook's distance (greater than 4/sample_size) and hence can be considered to have high influence
+
+
+<br><br>
 
 **(f)** Refit the additive multiple regression model without any points you identified as influential. Compare the coefficients of this fitted model to the previously fitted model.
 ```{r}
@@ -181,6 +196,8 @@ knitr::kable(df1)
 
 We see that there is slight change in all slopes, but nothing major. We also note that the sign of the intercept changes, which is a major change
 
+
+<br><br>
 
 **(g)** Create a data frame that stores the observations that were "removed" because they were influential. Use the two models you have fit to make predictions with these observations. Comment on the difference between these two sets of predictions.
 
@@ -245,6 +262,8 @@ fit_2 = lm(y_2 ~ x_1 + x_2)
 bptest(fit_2)
 ```
 
+<br><br>
+
 **(a)** Use the following code after changing `birthday` to your birthday.
 
 ```{r}
@@ -277,6 +296,8 @@ for(i in 1:num_sims){
 ```
 
 
+<br><br>
+
 **(b)** What proportion of the `p_val_1` values is less than 0.01? Less than 0.05? Less than 0.10? What proportion of the `p_val_2` values is less than 0.01? Less than 0.05? Less than 0.10? Arrange your results in a table. Briefly explain these results.
 
 ```{r fig.width=15}
@@ -292,18 +313,21 @@ knitr::kable(df1)
 
 ```
 
+In order to explain the results we also plot the distributions of these p-values
 
-The p-value proportions here signify how many simulations gave significance to $\beta_2$, which is $0$ in the model. Now if the linear model assumptions are met, we would expect that the t-test would result in the the proportion to be same as the the $\alpha$. We see that in model1 where the proportion of p-values is very close to $\alpha$. In model 2 we see that the proportion is more than $\alpha$ which tells us that some model assumptions are violated. 
-
-For the 2nd model, we draw the qq plot and residuals vs fit plot below along with their respective tests
 
 ```{r fig.width=15}
-diagnostics2(fit_2)
+par(mfrow = c(1,2))
+
+hist(p_val_1, main = "p-value distribution for 1st model", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(p_val_1)))
+
+hist(p_val_2, main = "p-value distribution for 2nd model", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "p-value", xlim = c(0,max(p_val_2)))
 ```
 
-Based on the above BP test we see that for the 2nd model the constant variance assumption is suspect hence we see a disproportionately higher proportion of p-values above $\alpha$
+Based on the table and distributions we see that the 1st model has a uniform distribution which is why the table shows that the proportion of p-values less than a certain percentage of distribution is almost equal to the percentage. This implies that there is no significant relationship between $\beta_2$ and the response variable and that it supports the Null Hypothesis. This finding matches with the true model where we see that $\beta_2 = 0$.
 
-todo - is this correct?
+For the 2nd model, we see that p-value distribution is closer to 0, and in the table we see that there is a higher proportion of p-value less than a given percentage. This implies that there is increasing evidence that Null Hypothesis can be rejected and that there may be a significant relationship between $\beta_2$ and the response variable. This does not match what we know to be true from our model and hence we can conclude that if the linear model assumptions are not met, the Hypothesis test results will be incorrect. Garbage in = Garbage out. Model where linear model assumptions are not met = incorrect result of Hypothesis tests regarding significance of relationship
+
 
 ***
 
@@ -317,7 +341,97 @@ library(faraway)
 
 **(a)** Fit a simple linear regression with `loss` as the response and `Fe` as the predictor. Plot a scatterplot and add the fitted line. Check the assumptions of this model.
 
-**(b)** Fit higher order polynomial models of degree 2, 3, and 4. For each, plot a fitted versus residuals plot and comment on the constant variance assumption. Based on those plots, which of these three models do you think are acceptable? Use a statistical test(s) to compare the models you just chose. Based on the test, which is preferred? Check the normality assumption of this model. Identify any influential observations of this model.
+```{r fig.width=15, message=FALSE}
+m1 <- lm(formula = loss~Fe, data = corrosion)
+
+ggplot(data = m1, aes(y=loss, x=Fe)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between loss and Iron content from corrosion dataset")
+
+diagnostics2(m1, pcol = "black")
+
+```
+
+Looking at the QQ plot and Residuals vs fit plot it is hard to make out if the linear model assumptions are met, but the results of the Shapiro and BP test results tell us that the assumptions are met hence we accept the Null Hypothesis that the Normality and equal variance assumptions are not violated for this model
+
+todo - is this correct
+
+
+<br><br>
+
+**(b)** Fit higher order polynomial models of degree 2, 3, and 4. For each, plot a fitted versus residuals plot and comment on the constant variance assumption. Based on those plots, which of these three models do you think are acceptable? 
+
+```{r fig.width=15}
+m2 <- lm(formula = loss ~ Fe + I(Fe^2), data = corrosion)
+diagnostics2(m2, pcol = "black")
+
+m3 <- lm(formula = loss ~ Fe + I(Fe^2) + I(Fe^3), data = corrosion)
+diagnostics2(m3, pcol = "black")
+
+m4 <- lm(formula = loss ~ Fe + I(Fe^2) + I(Fe^3) + I(Fe^4), data = corrosion)
+diagnostics2(m4, pcol = "black")
+```
+
+Looking at the plots we see that plots for model 3 and model 4 seem to display constant variance. Since we prefer simplicity  we would prefer the third order model
+
+Use a statistical test(s) to compare the models you just chose. Based on the test, which is preferred? Check the normality assumption of this model. 
+
+We do an anova test between the models to see which model is significant
+
+```{r}
+anova(m1, m2)
+```
+
+Looking at the anova result we prefer the 1st model. Now we test the 1st and the 3rd model
+
+```{r}
+anova(m1, m3)
+```
+
+Looking at the result we prefer the 3rd model. 
+
+To validate that third model is indeed better than 2nd model we do an anova test between 2nd and 3rd model
+
+```{r}
+anova(m2, m3)
+```
+
+Since p-value is small we prefer the 3rd model
+
+
+Now we do anova test for 3rd and 4th model
+
+```{r}
+anova(m3, m4)
+```
+
+Based on the result, since p value is larger than .1,  we still prefer the third model
+
+We now do the Normality and Equal variance test for the third model
+
+```{r fig.width=15}
+diagnostics2(m3, plotit = FALSE)
+```
+
+Based on the test results we see that that the Normality and Equal variance assumptions are met
+
+We also look at the fitted regression line with the third model to validate that the line is indeed fitting better
+
+```{r fig.width=15}
+g1 <- ggplot(data = corrosion, aes(y=loss, x=Fe)) + geom_point() +
+stat_smooth(method="lm", se=TRUE, fill=NA,
+                formula=y ~ poly(x, 3, raw=TRUE),colour="red") + ggtitle(paste("Scatter plot beteeen loss and iron content with model ", summary(m3)$call)[2])
+
+```
+
+
+Identify any influential observations of this model.
+
+```{r}
+
+(m3_influentials <- corrosion[names(which(cooks.distance(m3)>4/nrow(corrosion))),])
+```
+
+Based on the above we see that there are no influential observations
+
 
 ***
 
@@ -331,8 +445,12 @@ library(ggplot2)
 
 **(a)** Fit a linear model with `price` as the response variable $y$, and `carat` as the predictor $x$. Return the summary information of this model.
 
+<br><br>
+
 **(b)** Plot a scatterplot of price versus carat and add the line for the fitted model in part **(a)**. Using a fitted versus residuals plot and/or a Q-Q plot, comment on the diagnostics. 
 
+
+<br><br>
 
 **(c)** Seeing as the price stretches over several orders of magnitude, it seems reasonable to try a log transformation of the response. Fit a model with a logged response, plot a scatterplot of log-price versus carat and add the line for the fitted model, then use a fitted versus residuals plot and/or a Q-Q plot to comment on the diagnostics of the model.
 
@@ -341,7 +459,12 @@ qplot(price, data = diamonds, bins = 30)
 ```
 
 
+<br><br>
+
 **(d)** Try adding log transformation of the predictor. Fit a model with a logged response and logged predictor, plot a scatterplot of log-price versus log-carat and add the line for the fitted model, then use a fitted versus residuals plot and/or a Q-Q plot to comment on the diagnostics of the model.
+
+
+<br><br>
 
 **(e)** Use the model from part **(d)** to predict the price (in dollars) of a 3-carat diamond. Construct a 99% prediction interval for the price (in dollars).
 
