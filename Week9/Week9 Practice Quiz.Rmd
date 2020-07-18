@@ -1,0 +1,79 @@
+---
+title: "Week9 Practice Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+quiz_data <- read.csv("quiz_data.csv")
+```
+
+
+Q1. From quiz_data.csv Calculate the partial correlation coefficient between y and x1 controlling for the effect of the remaining variables.
+
+```{r}
+m1 <- lm(y~ . - x1 , data=quiz_data)
+m2 <- lm(x1~ . - y , data = quiz_data)
+
+cor(resid(m2), resid(m1))
+```
+
+Q2. The above code block has access to a data frame stored in the variable quiz_data. We will use y as the response. Fit an additive model using the remaining variables as predictors. Calculate the variance inflation factor of the regression coefficient for x5.
+
+```{r}
+m1 <- lm(y~., data = quiz_data)
+car::vif(m1)
+```
+
+Q3. The above code block has access to a data frame stored in the variable quiz_data. We will use y as the response. Fit two additive linear models:
+
+* One with all possible predictors
+* One with x1, x2, and x3 as predictors
+Use AIC to compare these two models. Report the RSS of the preferred model.
+
+```{r}
+m1 <- lm(y~., data = quiz_data)
+m2 <- lm(y~x1+x2+x3, data = quiz_data)
+
+extractAIC(m1)
+extractAIC(m2)
+sum(resid(m1)^2)
+
+```
+
+Q4. The above code block has access to a data frame stored in the variable quiz_data. We will use y as the response. Fit two additive linear models:
+
+* One with x1, x2, and x4 as predictors
+* One with x3, x4, x5, and x6 as predictors
+Report the Adjusted R^2 of the model with the better Adjusted R^2
+
+```{r}
+
+m1 <- lm(y~x1+x2+x4, data = quiz_data)
+m2 <- lm(y~x3+x4+x5+x6, data = quiz_data)
+
+summary(m1)$"adj.r.squared"
+summary(m2)$"adj.r.squared" 
+# LARGER adjusted R2 is better
+
+```
+
+Q5. The above code block has access to a data frame stored in the variable quiz_data. We will use y as the response. Start with an additive model using the remaining variables as predictors, then perform variable selection using backwards AIC.
+
+Report the LOOCV-RMSE of the chosen mode.
+
+```{r}
+m1 <- lm(y~., data = quiz_data)
+
+frm <- formula(step(m1, direction = "backward", trace = 0))
+
+m2 <- lm(formula=frm, data = quiz_data)
+
+
+sqrt(mean((resid(m2) / (1 - hatvalues(m2))) ^ 2))
+
+```
+

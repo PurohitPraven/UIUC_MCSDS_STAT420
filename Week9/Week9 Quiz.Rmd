@@ -1,0 +1,158 @@
+---
+title: "Week9 Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+For Questions 1-9, use the the built-in R dataset mtcars. Use mpg as the response variable. Do not modify any of the data. (An argument could be made for cyl, gear, and carb to be coerced to factors, but for simplicity, we will keep them numeric.)
+
+```{r}
+mtcars
+```
+
+
+Q1. Fit an additive linear model with all available variables as predictors. What is the largest variance inflation factor? (Consider answering this question in a local R session and use an existing vif() function.)
+
+```{r}
+m1 <- lm(mpg~. , data = mtcars)
+car::vif(m1)
+```
+
+Q2. What is the Adjusted R^2 of the model fit in Question 1?
+```{r}
+summary(m1)$"adj.r.squared"
+```
+
+Q3. What is the LOOCV-RMSE of the model fit in Question 1?
+
+```{r}
+sqrt(mean((resid(m1) / (1 - hatvalues(m1))) ^ 2))
+
+```
+
+Q4. Start with the model fit in Question 1, and then perform variable selection using backwards AIC. Which of the following variables are selected? (Mark all that are selected.)
+
+* cyl
+* wt
+* drat
+* vs
+* qsec
+* carb
+* am
+
+```{r}
+(frm <- formula(step(m1, direction = "backward", trace = 0)))
+
+```
+
+Q5. What is the LOOCV-RMSE of the model found via selection in Question 4?
+
+```{r}
+m2 <- lm(formula = frm, data = mtcars)
+sqrt(mean((resid(m2) / (1 - hatvalues(m2))) ^ 2))
+
+```
+
+Q6. What is the largest variance inflation factor of the model found via selection in Question 4?
+
+```{r}
+
+car::vif(m2)
+```
+
+Q7. Based on the previous questions, which of the following is true? (We will refer to the model in Question 1 as the “full model” and the model found in Question 4 as the “selected model.”)
+
+
+* The selected model is better for predicting but has collinearity issues.
+* The full model is better for predicting but has collinearity issues.
+* The selected model is better for predicting and does not have collinearity issues. - ANSWER
+* The full model is better for predicting and does not have colinerity issues
+
+```{r}
+anova(m2, m1) # high p so we Fail to reject the Null hypothesis
+print("**********")
+car::vif(m2) # vif less than 5 hence no colinearity issues
+
+```
+
+Q8. Perform variable selection using BIC and a forward search. Begin the search with no predictors. The largest allowable model should be an additive model using all possible predictors.
+
+Which of the following variables are selected? (Mark all that are selected.)
+* wt
+* drat
+* cyl
+* vs
+* qsec
+* carb
+* am
+
+```{r}
+(frm <- formula(step(lm(mpg~1, data = mtcars), scope = "~ wt+drat+cyl+vs+qsec+carb+am+gear+carb", direction = "forward", k=log(nrow(mtcars)), trace = 0)))
+
+```
+
+Q9. What is the LOOCV-RMSE of the model found via selection in Question 8?
+```{r}
+m3 <- lm(formula = frm, data = mtcars)
+sqrt(mean((resid(m3) / (1 - hatvalues(m3))) ^ 2))
+
+```
+
+For Questions 10-15, use the the built-in R dataset LifeCycleSavings. Use sr as the response variable.
+
+Q10. Calculate the partial correlation coefficient between sr and ddpi controlling for the effect of the remaining variables.
+```{r}
+m1 <- lm(sr~. - ddpi, data = LifeCycleSavings)
+m2 <- lm(ddpi~. - sr, data = LifeCycleSavings)
+cor(resid(m2), resid(m1))
+
+```
+
+Q11. Fit a model with all available predictors as well as their two-way interactions. What is the Adjusted R^2 of this model?
+
+```{r}
+m3 <- lm(sr~(.)^2, data=LifeCycleSavings)
+summary(m3)$"adj.r.squared"
+```
+
+Q12. Start with the model fit in Question 11 then perform variable selection using backwards BIC. Which of the following variables are selected? (Mark all that are selected.)
+
+* pop15:pop75
+* pop15:dpi
+* pop15:ddpi
+* pop75:dpi
+* pop75:ddpi
+* dpi:ddpi
+
+```{r}
+(frm1 <- formula(step(m3, direction = "backward", k=log(nrow(LifeCycleSavings)), trace = 0)))
+```
+
+Q13. Start with the model fit in Question 11 then perform variable selection using backwards AIC. Which of the following variables are selected? (Mark all that are selected.)
+```{r}
+(frm2 <- formula(step(m3, direction = "backward", trace = 0)))
+
+```
+Q14. Consider the model in Question 11, the model found in Question 13, and an additive model with all possible predictors. Based of LOOCV-RMSE, which of these models is best? Report the LOOCV-RMSE of the model you choose.
+```{r}
+m4 <- lm(formula = frm2, data = LifeCycleSavings)
+m5 <- lm(sr~., data = LifeCycleSavings)
+
+(loocv_m3 <- sqrt(mean((resid(m3) / (1 - hatvalues(m3))) ^ 2)))
+(loocv_m4 <- sqrt(mean((resid(m4) / (1 - hatvalues(m4))) ^ 2)))
+(loocv_m5 <- sqrt(mean((resid(m5) / (1 - hatvalues(m5))) ^ 2)))
+
+```
+Q15. Consider the model in Question 11, the model found in Question 13, and an additive model with all possible predictors. Based of Adjusted R^2, which of these models is best? Report the Adjusted R^2 of the model you choose.
+
+```{r}
+summary(m3)$"adj.r.squared"
+summary(m4)$"adj.r.squared"
+summary(m5)$"adj.r.squared"
+```
+
+
+
