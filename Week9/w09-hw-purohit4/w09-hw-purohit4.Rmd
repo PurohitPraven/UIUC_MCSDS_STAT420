@@ -1,0 +1,485 @@
+---
+title: "Week 9 - Homework"
+author: "STAT 420, Summer 2020, purohit4@illinois.edu"
+date: ''
+output:
+  html_document: 
+    theme: readable
+    toc: yes
+  pdf_document: default
+urlcolor: cyan
+---
+
+***
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+options(scipen = 1, digits = 4, width = 80, fig.align = "center")
+```
+
+## Exercise 1 (`longley` Macroeconomic Data)
+
+The built-in dataset `longley` contains macroeconomic data for predicting employment. We will attempt to model the `Employed` variable.
+
+```{r, eval = FALSE, include=FALSE}
+View(longley)
+?longley
+```
+
+**(a)** What is the largest correlation between any pair of predictors in the dataset?
+```{r results="hold"}
+(c <- cor(longley))
+indices <- which(c == max(c[c<1]), arr.ind = TRUE)
+c[rownames(indices)[1],rownames(indices)[2]]
+
+```
+The largest correlation is between Year and GNP and it is .9953. 
+
+
+
+**(b)** Fit a model with `Employed` as the response and the remaining variables as predictors. Calculate and report the variance inflation factor (VIF) for each of the predictors. Which variable has the largest VIF? Do any of the VIFs suggest multicollinearity?
+```{r message=FALSE}
+library(car)
+
+m1 <- lm(Employed~., data = longley)
+(vif_longley <- vif(m1))
+vif_longley[which.max(vif_longley)]
+```
+GNP has the largest VIF. 
+
+Except Armed.Forces all VIFs suggest multicollinearity since their values are greater than 5
+
+**(c)** What proportion of the observed variation in `Population` is explained by a linear relationship with the other predictors?
+```{r}
+summary(lm(Population~.-Employed, data = longley))$"r.squared"
+```
+99.75% of the observed variation in Population is explained by the other predictors
+
+**(d)** Calculate the partial correlation coefficient for `Population` and `Employed` **with the effects of the other predictors removed**.
+
+```{r}
+cor(resid(lm(Population~.-Employed, data = longley)), resid(lm(Employed~.-Population, data = longley)))
+```
+
+
+**(e)** Fit a new model with `Employed` as the response and the predictors from the model in **(b)** that were significant. (Use $\alpha = 0.05$.) Calculate and report the variance inflation factor for each of the predictors. Which variable has the largest VIF? Do any of the VIFs suggest multicollinearity?
+
+
+```{r results="hold"}
+c_m1 <- coef(summary(m1))
+preds_1 <- which(c_m1[,"Pr(>|t|)"] < .05)
+pred_names <- names(preds_1)[2:length(preds_1)]
+print(paste("predictors that are significant from model in 'b' are ", paste(pred_names, collapse = ", ")))
+pred_formula <- paste(pred_names, collapse = "+")
+full_formula <- paste("Employed~", pred_formula, sep = "")
+m2 <- lm(full_formula, data = longley)
+print("variance inflation factors for each of the predictors are as below")
+(vif_m2 <- vif(m2))
+
+print(paste("The predictor with the largest vif = ", names(vif_m2[max(vif_m2)])))
+
+
+```
+None of the VIFs suggest multicollinearity since they are all less than 5
+
+**(f)** Use an $F$-test to compare the models in parts **(b)** and **(e)**. Report the following:
+
+
+```{r}
+(anova_result <- anova(m2,m1))
+```
+
+
+- The null hypothesis
+
+The null Hypothesis is 
+$H_0 : \hat{Employed} = \beta_0 + \beta_1 Unemployed + \beta_2 Armed.Forces + \beta_3 Year + \epsilon$
+or that Employed can be expressed in terms of Unemplyed and Armed.Forces and Year
+
+
+- The test statistic
+```{r}
+anova_result$F[2]
+```
+
+
+
+- The distribution of the test statistic under the null hypothesis
+
+The distribution of the test statistic under null hypothesis will be an F-curve
+
+todo - is this correct? or do we have to simulate data to show distribution?
+
+- The p-value
+
+```{r}
+anova_result$`Pr(>F)`[2]
+```
+
+
+
+- A decision
+
+Since p value is greater than any reasonable $\alpha$ we Fail to reject the null Hypothesis
+
+
+
+- Which model you prefer, **(b)** or **(e)**
+
+We prefer the model from **(e)**
+
+
+**(g)** Check the assumptions of the model chosen in part **(f)**. Do any assumptions appear to be violated?
+```{r fig.width=15, message=FALSE}
+library(ggplot2)
+library(gridExtra)
+library(lmtest)
+
+diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha = .05, plotit = TRUE, testit = TRUE){
+  
+  if(plotit == TRUE){
+    g1 <- ggplot(data = model, aes(sample=.resid)) + 
+      stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
+      ggtitle("Normal QQ Plot") +  theme_light() 
+    
+    g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
+      geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
+      xlab("Fitted") + ylab("Residuals") + ggtitle("Residuals vs Fitted Plot") + theme_light() 
+    
+    grid.arrange(g1, g2, ncol=2)
+  }
+  
+  if(testit == TRUE){
+    pval <- shapiro.test(resid(model))$"p.value"
+    decision <- "Fail to Reject."
+    if(pval < alpha){
+      decision <- "Reject"
+    }
+    return(list(p_val=pval, decision=decision))
+  }
+}
+diagnostics2 <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', 
+                         alpha = .05, plotit = TRUE, testit = TRUE)
+{
+  if(testit == TRUE){
+    shapiro_Normalcy_test_result <- diagnostics(model, pcol, lcol, alpha, plotit, testit)
+  
+    bptest(model)
+    pval <-  bptest(model)$"p.value"
+    decision <- "Fail to Reject."
+    if(pval < alpha){
+      decision <- "Reject"
+    }
+    bptest_Const_Variance_test_result <- list(p_val=pval, decision=decision)
+    df1 <- rbind(shapiro_Normalcy_test_result, bptest_Const_Variance_test_result)
+    
+    return(df1)
+  }
+  else{
+    diagnostics(model, pcol, lcol, alpha, plotit, testit)
+  }
+}
+
+diagnostics2(m2)
+```
+
+Looking at the above plots and the results of the Shapiro tests and BP test, we conclude that the Normal distribution of errors and constant variance assumptions of the model are not violated. The model is fitting using a linear expression hence the linearity assumption is also not violated.
+
+
+
+
+```{r, echo = FALSE}
+plot_fitted_resid = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
+  plot(fitted(model), resid(model), 
+       col = pointcol, pch = 20, cex = 1.5,
+       xlab = "Fitted", ylab = "Residuals")
+  abline(h = 0, col = linecol, lwd = 2)
+}
+
+plot_qq = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
+  qqnorm(resid(model), col = pointcol, pch = 20, cex = 1.5)
+  qqline(resid(model), col = linecol, lwd = 2)
+}
+```
+
+***
+
+## Exercise 2 (`Credit` Data)
+
+For this exercise, use the `Credit` data from the `ISLR` package. Use the following code to remove the `ID` variable which is not useful for modeling.
+
+```{r}
+library(ISLR)
+data(Credit)
+Credit = subset(Credit, select = -c(ID))
+```
+
+Use `?Credit` to learn about this dataset.
+
+**(a)** Find a "good" model for `balance` using the available predictors. Use any methods seen in class except transformations of the response. The model should:
+
+- Reach a LOOCV-RMSE below `140`
+- Obtain an adjusted $R^2$ above `0.90`
+- Fail to reject the Breusch-Pagan test with an $\alpha$ of $0.01$
+- Use fewer than 10 $\beta$ parameters
+
+Store your model in a variable called `mod_a`. Run the two given chunks to verify your model meets the requested criteria. If you cannot find a model that meets all criteria, partial credit will be given for meeting at least some of the criteria.
+
+```{r, message = FALSE, warning = FALSE}
+library(lmtest)
+
+get_bp_decision = function(model, alpha) {
+  decide = unname(bptest(model)$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_sw_decision = function(model, alpha) {
+  decide = unname(shapiro.test(resid(model))$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_num_params = function(model) {
+  length(coef(model))
+}
+
+get_loocv_rmse = function(model) {
+  sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
+}
+
+get_adj_r2 = function(model) {
+  summary(model)$adj.r.squared
+}
+```
+
+```{r, eval = FALSE}
+get_loocv_rmse(mod_a)
+get_adj_r2(mod_a)
+get_bp_decision(mod_a, alpha = 0.01)
+get_num_params(mod_a)
+```
+
+**(b)** Find another "good" model for `balance` using the available predictors. Use any methods seen in class except transformations of the response. The model should:
+
+- Reach a LOOCV-RMSE below `130`
+- Obtain an adjusted $R^2$ above `0.85`
+- Fail to reject the Shapiro-Wilk test with an $\alpha$ of $0.01$
+- Use fewer than 25 $\beta$ parameters
+
+Store your model in a variable called `mod_b`. Run the two given chunks to verify your model meets the requested criteria. If you cannot find a model that meets all criteria, partial credit will be given for meeting at least some of the criteria.
+
+```{r, message = FALSE, warning = FALSE}
+library(lmtest)
+
+get_bp_decision = function(model, alpha) {
+  decide = unname(bptest(model)$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_sw_decision = function(model, alpha) {
+  decide = unname(shapiro.test(resid(model))$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_num_params = function(model) {
+  length(coef(model))
+}
+
+get_loocv_rmse = function(model) {
+  sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
+}
+
+get_adj_r2 = function(model) {
+  summary(model)$adj.r.squared
+}
+```
+
+```{r, eval = FALSE}
+get_loocv_rmse(mod_b)
+get_adj_r2(mod_b)
+get_sw_decision(mod_b, alpha = 0.01)
+get_num_params(mod_b)
+```
+
+***
+
+## Exercise 3 (`Sacramento` Housing Data)
+
+For this exercise, use the `Sacramento` data from the `caret` package. Use the following code to perform some preprocessing of the data.
+
+```{r}
+library(caret)
+library(ggplot2)
+data(Sacramento)
+sac_data = Sacramento
+sac_data$limits = factor(ifelse(sac_data$city == "SACRAMENTO", "in", "out"))
+sac_data = subset(sac_data, select = -c(city, zip))
+```
+
+Instead of using the `city` or `zip` variables that exist in the dataset, we will simply create a variable (`limits`) indicating whether or not a house is technically within the city limits of Sacramento. (We do this because they would both be factor variables with a **large** number of levels. This is a choice that is made due to laziness, not necessarily because it is justified. Think about what issues these variables might cause.)
+
+Use `?Sacramento` to learn more about this dataset.
+
+A plot of longitude versus latitude gives us a sense of where the city limits are.
+
+```{r}
+qplot(y = longitude, x = latitude, data = sac_data,
+      col = limits, main = "Sacramento City Limits ")
+```
+
+After these modifications, we test-train split the data.
+
+```{r}
+set.seed(420)
+sac_trn_idx  = sample(nrow(sac_data), size = trunc(0.80 * nrow(sac_data)))
+sac_trn_data = sac_data[sac_trn_idx, ]
+sac_tst_data = sac_data[-sac_trn_idx, ]
+```
+
+The training data should be used for all model fitting. Our goal is to find a model that is useful for predicting home prices.
+
+**(a)** Find a "good" model for `price`. Use any methods seen in class. The model should reach a LOOCV-RMSE below 77,500 in the training data. Do not use any transformations of the response variable.
+
+**(b)** Is a model that achieves a LOOCV-RMSE below 77,500 useful in this case? That is, is an average error of 77,500 low enough when predicting home prices? To further investigate, use the held-out test data and your model from part **(a)** to do two things:
+
+- Calculate the average percent error:
+\[
+\frac{1}{n}\sum_i\frac{|\text{predicted}_i - \text{actual}_i|}{\text{predicted}_i} \times 100
+\]
+- Plot the predicted versus the actual values and add the line $y = x$.
+
+Based on all of this information, argue whether or not this model is useful.
+
+***
+
+## Exercise 4 (Does It Work?)
+
+In this exercise, we will investigate how well backwards AIC and BIC actually perform. For either to be "working" correctly, they should result in a low number of both **false positives** and **false negatives**. In model selection,
+
+- **False Positive**, FP: Incorrectly including a variable in the model. Including a *non-significant* variable
+- **False Negative**, FN: Incorrectly excluding a variable in the model. Excluding a *significant* variable
+
+Consider the **true** model
+
+\[
+Y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 + \beta_4 x_4 + \beta_5 x_5 + \beta_6 x_6 + \beta_7 x_7 + \beta_8 x_8 + \beta_9 x_9 + \beta_{10} x_{10} + \epsilon
+\]
+
+where $\epsilon \sim N(0, \sigma^2 = 4)$. The true values of the $\beta$ parameters are given in the `R` code below.
+
+```{r}
+beta_0  = 1
+beta_1  = -1
+beta_2  = 2
+beta_3  = -2
+beta_4  = 1
+beta_5  = 1
+beta_6  = 0
+beta_7  = 0
+beta_8  = 0
+beta_9  = 0
+beta_10 = 0
+sigma = 2
+```
+
+Then, as we have specified them, some variables are significant, and some are not. We store their names in `R` variables for use later.
+
+```{r}
+not_sig  = c("x_6", "x_7", "x_8", "x_9", "x_10")
+signif = c("x_1", "x_2", "x_3", "x_4", "x_5")
+```
+
+We now simulate values for these `x` variables, which we will use throughout part **(a)**.
+
+```{r}
+set.seed(420)
+n = 100
+x_1  = runif(n, 0, 10)
+x_2  = runif(n, 0, 10)
+x_3  = runif(n, 0, 10)
+x_4  = runif(n, 0, 10)
+x_5  = runif(n, 0, 10)
+x_6  = runif(n, 0, 10)
+x_7  = runif(n, 0, 10)
+x_8  = runif(n, 0, 10)
+x_9  = runif(n, 0, 10)
+x_10 = runif(n, 0, 10)
+```
+
+We then combine these into a data frame and simulate `y` according to the true model.
+
+```{r}
+sim_data_1 = data.frame(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8, x_9, x_10,
+  y = beta_0 + beta_1 * x_1 + beta_2 * x_2 + beta_3 * x_3 + beta_4 * x_4 + 
+      beta_5 * x_5 + rnorm(n, 0 , sigma)
+)
+```
+
+We do a quick check to make sure everything looks correct.
+
+```{r}
+head(sim_data_1)
+```
+
+Now, we fit an incorrect model.
+
+```{r}
+fit = lm(y ~ x_1 + x_2 + x_6 + x_7, data = sim_data_1)
+coef(fit)
+```
+
+Notice, we have coefficients for `x_1`, `x_2`, `x_6`, and `x_7`. This means that `x_6` and `x_7` are false positives, while `x_3`, `x_4`, and `x_5` are false negatives.
+
+To detect the false negatives, use:
+
+```{r}
+# which are false negatives?
+!(signif %in% names(coef(fit)))
+```
+
+To detect the false positives, use:
+
+```{r}
+# which are false positives?
+names(coef(fit)) %in% not_sig
+```
+
+Note that in both cases, you could `sum()` the result to obtain the number of false negatives or positives.
+
+**(a)** Set a seed equal to your birthday; then, using the given data for each `x` variable above in `sim_data_1`, simulate the response variable `y` 300 times. Each time,
+
+- Fit an additive model using each of the `x` variables.
+- Perform variable selection using backwards AIC.
+- Perform variable selection using backwards BIC.
+- Calculate and store the number of false negatives for the models chosen by AIC and BIC.
+- Calculate and store the number of false positives for the models chosen by AIC and BIC.
+
+Calculate the rate of false positives and negatives for both AIC and BIC. Compare the rates between the two methods. Arrange your results in a well formatted table.
+
+**(b)** Set a seed equal to your birthday; then, using the given data for each `x` variable below in `sim_data_2`, simulate the response variable `y` 300 times. Each time,
+
+- Fit an additive model using each of the `x` variables.
+- Perform variable selection using backwards AIC.
+- Perform variable selection using backwards BIC.
+- Calculate and store the number of false negatives for the models chosen by AIC and BIC.
+- Calculate and store the number of false positives for the models chosen by AIC and BIC.
+
+Calculate the rate of false positives and negatives for both AIC and BIC. Compare the rates between the two methods. Arrange your results in a well formatted table. Also compare to your answers in part **(a)** and suggest a reason for any differences.
+
+```{r}
+set.seed(94)
+x_1  = runif(n, 0, 10)
+x_2  = runif(n, 0, 10)
+x_3  = runif(n, 0, 10)
+x_4  = runif(n, 0, 10)
+x_5  = runif(n, 0, 10)
+x_6  = runif(n, 0, 10)
+x_7  = runif(n, 0, 10)
+x_8  = x_1 + rnorm(n, 0, 0.1)
+x_9  = x_1 + rnorm(n, 0, 0.1)
+x_10 = x_2 + rnorm(n, 0, 0.1)
+
+sim_data_2 = data.frame(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8, x_9, x_10,
+  y = beta_0 + beta_1 * x_1 + beta_2 * x_2 + beta_3 * x_3 + beta_4 * x_4 + 
+      beta_5 * x_5 + rnorm(n, 0 , sigma)
+)
+```
+
