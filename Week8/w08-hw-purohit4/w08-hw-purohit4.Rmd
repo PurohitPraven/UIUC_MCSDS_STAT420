@@ -111,7 +111,7 @@ library(lmtest)
 ```
 
 ```{r}
-# Add BP_Test to above function and add better discription to result
+# Add BP_Test to above function and add better description to result
 diagnostics2 <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', 
                          alpha = .05, plotit = TRUE, testit = TRUE)
 {
@@ -135,6 +135,7 @@ diagnostics2 <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue',
 }
 ```
 
+<br><br>
 
 **(a)** Fit an additive multiple regression model with `lpsa` as the response and the remaining variables in the `prostate` dataset as predictors. Report the $R^2$ value for this model.
 ```{r}
@@ -145,24 +146,26 @@ summary(m1)$"r.squared"
 <br><br>
 
 **(b)** Check the constant variance assumption for this model. Do you feel it has been violated? Justify your answer.
+
 ```{r fig.width=15}
 diagnostics2(m1)
 ```
+
 Based on the above Residuals vs Fitted plot, and the BP_test p-value and decision we feel that the constant variance assumption has not been violated. If we look at the graph, we see that the variance at any value of x seems to be approximately the same even though the number of points in the middle are more, the variance seems to be the same
 
 <br><br>
 
 **(c)** Check the normality assumption for this model. Do you feel it has been violated? Justify your answer.
 ```{r}
-
 diagnostics2(m1, plotit = FALSE)
 ```
 
-Based on the above QQ plot above, we observe that most of the points fall on line. We do observe that it has fat tails, but the number of points on the tails are very less. Hence it is hard to say that the normality condition is met or violated by simply looking at the graph. To be sure we look at the BP_test results in the above table. Based on the BP_test we Fail to reject the Null Hypothesis that normality assumptions are not voilated. Hence we say that the Normality assumptions are met.
+Based on the QQ plot we see in the answer to part b or question 2 above, we observe that most of the points fall on the line. We do observe that it has fat tails. Hence it is hard to say that the normality condition is met or violated by simply looking at the graph. To be sure we look at the BP_test results in the above table. Based on the BP_test we Fail to reject the Null Hypothesis and say that normality assumptions are not violated.
 
 <br><br>
 
 **(d)** Check for any high leverage observations. Report any observations you determine to have high leverage.
+
 ```{r}
 prostate[names(hatvalues(m1)[(hatvalues(m1)>2*mean(hatvalues(m1)))]),]
 ```
@@ -172,6 +175,7 @@ The above observations have high leverage
 <br><br>
 
 **(e)** Check for any influential observations. Report any observations you determine to be influential.
+
 ```{r}
 (prostate_influentials <- prostate[names(which(cooks.distance(m1)>4/nrow(prostate))),])
 ```
@@ -186,13 +190,14 @@ The above observations seem to have high cook's distance (greater than 4/sample_
 prostrate_wo_influentials <- prostate[(names(which(cooks.distance(m1)<=4/nrow(prostate)))),]
 m2 <- lm(formula = lpsa ~ . , data = prostrate_wo_influentials)
 
-df1 <- rbind(coef(m1), coef(m2))
-rownames(df1) <- c("original prostate dataset", "prostate dataset without infludential points")
-knitr::kable(df1)
+df1 <- as.vector((coef(m1)-coef(m2))/coef(m1))
 
+df2 <- rbind(coef(m1), coef(m2), df1)
+rownames(df2) <- c("original prostate dataset", "prostate dataset without infludential points", "%age difference")
+knitr::kable(df2)
 ```
 
-We see that there is slight change in all slopes, but nothing major. We also note that the sign of the intercept changes, which is a major change
+We see that Intercept changes by in sign and has the largest percentage change. gleason also has a significant percentage change. next highest change is seen by pgg45 and lcp. Next in line are lbph and lweight. Others see minimal change  
 
 
 <br><br>
@@ -202,23 +207,22 @@ We see that there is slight change in all slopes, but nothing major. We also not
 ```{r}
 df1 <- predict(m1, newdata = prostate_influentials)
 df2 <- predict(m2, newdata = prostate_influentials)
-df3 <- rbind(df1,df2)
-row.names(df3) <- c("prediction of lpsa with influential points included", "prediction of lpsa with no influential points")
+df3 <- as.vector((df1-df2)/df1)
+df4 <- rbind(df1, df2, df3)
+row.names(df4) <- c("prediction of lpsa with influential points included", "prediction of lpsa with no influential points", "%age difference")
 
-knitr::kable(df3)
+knitr::kable(df4)
 
 ```
 
 
-We see that the predicted values show minor change but no drastic changes are observed. This would imply that we would do nothing with the influential points and will keep them in the dataset 
-
-todo - is the above assessment correct
+We see that the percentage change is very small. Predicted values show minor change but no drastic changes are observed. This would imply that we would do nothing with the influential points and will keep them in the dataset 
 
 ***
 
 ## Exercise 3 (Why Bother?)
 
-**Why** do we care about violations of assumptions? One key reason is that the distributions of the parameter esimators that we have used are all reliant on these assumptions. When the assumptions are violated, the distributional results are not correct, so our tests are garbage. **Garbage In, Garbage Out!**
+**Why** do we care about violations of assumptions? One key reason is that the distributions of the parameter estimators that we have used are all reliant on these assumptions. When the assumptions are violated, the distributional results are not correct, so our tests are garbage. **Garbage In, Garbage Out!**
 
 Consider the following setup that we will use for the remainder of the exercise. We choose a sample size of 50.
 
@@ -348,9 +352,7 @@ diagnostics2(m1, pcol = "black")
 
 ```
 
-Looking at the QQ plot and Residuals vs fit plot it is hard to make out if the linear model assumptions are met, but the results of the Shapiro and BP test results tell us that the assumptions are met hence we accept the Null Hypothesis that the Normality and equal variance assumptions are not violated for this model
-
-todo - is this correct
+Looking at the QQ plot it looks like the normal distribution assumptions are met. Looking at the residuals plot we see that in the middle the points are below the line and for lower and higher fitted values the points are generally above the line. This tells us that there is a pattern that we are missing and a higher order transformation might be useful
 
 
 <br><br>
@@ -368,7 +370,7 @@ m4 <- lm(formula = loss ~ Fe + I(Fe^2) + I(Fe^3) + I(Fe^4), data = corrosion)
 diagnostics2(m4, pcol = "black")
 ```
 
-Looking at the plots we see that plots for model 3 and model 4 seem to display constant variance. Since we prefer simplicity  we would prefer the third order model
+Looking at the plots we see that plot for model 3 seem to display constant variance. Plot for model 2 seems to have a pattern with points in the middle below the line and for lower and higher fitted values above the line. Model 4 seems to have more points below the line than above the line. Hence we prefer the third order model
 
 Use a statistical test(s) to compare the models you just chose. Based on the test, which is preferred? Check the normality assumption of this model. 
 
@@ -401,7 +403,7 @@ Now we do anova test for 3rd and 4th model
 anova(m3, m4)
 ```
 
-Based on the result, since p value is larger than .1,  we still prefer the third model
+Based on the result and visual inspection of the plots,  we still prefer the third model
 
 We now do the Normality and Equal variance test for the third model
 
@@ -413,10 +415,10 @@ Based on the test results we see that that the Normality and Equal variance assu
 
 We also look at the fitted regression line with the third model to validate that the line is indeed fitting better
 
-```{r fig.width=15}
-g1 <- ggplot(data = corrosion, aes(y=loss, x=Fe)) + geom_point() +
-stat_smooth(method="lm", se=TRUE, fill=NA,
-                formula=y ~ poly(x, 3, raw=TRUE),colour="red") + ggtitle(paste("Scatter plot beteeen loss and iron content with model ", summary(m3)$call)[2])
+```{r fig.width=15, message=FALSE}
+ggplot(data = corrosion, aes(y=loss, x=Fe)) + geom_point() + 
+  stat_smooth(method="lm", se=TRUE, fill=NA, formula=y ~ poly(x, 3, raw=TRUE),colour="red") + 
+  ggtitle(paste("Scatter plot beteeen loss and iron content with model ", summary(m3)$call)[2])
 
 ```
 
@@ -437,10 +439,6 @@ Based on the above we see that there are no influential observations
 
 The data set `diamonds` from the `ggplot2` package contains prices and characteristics of 54,000 diamonds. For this exercise, use `price` as the response variable $y$, and `carat` as the predictor $x$. Use `?diamonds` to learn more.
 
-```{r, message = FALSE, warning = FALSE}
-library(ggplot2)
-```
-
 **(a)** Fit a linear model with `price` as the response variable $y$, and `carat` as the predictor $x$. Return the summary information of this model.
 
 ```{r}
@@ -452,10 +450,10 @@ summary(m1)
 
 **(b)** Plot a scatterplot of price versus carat and add the line for the fitted model in part **(a)**. Using a fitted versus residuals plot and/or a Q-Q plot, comment on the diagnostics. 
 
-```{r fig.width=15}
-ggplot(data = m1, aes(y=price, x=carat)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between price and carat from diamonds dataset") +  theme_light()
+```{r fig.width=15, message=FALSE}
+ggplot(data = m1, aes(y=price, x=carat)) + geom_point() + stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between price and carat from diamonds dataset") +  theme_light()
 
-diagnostics2(m1, pcol = "black", testit = FALSE)
+diagnostics2(m1, testit = FALSE)
 
 ```
 
@@ -463,7 +461,7 @@ Based on the above plots we make the following observations
 
 1) The linear line does not seem to be fitting the data very well
 2) The normality assumption seems suspect based on the QQ plot
-3) The Equal variance assumptions seems to be voilated when looking at the residuals vs fit plot
+3) The Equal variance assumptions seems to be violated when looking at the residuals vs fit plot
 
 <br><br>
 
@@ -477,11 +475,11 @@ m2 <- lm(formula = log(price)~carat, data = diamonds)
 
 ggplot(data = m2, aes(y=`log(price)`, x=carat)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between log(price) and carat from diamonds dataset") +  theme_light()
 
-diagnostics2(m2, pcol = "black", testit = FALSE)
+diagnostics2(m2, testit = FALSE)
 
 ```
 
-looking at the diagnostic charts, the QQ and residual vs fitted charts, we see that both Normality and equal variance assumptions are suspect. We do notice that the lower tail of the QQ plot has improved after converting price to log
+looking at the diagnostic charts, the QQ and residual vs fitted charts, we see that both Normality and equal variance assumptions are suspect. We do notice that the upper tail of the QQ plot has improved after converting price to log when compared to the previous plot.
 
 <br><br>
 
@@ -492,11 +490,11 @@ m3 <- lm(formula = log(price)~log(carat), data = diamonds)
 
 ggplot(data = m3, aes(y=`log(price)`, x=`log(price)`)) + geom_point() +stat_smooth(method = lm, se = FALSE) + ggtitle("Scatter plot to show relationship between log(price) and log(carat) from diamonds dataset") +  theme_light()
 
-diagnostics2(m3, pcol = "black", testit = FALSE)
+diagnostics2(m3, testit = FALSE)
 
 ```
 
-The diagnostics of the model have improved a lot from the original dataset where the Normal assumption seems less suspect with both the tails coming in, and the constant variance plot seems a lot better.
+The diagnostics of the model have improved a lot from the original dataset where the Normal assumption seems less suspect with both the tails coming in, and the constant variance plot seems a lot better, but they still dont seem to be perfect though.
 
 <br><br>
 
@@ -504,6 +502,8 @@ The diagnostics of the model have improved a lot from the original dataset where
 
 ```{r}
 newdata <- data.frame("carat"=c(3))
-exp(predict(m3, newdata = newdata, interval = c("predict"), level = .99))
+(p1 <- exp(predict(m3, newdata = newdata, interval = c("predict"), level = .99)))
 ```
+
+
 
