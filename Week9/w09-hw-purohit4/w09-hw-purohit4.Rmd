@@ -133,8 +133,24 @@ We prefer the model from **(e)**
 library(ggplot2)
 library(gridExtra)
 library(lmtest)
+```
 
-diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha = .05, plotit = TRUE, testit = TRUE){
+```{r fig.width=15, echo=FALSE, include=FALSE}
+plot_fitted_resid = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
+  plot(fitted(model), resid(model), 
+       col = pointcol, pch = 20, cex = 1.5,
+       xlab = "Fitted", ylab = "Residuals")
+  abline(h = 0, col = linecol, lwd = 2)
+}
+
+plot_qq = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
+  qqnorm(resid(model), col = pointcol, pch = 20, cex = 1.5)
+  qqline(resid(model), col = linecol, lwd = 2)
+}
+```
+
+```{r fig.width=15, echo=TRUE}
+diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha = .05, plotit = TRUE, testit = TRUE){
   
   if(plotit == TRUE){
     g1 <- ggplot(data = model, aes(sample=.resid)) + 
@@ -154,15 +170,8 @@ diagnostics <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', alpha
     if(pval < alpha){
       decision <- "Reject"
     }
-    return(list(p_val=pval, decision=decision))
-  }
-}
-diagnostics2 <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue', 
-                         alpha = .05, plotit = TRUE, testit = TRUE)
-{
-  if(testit == TRUE){
-    shapiro_Normalcy_test_result <- diagnostics(model, pcol, lcol, alpha, plotit, testit)
-  
+    shapiro_Normalcy_test_result <- list(p_val=pval, decision=decision)
+    
     bptest(model)
     pval <-  bptest(model)$"p.value"
     decision <- "Fail to Reject."
@@ -174,32 +183,19 @@ diagnostics2 <- function(model = fit_1, pcol = 'grey', lcol = 'dodgerblue',
     
     return(df1)
   }
-  else{
-    diagnostics(model, pcol, lcol, alpha, plotit, testit)
-  }
 }
 
-diagnostics2(m2)
 ```
 
-Looking at the above plots and the results of the Shapiro tests and BP test, we conclude that the Normal distribution of errors and constant variance assumptions of the model are not violated. The model is fitting using a linear expression hence the linearity assumption is also not violated.
-
-
-
-
-```{r, echo = FALSE}
-plot_fitted_resid = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
-  plot(fitted(model), resid(model), 
-       col = pointcol, pch = 20, cex = 1.5,
-       xlab = "Fitted", ylab = "Residuals")
-  abline(h = 0, col = linecol, lwd = 2)
-}
-
-plot_qq = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
-  qqnorm(resid(model), col = pointcol, pch = 20, cex = 1.5)
-  qqline(resid(model), col = linecol, lwd = 2)
-}
+```{r fig.width=15}
+diagnostics(m2)
 ```
+
+The plots seem to suggest that the constant variance assumption may be suspect. The QQ plot also shows a fat tail on the lower end which encourages us to get a more definitive answer. To be sure we look at the results of the Shapiro tests and BP test. Based on the test results, we conclude that the Normal distribution of errors and constant variance assumptions of the model are not violated. The model is fitting using a linear expression hence the linearity assumption is also not violated. We dont have enough data on the Indendent observations assumption, and one could argue that one year is dependent on the previous. But for the sake of this exercise we will assume that the independent assumption is also met.
+
+todo - is this correct. Using the test results to conclude. Should we hide the function with echo=FALSE?
+
+
 
 ***
 
@@ -207,13 +203,49 @@ plot_qq = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
 
 For this exercise, use the `Credit` data from the `ISLR` package. Use the following code to remove the `ID` variable which is not useful for modeling.
 
-```{r}
+```{r message=FALSE}
 library(ISLR)
+library(car)
+```
+
+
+```{r, include=FALSE, eval=FALSE}
+?Credit
+summary(Credit)
+summary(lm(Balance ~ Student + Limit, data=Credit))
+```
+
+
+```{r}
 data(Credit)
 Credit = subset(Credit, select = -c(ID))
 ```
 
-Use `?Credit` to learn about this dataset.
+```{r, message = FALSE, warning = FALSE}
+library(lmtest)
+
+get_bp_decision = function(model, alpha) {
+  decide = unname(bptest(model)$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_sw_decision = function(model, alpha) {
+  decide = unname(shapiro.test(resid(model))$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_num_params = function(model) {
+  length(coef(model))
+}
+
+get_loocv_rmse = function(model) {
+  sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
+}
+
+get_adj_r2 = function(model) {
+  summary(model)$adj.r.squared
+}
+```
 
 **(a)** Find a "good" model for `balance` using the available predictors. Use any methods seen in class except transformations of the response. The model should:
 
@@ -224,38 +256,104 @@ Use `?Credit` to learn about this dataset.
 
 Store your model in a variable called `mod_a`. Run the two given chunks to verify your model meets the requested criteria. If you cannot find a model that meets all criteria, partial credit will be given for meeting at least some of the criteria.
 
-```{r, message = FALSE, warning = FALSE}
-library(lmtest)
+Let us look at the pairs plot after removing the factor variables
 
-get_bp_decision = function(model, alpha) {
-  decide = unname(bptest(model)$p.value < alpha)
-  ifelse(decide, "Reject", "Fail to Reject")
-}
-
-get_sw_decision = function(model, alpha) {
-  decide = unname(shapiro.test(resid(model))$p.value < alpha)
-  ifelse(decide, "Reject", "Fail to Reject")
-}
-
-get_num_params = function(model) {
-  length(coef(model))
-}
-
-get_loocv_rmse = function(model) {
-  sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
-}
-
-get_adj_r2 = function(model) {
-  summary(model)$adj.r.squared
-}
+```{r fig.height=10, fig.width=20}
+pairs(Balance~Income+Limit+Rating+Cards+Age+Education,data=Credit)
 ```
 
-```{r, eval = FALSE}
+Looking at the above plot a few things stand out
+
+1) Income, Limit and Rating are showing a cluster towards the lower end of the x axis for most pairs, implying that they may benefit from log transformations
+2) There is strong colinearity between Limit and Rating and maybe between Income and Limit and Income and Rating
+
+To evaluate if we should transform Income, Limit and Rating with a log transformation, let us compare their relationship plot with Balance before and after transformations
+
+
+```{r fig.height=7, fig.width=15}
+g1 <- ggplot(data = Credit, aes(x=Income, y=Balance))+geom_point()
+g2 <- ggplot(data = Credit, aes(x=Limit, y=Balance))+geom_point()
+g3 <- ggplot(data = Credit, aes(x=Rating, y=Balance))+geom_point()
+g4 <- ggplot(data = Credit, aes(x=log(Income), y=Balance))+geom_point()
+g5 <- ggplot(data = Credit, aes(x=log(Limit), y=Balance))+geom_point()
+g6 <- ggplot(data = Credit, aes(x=log(Rating), y=Balance))+geom_point()
+
+grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3)
+```
+
+Looking at the plot comparisons, we conclude that only Income will benefit from a log transformation. Hence we start with a model with all parameters but Income with log transformation. Then use step to step backwards and find the model with minimum AIC.
+
+
+```{r}
+mod_1 <- lm(Balance ~ (log(Income) + Limit + Rating + Cards + Age + Education + Gender + Student + Married + Ethnicity), data=Credit)
+#Find model with minimum AIC and extract formula of model
+(frm_1 <- formula(step(mod_1, direction = "backward", trace=0)))
+
+mod_a <- lm(formula = frm_1, data = Credit)
+```
+
+Test to see if the model fits the required conditions
+
+```{r}
 get_loocv_rmse(mod_a)
 get_adj_r2(mod_a)
 get_bp_decision(mod_a, alpha = 0.01)
 get_num_params(mod_a)
 ```
+
+We see that all conditions except Normal distribution of errors is met. Now identify the variables that are passing the BP test as a single linear regression model with Balance as response. Display the variables that do not violate the normal distribution assumption
+
+```{r}
+cols <- colnames(Credit)[colnames(Credit)!="Balance"]
+j <- 1
+normal_error_parameters <- c("")
+for(i in cols){
+  s <- as.formula(paste("Balance~",i))
+  bpt_result <- bptest(lm(s, data = Credit))
+  if(bpt_result$"p.value">.01){
+    normal_error_parameters[j] <- i
+    j <- j+1
+  }
+}
+normal_error_parameters
+```
+
+The above variables do not violate the errors are normally distributed assumption when plotted individually with Balance as response
+
+Now check to see if the model we have selected has the above variables as predictors. We see that "Education, Gender, Married and Ethnicity" are not part of the model. It goes to reason that adding these to the model may help with the response not violating the normal distribution assumption.
+
+Start adding the parameters one and a time and see which one helps with the overall model passing all the tests
+
+```{r}
+variables_to_try <- c("Education", "Gender", "Married", "Ethnicity")
+j <- 1
+good_variables <- c("")
+for(v in variables_to_try){
+  frm2 <- paste((deparse(frm_1)), "+", v)
+  m <- lm(frm2, data = Credit)
+  if(get_loocv_rmse(m)<140 & get_adj_r2(m)>.9 & get_bp_decision(m, alpha = 0.01)!="Reject" & get_num_params(m)<10){
+    good_variables[j] <- v
+    j <- j+1
+  }
+}
+good_variables
+```
+Now adding either of these to our model may make the model meet our condition. We will add the Gender first and run our tests
+
+```{r}
+(frm2 <- paste((deparse(frm_1)), "+", good_variables[1]))
+mod_a <- lm(frm2, data = Credit)
+```
+
+```{r}
+get_loocv_rmse(mod_a)
+get_adj_r2(mod_a)
+get_bp_decision(mod_a, alpha = 0.01)
+get_num_params(mod_a)
+```
+We see that the model meets all the conditions
+
+
 
 **(b)** Find another "good" model for `balance` using the available predictors. Use any methods seen in class except transformations of the response. The model should:
 
@@ -264,33 +362,25 @@ get_num_params(mod_a)
 - Fail to reject the Shapiro-Wilk test with an $\alpha$ of $0.01$
 - Use fewer than 25 $\beta$ parameters
 
-Store your model in a variable called `mod_b`. Run the two given chunks to verify your model meets the requested criteria. If you cannot find a model that meets all criteria, partial credit will be given for meeting at least some of the criteria.
+Let us take the formula from the above model and add two way interactions. Then we create a model with these two way interactions and use this as the starting model.
 
-```{r, message = FALSE, warning = FALSE}
-library(lmtest)
+Then use the step function and step back from the model to find the model with the lower AIC
 
-get_bp_decision = function(model, alpha) {
-  decide = unname(bptest(model)$p.value < alpha)
-  ifelse(decide, "Reject", "Fail to Reject")
-}
+```{r}
+mod_1 <- lm("Balance ~ (log(Income) + Limit + Cards + Age + Student + Gender)^2", data = Credit)
 
-get_sw_decision = function(model, alpha) {
-  decide = unname(shapiro.test(resid(model))$p.value < alpha)
-  ifelse(decide, "Reject", "Fail to Reject")
-}
+#Find model with minimum AIC and extract formula of model
+(frm_1 <- formula(step(mod_1, direction = "backward", trace=0)))
 
-get_num_params = function(model) {
-  length(coef(model))
-}
-
-get_loocv_rmse = function(model) {
-  sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
-}
-
-get_adj_r2 = function(model) {
-  summary(model)$adj.r.squared
-}
+(mod_b <- lm(formula = frm_1, data = Credit))
 ```
+
+We take the above model selected by step, and store it in mod_b. We now run the tests given to see if the model meets the given conditions
+
+- Reach a LOOCV-RMSE below `130`
+- Obtain an adjusted $R^2$ above `0.85`
+- Fail to reject the Shapiro-Wilk test with an $\alpha$ of $0.01$
+- Use fewer than 25 $\beta$ parameters
 
 ```{r, eval = FALSE}
 get_loocv_rmse(mod_b)
@@ -298,6 +388,7 @@ get_adj_r2(mod_b)
 get_sw_decision(mod_b, alpha = 0.01)
 get_num_params(mod_b)
 ```
+We see that all our conditions are met for the model
 
 ***
 
@@ -305,13 +396,14 @@ get_num_params(mod_b)
 
 For this exercise, use the `Sacramento` data from the `caret` package. Use the following code to perform some preprocessing of the data.
 
-```{r}
+```{r message=FALSE}
 library(caret)
 library(ggplot2)
 data(Sacramento)
 sac_data = Sacramento
 sac_data$limits = factor(ifelse(sac_data$city == "SACRAMENTO", "in", "out"))
-sac_data = subset(sac_data, select = -c(city, zip))
+sac_data = subset(sac_data, select = -c(city, zip)) 
+
 ```
 
 Instead of using the `city` or `zip` variables that exist in the dataset, we will simply create a variable (`limits`) indicating whether or not a house is technically within the city limits of Sacramento. (We do this because they would both be factor variables with a **large** number of levels. This is a choice that is made due to laziness, not necessarily because it is justified. Think about what issues these variables might cause.)
@@ -338,15 +430,63 @@ The training data should be used for all model fitting. Our goal is to find a mo
 
 **(a)** Find a "good" model for `price`. Use any methods seen in class. The model should reach a LOOCV-RMSE below 77,500 in the training data. Do not use any transformations of the response variable.
 
+Let us first look at the pairs plot to understand the data. We remove time and limits from the pairs plot since they are factors. We also remove beds and baths since they have discrete values
+```{r fig.height=10, fig.width=15}
+pairs(price~sqft+latitude+longitude, data=sac_data)
+```
+Looking at the pairs plots we want to evaluate if log transformations will help when plotting individually plotting sqft, latitude and longitude with price
+
+
+```{r fig.height=7, fig.width=15}
+g1 <- ggplot(data = sac_data, aes(x=sqft, y=price))+geom_point()
+g2 <- ggplot(data = sac_data, aes(x=latitude, y=price))+geom_point()
+g3 <- ggplot(data = sac_data, aes(x=longitude, y=price))+geom_point()
+g4 <- ggplot(data = sac_data, aes(x=log(sqft), y=price))+geom_point()
+g5 <- ggplot(data = sac_data, aes(x=log(latitude), y=price))+geom_point()
+g6 <- ggplot(data = sac_data, aes(x=log(longitude), y=price))+geom_point()
+
+grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3)
+```
+Based on the above plots we see that sqft may benefit from log transformation
+
+We start with a model with all variables including log(sqft) and their two way interactions. Then we step backwards to find a model with the best AIC
+```{r results="hold"}
+m1 <- lm("price~(log(sqft)+beds+baths+type+latitude+longitude+limits)^2", data = sac_trn_data)
+
+(frm_1 <- formula(step(m1, direction = "backward", trace=0)))
+
+(mod_a <- lm(formula = frm_1, data = sac_trn_data))
+
+print(paste("The RMSE for the selected model = ", get_loocv_rmse(mod_a)))
+
+```
+
 **(b)** Is a model that achieves a LOOCV-RMSE below 77,500 useful in this case? That is, is an average error of 77,500 low enough when predicting home prices? To further investigate, use the held-out test data and your model from part **(a)** to do two things:
+
 
 - Calculate the average percent error:
 \[
 \frac{1}{n}\sum_i\frac{|\text{predicted}_i - \text{actual}_i|}{\text{predicted}_i} \times 100
 \]
+
+
+```{r}
+pred_prices <- predict(mod_a, newdata = sac_tst_data)
+sum(abs(pred_prices - sac_tst_data$price)/pred_prices)/nrow(sac_tst_data)*100
+```
+
 - Plot the predicted versus the actual values and add the line $y = x$.
+```{r}
+ggplot(data=data.frame(predicted=pred_prices, actual=sac_tst_data$price), aes(x=predicted, y=actual)) + 
+  geom_point() + geom_abline(intercept=0, slope=1) + ggtitle("Graph showing predicted vs actual prices for test data") +theme_light()
+```
+
 
 Based on all of this information, argue whether or not this model is useful.
+
+The model isnt correct, but is useful. It is more useful for prices below 25K, after which the variation increases and the errors are higher
+
+todo - is this sufficient
 
 ***
 
