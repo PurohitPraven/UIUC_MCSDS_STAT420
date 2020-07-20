@@ -67,8 +67,6 @@ summary(lm(Population~.-Employed, data = longley))$"r.squared"
 cor(resid(lm(Population~.-Employed, data = longley)), resid(lm(Employed~.-Population, data = longley)))
 ```
 
-todo - is this answer correct?
-
 <br><br>
 
 **(e)** Fit a new model with `Employed` as the response and the predictors from the model in **(b)** that were significant. (Use $\alpha = 0.05$.) Calculate and report the variance inflation factor for each of the predictors. Which variable has the largest VIF? Do any of the VIFs suggest multicollinearity?
@@ -104,10 +102,9 @@ None of the VIFs suggest multicollinearity since they are all less than 5
 - The null hypothesis
 
 The null Hypothesis is 
-$H_0 : \hat{Employed} = \beta_0 + \beta_1 Unemployed + \beta_2 Armed.Forces + \beta_3 Year + \epsilon$
-or that Employed can be expressed in terms of Unemployed and Armed.Forces and Year
 
-todo- is the null hypothesis written correctly
+$H_0: \beta_{GNP.deflator} = \beta_{GNP} = \beta_{Population} = 0$
+
 
 - The test statistic
 ```{r}
@@ -184,9 +181,7 @@ diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha 
 diagnostics(m2)
 ```
 
-The plots seem to suggest that the constant variance assumption may be suspect. The QQ plot also shows a fat tail on the lower end which encourages us to get a more definitive answer. To be sure we look at the results of the Shapiro tests and BP test. Based on the test results, we conclude that the Normal distribution of errors and constant variance assumptions of the model are not violated. The model is fitting using a linear expression hence the linearity assumption is also not violated. We dont have enough data on the Indendent observations assumption, and one could argue that one year is dependent on the previous. But for the sake of this exercise we will assume that the independent assumption is also met.
-
-todo - is this correct. Using the test results to conclude even though the plots seem suspect. Should we hide the function with echo=FALSE?
+The plots seem to suggest that the constant variance assumption may be suspect. The QQ plot also shows a fat tail on the lower end which encourages us to get a more definitive answer. To be sure we look at the results of the Shapiro tests and BP test. Based on the test results, we conclude that the Normal distribution of errors and constant variance assumptions of the model are not violated. 
 
 ***
 
@@ -271,12 +266,11 @@ g4 <- ggplot(data = Credit, aes(x=log(Income), y=Balance))+geom_point()
 g5 <- ggplot(data = Credit, aes(x=log(Limit), y=Balance))+geom_point()
 g6 <- ggplot(data = Credit, aes(x=log(Rating), y=Balance))+geom_point()
 
-grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3)
+grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3, top="Comparison of log transformation vs not to see if log transformation will help")
 ```
 
 Looking at the plot comparisons, we conclude that only Income will benefit from a log transformation. Hence we start with a model with all parameters but Income with log transformation. Then use step to step backwards and find the model with minimum AIC.
 
-todo - is it ok to show this plot or is this considered unnecessary?
 
 ```{r}
 mod_1 <- lm(Balance ~ (log(Income) + Limit + Rating + Cards + Age + Education + Gender + Student + Married + Ethnicity), data=Credit)
@@ -286,6 +280,10 @@ mod_1 <- lm(Balance ~ (log(Income) + Limit + Rating + Cards + Age + Education + 
 mod_a <- lm(formula = frm_1, data = Credit)
 ```
 
+The above is the result of the step function. 
+
+THIS IS NOT THE FINAL ANSWER
+
 Test to see if the model fits the required conditions
 
 ```{r}
@@ -294,9 +292,8 @@ get_adj_r2(mod_a)
 get_bp_decision(mod_a, alpha = 0.01)
 get_num_params(mod_a)
 ```
-todo - is it ok to show a failed test results or should I hide this?
 
-We see that all conditions except Normal distribution of errors is met. Now identify the variables that are passing the BP test as a single linear regression model with Balance as response. Display the variables that do not violate the normal distribution assumption
+We see that all conditions except constant variance is met. Now identify the variables that are passing the BP test as a single linear regression model with Balance as response. Display those variables
 
 ```{r}
 cols <- colnames(Credit)[colnames(Credit)!="Balance"]
@@ -313,9 +310,11 @@ for(i in cols){
 normal_error_parameters
 ```
 
-The above variables do not violate the errors are normally distributed assumption when plotted individually with Balance as response
+The above variables do not violate the constant variance assumption when plotted individually with Balance as response
 
-Now check to see if the model we have selected has the above variables as predictors. We see that "Education, Gender, Married and Ethnicity" are not part of the model. It goes to reason that adding these to the model may help with the response not violating the normal distribution assumption.
+Now check to see if the model we have selected has the above variables as predictors. We see that "Education, Gender, Married and Ethnicity" are not part of the model. 
+
+There is a possibility that adding these to the model may help with the response not violating the constant variance assumption. Let us check that
 
 Start adding the parameters one and a time and see which one helps with the overall model passing all the tests
 
@@ -333,7 +332,7 @@ for(v in variables_to_try){
 }
 good_variables
 ```
-The above variables, when made a predictor for a sinle linear regression model with Balance as response, pass all tests
+The above variables, when made a predictor for a single linear regression model with Balance as response, pass all tests
 
 Now adding either of these to our model may make the model meet our condition. We will add the Gender first and run our tests
 
@@ -348,7 +347,12 @@ get_adj_r2(mod_a)
 get_bp_decision(mod_a, alpha = 0.01)
 get_num_params(mod_a)
 ```
-We see that the model meets all the conditions
+We see that the model meets all the conditions. Our final model is fitted using the formula below
+
+```{r}
+frm_2
+```
+
 
 <br><br>
 
@@ -385,7 +389,12 @@ get_adj_r2(mod_b)
 get_sw_decision(mod_b, alpha = 0.01)
 get_num_params(mod_b)
 ```
-We see that all our conditions are met for the model
+We see that all our conditions are met for the model. Our final model is fitted with the formula below
+
+```{r}
+frm_1
+```
+
 
 ***
 
@@ -445,7 +454,7 @@ g4 <- ggplot(data = sac_data, aes(x=log(sqft), y=price))+geom_point()
 g5 <- ggplot(data = sac_data, aes(x=log(latitude), y=price))+geom_point()
 g6 <- ggplot(data = sac_data, aes(x=log(longitude), y=price))+geom_point()
 
-grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3)
+grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3, top="Comparison of log transformation vs not to see if log transformation will help")
 ```
 Based on the above plots we see that sqft may benefit from log transformation
 
@@ -480,16 +489,25 @@ sum(abs(pred_prices - sac_tst_data$price)/pred_prices)/nrow(sac_tst_data)*100
 - Plot the predicted versus the actual values and add the line $y = x$.
 
 ```{r fig.width=15}
-ggplot(data=data.frame(predicted=pred_prices, actual=sac_tst_data$price), aes(x=predicted, y=actual)) + 
+df_price <- data.frame(predicted=pred_prices, actual=sac_tst_data$price)
+ggplot(data=df_price, aes(y=predicted, x=actual)) + 
   geom_point() + geom_abline(intercept=0, slope=1) + ggtitle("Graph showing predicted vs actual prices for test data") +theme_light()
 ```
 
 
 Based on all of this information, argue whether or not this model is useful.
 
-The model isnt correct, but is useful. It is more useful for prices below 25K, after which the variation increases and the errors are higher
+Let us look at the %age variation of the predicted price from actual
 
-todo - is this sufficient
+```{r}
+df_price$perc_error <- ((df_price$predicted-df_price$actual)/df_price$actual)*100
+
+hist(df_price$perc_error, main = "Percentage error distribution of predicted price from actual", prob = TRUE, col = "dodgerblue", border = "darkorange", xlab = "percentage error (predicted-actual)/actual", breaks=seq(-70,230,20))
+```
+
+Based on the above scatter plot and the percentage error distribution we can say that The model isnt correct, but is useful. Looking at the scatter plot we can see that it is more useful for prices below 25K, after which the variation increases and the errors are higher. We can also see that for prices above 65000 the predicted prices are much lower than the actual prices hence the model isnt great for expensive houses
+
+If we look at the predicted price percentage error vs. actuals, we see that the distribution is slightly right skewed but most of the distribution resembles a normal distribution. We can also see from the histogram that the predicted price is $\pm25 percent$ of the actual price for most of the data.
 
 ***
 
@@ -533,7 +551,7 @@ signif = c("x_1", "x_2", "x_3", "x_4", "x_5")
 We now simulate values for these `x` variables, which we will use throughout part **(a)**.
 
 ```{r}
-set.seed(400)
+set.seed(420)
 n = 100
 x_1  = runif(n, 0, 10)
 x_2  = runif(n, 0, 10)
@@ -546,8 +564,6 @@ x_8  = runif(n, 0, 10)
 x_9  = runif(n, 0, 10)
 x_10 = runif(n, 0, 10)
 ```
-
-todo - replace set seed 400 by this here?
 
 We then combine these into a data frame and simulate `y` according to the true model.
 
@@ -600,6 +616,7 @@ Note that in both cases, you could `sum()` the result to obtain the number of fa
 - Calculate and store the number of false positives for the models chosen by AIC and BIC.
 
 Calculate the rate of false positives and negatives for both AIC and BIC. Compare the rates between the two methods. Arrange your results in a well formatted table.
+
 ```{r}
 sim_data_return_Rate <- function(num_simul, mu, sigma, sim_data, n, signif, not_sig){
   false_negs_aic <- rep(num_simul,0)
@@ -679,18 +696,12 @@ knitr::kable(df2)
 ```
 
 
-Comparing the two results
-
-```{r}
-knitr::kable(cbind(df1, df2))
-```
-
 
 ```{r message=FALSE}
 library(GGally)
 ```
 
-We see that BIC outperforms AIC in the rate of selection of False positives and False negatives. Based on how the sim_dat_2 was simulated, there is multicolinearity  which can be seen by the plot below
+Based on how the sim_dat_2 was simulated, there is multicolinearity  which can be seen by the plot below
 
 
 ```{r fig.height=9, fig.width=15, message=FALSE, eval=TRUE}
@@ -698,6 +709,12 @@ ggpairs(sim_data_2, ggplot2::aes(color=I("navyblue")), title = "ggpairs plot to 
 ```
 
 
-We note that when multicolinearity increases the performance of both AIC and BIC suffers. We see that BIC is more impacted by collinearity when compared to AIC.
+Comparing the two results
 
-todo- is this sufficient?
+```{r}
+knitr::kable(cbind(df1, df2))
+```
+
+We see that BIC outperforms AIC in the rate of selection of False positives and False negatives.
+We note that when multicolinearity increases the performance of both AIC and BIC suffers. We also see that the rate of False positives and negatives is 0 when there is no colinearity and it increases when colinearity is introduced
+

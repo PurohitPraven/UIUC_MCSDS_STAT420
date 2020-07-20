@@ -1,0 +1,46 @@
+---
+title: "Project Proposal"
+output:
+  html_document: 
+    theme: readable
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Names of the students
+
+Sunil Nandamuri(sunilkn2@illinois.edu) and Praveen Purohit(purohit4@illinois.edu)
+
+### Project title
+
+House Price Prediction
+
+### Description of the data file
+
+The dataset is split into training data with 1460 observation and test data which is 1459 observations. These combined make 2919 observations which meet the minimum 2000 observations criteria.
+
+```{r}
+
+train_df <- read.csv("train.csv")
+str(train_df)
+```
+
+###  Background on the dataset
+
+The dataset is from Kaggle. Link is https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
+
+### Statement of personal interest
+
+Personal Interest -  We wish to start on Kaggle competitions and this is supposed to be a good kickstarter dataset. We intend to submit this on Kaggle post completion of the project
+
+
+### Evidence that data can be loaded into R
+
+```{r}
+head(train_df)
+
+```
+
