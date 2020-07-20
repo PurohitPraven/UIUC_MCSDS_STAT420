@@ -105,9 +105,8 @@ anova_result$F[2]
 
 - The distribution of the test statistic under the null hypothesis
 
-The distribution of the test statistic under null hypothesis will be an F-curve
+The distribution of the test statistic under null hypothesis will be an F distribution with 3 degrees of freedom
 
-todo - is this correct? or do we have to simulate data to show distribution?
 
 - The p-value
 
@@ -329,8 +328,8 @@ variables_to_try <- c("Education", "Gender", "Married", "Ethnicity")
 j <- 1
 good_variables <- c("")
 for(v in variables_to_try){
-  frm2 <- paste((deparse(frm_1)), "+", v)
-  m <- lm(frm2, data = Credit)
+  frm_2 <- paste((deparse(frm_1)), "+", v)
+  m <- lm(frm_2, data = Credit)
   if(get_loocv_rmse(m)<140 & get_adj_r2(m)>.9 & get_bp_decision(m, alpha = 0.01)!="Reject" & get_num_params(m)<10){
     good_variables[j] <- v
     j <- j+1
@@ -341,8 +340,8 @@ good_variables
 Now adding either of these to our model may make the model meet our condition. We will add the Gender first and run our tests
 
 ```{r}
-(frm2 <- paste((deparse(frm_1)), "+", good_variables[1]))
-mod_a <- lm(frm2, data = Credit)
+(frm_2 <- paste((deparse(frm_1)), "+", good_variables[1]))
+mod_a <- lm(frm_2, data = Credit)
 ```
 
 ```{r}
@@ -530,7 +529,7 @@ signif = c("x_1", "x_2", "x_3", "x_4", "x_5")
 We now simulate values for these `x` variables, which we will use throughout part **(a)**.
 
 ```{r}
-set.seed(420)
+set.seed(400)
 n = 100
 x_1  = runif(n, 0, 10)
 x_2  = runif(n, 0, 10)
@@ -543,6 +542,7 @@ x_8  = runif(n, 0, 10)
 x_9  = runif(n, 0, 10)
 x_10 = runif(n, 0, 10)
 ```
+todo - replace set seed 400 by this here?
 
 We then combine these into a data frame and simulate `y` according to the true model.
 
@@ -593,6 +593,36 @@ Note that in both cases, you could `sum()` the result to obtain the number of fa
 - Calculate and store the number of false positives for the models chosen by AIC and BIC.
 
 Calculate the rate of false positives and negatives for both AIC and BIC. Compare the rates between the two methods. Arrange your results in a well formatted table.
+
+```{r}
+set.seed(19732103)
+num_simul <- 300
+false_negs_aic <- rep(num_simul,0)
+false_negs_bic <- rep(num_simul,0)
+false_pos_aic <- rep(num_simul,0)
+false_pos_bic <- rep(num_simul,0)
+
+for(i in 1:num_simul){
+  y = beta_0 + beta_1 * x_1 + beta_2 * x_2 + beta_3 * x_3 + beta_4 * x_4 + 
+      beta_5 * x_5 + rnorm(n, 0 , sigma)
+  sim_data_1 = data.frame(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8, x_9, x_10, y)
+                          
+  m1 <- lm("y~.", data=sim_data_1)
+  m_aic <- step(m1, direction = "backward", trace=0)
+  false_negs_aic[i] <- sum(!(signif %in% names(coef(m_aic))))
+  false_pos_aic[i] <- sum(names(coef(m_aic)) %in% not_sig)
+  m_bic <- step(m1, direction = "backward", trace=0, k=log(nrow(sim_data_1)))
+  false_negs_bic[i] <- sum(!(signif %in% names(coef(m_bic))))
+  false_pos_bic[i] <- sum(names(coef(m_bic)) %in% not_sig)
+}
+l1 <- list("AIC"=mean(false_pos_aic), "BIC"=mean(false_pos_bic))
+l2 <- list("AIC"=mean(false_negs_aic), "BIC"=mean(false_negs_bic))
+df1 <- rbind(l1,l2)
+rownames(df1) <- c("Rate of False Positives", "Rate of False Negatives")
+knitr::kable(df1)
+
+```
+
 
 **(b)** Set a seed equal to your birthday; then, using the given data for each `x` variable below in `sim_data_2`, simulate the response variable `y` 300 times. Each time,
 
