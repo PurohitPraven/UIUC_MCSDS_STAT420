@@ -25,16 +25,19 @@ View(longley)
 ?longley
 ```
 
+<br><br>
+
 **(a)** What is the largest correlation between any pair of predictors in the dataset?
 ```{r results="hold"}
-(c <- cor(longley))
+c <- cor(longley)
 indices <- which(c == max(c[c<1]), arr.ind = TRUE)
+rownames(indices)
 c[rownames(indices)[1],rownames(indices)[2]]
 
 ```
 The largest correlation is between Year and GNP and it is .9953. 
 
-
+<br><br>
 
 **(b)** Fit a model with `Employed` as the response and the remaining variables as predictors. Calculate and report the variance inflation factor (VIF) for each of the predictors. Which variable has the largest VIF? Do any of the VIFs suggest multicollinearity?
 ```{r message=FALSE}
@@ -48,11 +51,15 @@ GNP has the largest VIF.
 
 Except Armed.Forces all VIFs suggest multicollinearity since their values are greater than 5
 
+<br><br>
+
 **(c)** What proportion of the observed variation in `Population` is explained by a linear relationship with the other predictors?
 ```{r}
 summary(lm(Population~.-Employed, data = longley))$"r.squared"
 ```
 99.75% of the observed variation in Population is explained by the other predictors
+
+<br><br>
 
 **(d)** Calculate the partial correlation coefficient for `Population` and `Employed` **with the effects of the other predictors removed**.
 
@@ -60,6 +67,9 @@ summary(lm(Population~.-Employed, data = longley))$"r.squared"
 cor(resid(lm(Population~.-Employed, data = longley)), resid(lm(Employed~.-Population, data = longley)))
 ```
 
+todo - is this answer correct?
+
+<br><br>
 
 **(e)** Fit a new model with `Employed` as the response and the predictors from the model in **(b)** that were significant. (Use $\alpha = 0.05$.) Calculate and report the variance inflation factor for each of the predictors. Which variable has the largest VIF? Do any of the VIFs suggest multicollinearity?
 
@@ -68,18 +78,20 @@ cor(resid(lm(Population~.-Employed, data = longley)), resid(lm(Employed~.-Popula
 c_m1 <- coef(summary(m1))
 preds_1 <- which(c_m1[,"Pr(>|t|)"] < .05)
 pred_names <- names(preds_1)[2:length(preds_1)]
-print(paste("predictors that are significant from model in 'b' are ", paste(pred_names, collapse = ", ")))
+cat(paste("predictors that are significant from model in 'b' are ", paste(pred_names, collapse = ", "), "\n\n"))
 pred_formula <- paste(pred_names, collapse = "+")
 full_formula <- paste("Employed~", pred_formula, sep = "")
 m2 <- lm(full_formula, data = longley)
-print("variance inflation factors for each of the predictors are as below")
+cat("variance inflation factors for each of the predictors are as below \n")
 (vif_m2 <- vif(m2))
-
-print(paste("The predictor with the largest vif = ", names(vif_m2[max(vif_m2)])))
+cat("\n")
+cat(paste("The variable with the largest vif = ", names(vif_m2[max(vif_m2)]), "\n"))
 
 
 ```
 None of the VIFs suggest multicollinearity since they are all less than 5
+
+<br><br>
 
 **(f)** Use an $F$-test to compare the models in parts **(b)** and **(e)**. Report the following:
 
@@ -93,15 +105,14 @@ None of the VIFs suggest multicollinearity since they are all less than 5
 
 The null Hypothesis is 
 $H_0 : \hat{Employed} = \beta_0 + \beta_1 Unemployed + \beta_2 Armed.Forces + \beta_3 Year + \epsilon$
-or that Employed can be expressed in terms of Unemplyed and Armed.Forces and Year
+or that Employed can be expressed in terms of Unemployed and Armed.Forces and Year
 
+todo- is the null hypothesis written correctly
 
 - The test statistic
 ```{r}
 anova_result$F[2]
 ```
-
-
 
 - The distribution of the test statistic under the null hypothesis
 
@@ -114,38 +125,21 @@ The distribution of the test statistic under null hypothesis will be an F distri
 anova_result$`Pr(>F)`[2]
 ```
 
-
-
 - A decision
 
 Since p value is greater than any reasonable $\alpha$ we Fail to reject the null Hypothesis
-
-
 
 - Which model you prefer, **(b)** or **(e)**
 
 We prefer the model from **(e)**
 
+<br><br>
 
 **(g)** Check the assumptions of the model chosen in part **(f)**. Do any assumptions appear to be violated?
 ```{r fig.width=15, message=FALSE}
 library(ggplot2)
 library(gridExtra)
 library(lmtest)
-```
-
-```{r fig.width=15, echo=FALSE, include=FALSE}
-plot_fitted_resid = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
-  plot(fitted(model), resid(model), 
-       col = pointcol, pch = 20, cex = 1.5,
-       xlab = "Fitted", ylab = "Residuals")
-  abline(h = 0, col = linecol, lwd = 2)
-}
-
-plot_qq = function(model, pointcol = "dodgerblue", linecol = "darkorange") {
-  qqnorm(resid(model), col = pointcol, pch = 20, cex = 1.5)
-  qqline(resid(model), col = linecol, lwd = 2)
-}
 ```
 
 ```{r fig.width=15, echo=TRUE}
@@ -192,9 +186,7 @@ diagnostics(m2)
 
 The plots seem to suggest that the constant variance assumption may be suspect. The QQ plot also shows a fat tail on the lower end which encourages us to get a more definitive answer. To be sure we look at the results of the Shapiro tests and BP test. Based on the test results, we conclude that the Normal distribution of errors and constant variance assumptions of the model are not violated. The model is fitting using a linear expression hence the linearity assumption is also not violated. We dont have enough data on the Indendent observations assumption, and one could argue that one year is dependent on the previous. But for the sake of this exercise we will assume that the independent assumption is also met.
 
-todo - is this correct. Using the test results to conclude. Should we hide the function with echo=FALSE?
-
-
+todo - is this correct. Using the test results to conclude even though the plots seem suspect. Should we hide the function with echo=FALSE?
 
 ***
 
@@ -246,6 +238,8 @@ get_adj_r2 = function(model) {
 }
 ```
 
+<br><br>
+
 **(a)** Find a "good" model for `balance` using the available predictors. Use any methods seen in class except transformations of the response. The model should:
 
 - Reach a LOOCV-RMSE below `140`
@@ -282,6 +276,7 @@ grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3)
 
 Looking at the plot comparisons, we conclude that only Income will benefit from a log transformation. Hence we start with a model with all parameters but Income with log transformation. Then use step to step backwards and find the model with minimum AIC.
 
+todo - is it ok to show this plot or is this considered unnecessary?
 
 ```{r}
 mod_1 <- lm(Balance ~ (log(Income) + Limit + Rating + Cards + Age + Education + Gender + Student + Married + Ethnicity), data=Credit)
@@ -299,6 +294,7 @@ get_adj_r2(mod_a)
 get_bp_decision(mod_a, alpha = 0.01)
 get_num_params(mod_a)
 ```
+todo - is it ok to show a failed test results or should I hide this?
 
 We see that all conditions except Normal distribution of errors is met. Now identify the variables that are passing the BP test as a single linear regression model with Balance as response. Display the variables that do not violate the normal distribution assumption
 
@@ -337,6 +333,8 @@ for(v in variables_to_try){
 }
 good_variables
 ```
+The above variables, when made a predictor for a sinle linear regression model with Balance as response, pass all tests
+
 Now adding either of these to our model may make the model meet our condition. We will add the Gender first and run our tests
 
 ```{r}
@@ -352,7 +350,7 @@ get_num_params(mod_a)
 ```
 We see that the model meets all the conditions
 
-
+<br><br>
 
 **(b)** Find another "good" model for `balance` using the available predictors. Use any methods seen in class except transformations of the response. The model should:
 
@@ -363,7 +361,7 @@ We see that the model meets all the conditions
 
 Let us take the formula from the above model and add two way interactions. Then we create a model with these two way interactions and use this as the starting model.
 
-Then use the step function and step back from the model to find the model with the lower AIC
+Then use the step function and step back from the model to find the model with the lowest AIC
 
 ```{r}
 mod_1 <- lm("Balance ~ (log(Income) + Limit + Cards + Age + Student + Gender)^2", data = Credit)
@@ -371,7 +369,7 @@ mod_1 <- lm("Balance ~ (log(Income) + Limit + Cards + Age + Student + Gender)^2"
 #Find model with minimum AIC and extract formula of model
 (frm_1 <- formula(step(mod_1, direction = "backward", trace=0)))
 
-(mod_b <- lm(formula = frm_1, data = Credit))
+mod_b <- lm(formula = frm_1, data = Credit)
 ```
 
 We take the above model selected by step, and store it in mod_b. We now run the tests given to see if the model meets the given conditions
@@ -381,7 +379,7 @@ We take the above model selected by step, and store it in mod_b. We now run the 
 - Fail to reject the Shapiro-Wilk test with an $\alpha$ of $0.01$
 - Use fewer than 25 $\beta$ parameters
 
-```{r, eval = FALSE}
+```{r}
 get_loocv_rmse(mod_b)
 get_adj_r2(mod_b)
 get_sw_decision(mod_b, alpha = 0.01)
@@ -427,9 +425,12 @@ sac_tst_data = sac_data[-sac_trn_idx, ]
 
 The training data should be used for all model fitting. Our goal is to find a model that is useful for predicting home prices.
 
+<br><br>
+
 **(a)** Find a "good" model for `price`. Use any methods seen in class. The model should reach a LOOCV-RMSE below 77,500 in the training data. Do not use any transformations of the response variable.
 
 Let us first look at the pairs plot to understand the data. We remove time and limits from the pairs plot since they are factors. We also remove beds and baths since they have discrete values
+
 ```{r fig.height=10, fig.width=15}
 pairs(price~sqft+latitude+longitude, data=sac_data)
 ```
@@ -449,16 +450,18 @@ grid.arrange(g1,g2,g3,g4,g5,g5, ncol=3)
 Based on the above plots we see that sqft may benefit from log transformation
 
 We start with a model with all variables including log(sqft) and their two way interactions. Then we step backwards to find a model with the best AIC
+
 ```{r results="hold"}
 m1 <- lm("price~(log(sqft)+beds+baths+type+latitude+longitude+limits)^2", data = sac_trn_data)
 
 (frm_1 <- formula(step(m1, direction = "backward", trace=0)))
 
-(mod_a <- lm(formula = frm_1, data = sac_trn_data))
+mod_a <- lm(formula = frm_1, data = sac_trn_data)
 
-print(paste("The RMSE for the selected model = ", get_loocv_rmse(mod_a)))
+cat(paste("\n  RMSE for the selected model = ", get_loocv_rmse(mod_a), "\n"))
 
 ```
+<br><br>
 
 **(b)** Is a model that achieves a LOOCV-RMSE below 77,500 useful in this case? That is, is an average error of 77,500 low enough when predicting home prices? To further investigate, use the held-out test data and your model from part **(a)** to do two things:
 
@@ -475,7 +478,8 @@ sum(abs(pred_prices - sac_tst_data$price)/pred_prices)/nrow(sac_tst_data)*100
 ```
 
 - Plot the predicted versus the actual values and add the line $y = x$.
-```{r}
+
+```{r fig.width=15}
 ggplot(data=data.frame(predicted=pred_prices, actual=sac_tst_data$price), aes(x=predicted, y=actual)) + 
   geom_point() + geom_abline(intercept=0, slope=1) + ggtitle("Graph showing predicted vs actual prices for test data") +theme_light()
 ```
@@ -542,6 +546,7 @@ x_8  = runif(n, 0, 10)
 x_9  = runif(n, 0, 10)
 x_10 = runif(n, 0, 10)
 ```
+
 todo - replace set seed 400 by this here?
 
 We then combine these into a data frame and simulate `y` according to the true model.
@@ -584,6 +589,8 @@ names(coef(fit)) %in% not_sig
 
 Note that in both cases, you could `sum()` the result to obtain the number of false negatives or positives.
 
+<br><br>
+
 **(a)** Set a seed equal to your birthday; then, using the given data for each `x` variable above in `sim_data_1`, simulate the response variable `y` 300 times. Each time,
 
 - Fit an additive model using each of the `x` variables.
@@ -593,36 +600,44 @@ Note that in both cases, you could `sum()` the result to obtain the number of fa
 - Calculate and store the number of false positives for the models chosen by AIC and BIC.
 
 Calculate the rate of false positives and negatives for both AIC and BIC. Compare the rates between the two methods. Arrange your results in a well formatted table.
-
 ```{r}
+sim_data_return_Rate <- function(num_simul, mu, sigma, sim_data, n, signif, not_sig){
+  false_negs_aic <- rep(num_simul,0)
+  false_negs_bic <- rep(num_simul,0)
+  false_pos_aic <- rep(num_simul,0)
+  false_pos_bic <- rep(num_simul,0)
+  
+  for(i in 1:num_simul){
+    sim_data$y = beta_0 + beta_1 * sim_data$x_1 + beta_2 * sim_data$x_2 + beta_3 * sim_data$x_3 + 
+      beta_4 * sim_data$x_4 + beta_5 * sim_data$x_5 + rnorm(n, mu , sigma)
+                          
+    m1 <- lm("y~.", data=sim_data)
+    m_aic <- step(m1, direction = "backward", trace=0)
+    false_negs_aic[i] <- sum(!(signif %in% names(coef(m_aic))))
+    false_pos_aic[i] <- sum(names(coef(m_aic)) %in% not_sig)
+    m_bic <- step(m1, direction = "backward", trace=0, k=log(nrow(sim_data_1)))
+    false_negs_bic[i] <- sum(!(signif %in% names(coef(m_bic))))
+    false_pos_bic[i] <- sum(names(coef(m_bic)) %in% not_sig)
+  }
+  l1 <- list("AIC"=mean(false_pos_aic), "BIC"=mean(false_pos_bic))
+  l2 <- list("AIC"=mean(false_negs_aic), "BIC"=mean(false_negs_bic))
+  df1 <- rbind(l1,l2)
+  rownames(df1) <- c("Rate of False Positives", "Rate of False Negatives")
+  return(df1)
+}
+```
+
+```{r message=FALSE}
 set.seed(19732103)
 num_simul <- 300
-false_negs_aic <- rep(num_simul,0)
-false_negs_bic <- rep(num_simul,0)
-false_pos_aic <- rep(num_simul,0)
-false_pos_bic <- rep(num_simul,0)
+df1 <- sim_data_return_Rate(num_simul = num_simul, mu=0, sigma = sigma, sim_data = sim_data_1, n=n, signif = signif, not_sig = not_sig)
 
-for(i in 1:num_simul){
-  y = beta_0 + beta_1 * x_1 + beta_2 * x_2 + beta_3 * x_3 + beta_4 * x_4 + 
-      beta_5 * x_5 + rnorm(n, 0 , sigma)
-  sim_data_1 = data.frame(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8, x_9, x_10, y)
-                          
-  m1 <- lm("y~.", data=sim_data_1)
-  m_aic <- step(m1, direction = "backward", trace=0)
-  false_negs_aic[i] <- sum(!(signif %in% names(coef(m_aic))))
-  false_pos_aic[i] <- sum(names(coef(m_aic)) %in% not_sig)
-  m_bic <- step(m1, direction = "backward", trace=0, k=log(nrow(sim_data_1)))
-  false_negs_bic[i] <- sum(!(signif %in% names(coef(m_bic))))
-  false_pos_bic[i] <- sum(names(coef(m_bic)) %in% not_sig)
-}
-l1 <- list("AIC"=mean(false_pos_aic), "BIC"=mean(false_pos_bic))
-l2 <- list("AIC"=mean(false_negs_aic), "BIC"=mean(false_negs_bic))
-df1 <- rbind(l1,l2)
-rownames(df1) <- c("Rate of False Positives", "Rate of False Negatives")
+colnames(df1) <- c("AIC: sim_data_1", "BIC: sim_data_1")
 knitr::kable(df1)
 
 ```
 
+<br><br>
 
 **(b)** Set a seed equal to your birthday; then, using the given data for each `x` variable below in `sim_data_2`, simulate the response variable `y` 300 times. Each time,
 
@@ -653,3 +668,36 @@ sim_data_2 = data.frame(x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8, x_9, x_10,
 )
 ```
 
+
+```{r message=FALSE}
+set.seed(19732103)
+num_simul <- 300
+df2 <- sim_data_return_Rate(num_simul = num_simul, mu=0, sigma = sigma, sim_data = sim_data_2, n=n, signif = signif, not_sig = not_sig)
+colnames(df2) <- c("AIC: sim_data_2", "BIC: sim_data_2")
+knitr::kable(df2)
+
+```
+
+
+Comparing the two results
+
+```{r}
+knitr::kable(cbind(df1, df2))
+```
+
+
+```{r message=FALSE}
+library(GGally)
+```
+
+We see that BIC outperforms AIC in the rate of selection of False positives and False negatives. Based on how the sim_dat_2 was simulated, there is multicolinearity  which can be seen by the plot below
+
+
+```{r fig.height=9, fig.width=15, message=FALSE, eval=TRUE}
+ggpairs(sim_data_2, ggplot2::aes(color=I("navyblue")), title = "ggpairs plot to see correlation and distribution of sim_data_2", lower = list(continuous = wrap("smooth")))
+```
+
+
+We note that when multicolinearity increases the performance of both AIC and BIC suffers. We see that BIC is more impacted by collinearity when compared to AIC.
+
+todo- is this sufficient?
