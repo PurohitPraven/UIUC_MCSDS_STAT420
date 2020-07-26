@@ -1,0 +1,55 @@
+---
+title: "Week10 Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Q1. Consider a categorical response Y which takes possible values 0 and 1 as well as three numerical predictors X_1, X_2 and X_3. Recall that
+
+$p({\bf x}) = P[Y = 1 \mid {\bf X} = {\bf x}]$
+
+Consider the model
+
+$\log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3$
+ 
+
+together with parameters
+
+\beta_0 = -3
+\beta_1 = 1
+\beta_2 = 2
+\beta_2 = 3
+
+Calculate $P[Y = 0 \mid X_1 = -1, X_2 = 0.5, X_2 = 0.25]$
+
+```{r}
+p_y_1 <- 1/(1 + exp(-1 * (-3 + (-1*1) + (2 * .5) + (3 * .25))))
+1- p_y_1
+```
+
+Q2. For Exercises 2 - 7, use the built-in R dataset mtcars. We will use this dataset to attempt to predict whether or not a car has a manual transmission.
+
+Recall that
+
+$p({\bf x}) = P[Y = 1 \mid {\bf X} = {\bf x}]$
+
+Fit the model
+
+$\log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3$
+ 
+
+where
+
+Y is am
+X_1 is mpg
+X_2 is hp
+X_3 is qsec
+Report the value of the estimate for \beta_3
+
+```{r}
+
+```
+

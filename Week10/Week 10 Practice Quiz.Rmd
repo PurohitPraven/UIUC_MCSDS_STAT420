@@ -1,0 +1,77 @@
+---
+title: "Week10 Practice Quiz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Q1. Consider a categorical response YY which takes possible values 00 and 11 as well as two numerical predictors X_1 and X_2. Recall that
+
+$p({\bf x}) = P[Y = 1 \mid {\bf X} = {\bf x}]$
+
+Consider the model
+
+$\log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2$
+
+ 
+
+together with parameters
+
+\beta_0 = 2
+\beta_1 = -1
+\beta_2 = -1
+
+Calculate $P[Y = 1 \mid X_1 = 1, X_2 = 0]$
+
+```{r}
+1 / (1 + exp(-1*(2+(-1*1)+(-1*0))))
+     
+```
+
+Q2. Recall that $p({\bf x}) = P[Y = 1 \mid {\bf X} = {\bf x}]$
+
+Use the data available in the above code chunk stored in quiz_data to fit the model
+
+$ \log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3 + \beta_4 x_4 + \beta_5 x_5 + \beta_6 x_6 + \beta_7 x_7$
+
+Report the value of the estimate for $\beta_2$
+
+```{r}
+quiz_df <- read.csv("quiz_data.csv")
+
+m1 <- glm(formula = y~., data = quiz_df, family = "binomial")
+coef(m1)
+
+```
+
+Q3. Use a Wald test to test $H_0: \beta_3 = 0$ versus $H_1: \beta_3 \neq 0$ Report the p-value of this test.
+
+```{r}
+coef(summary(m1))
+```
+
+
+Q4. Using this as an initial model, use BIC and a backwards stepwise procedure to select a reduced model. Use likelihood ratio test to compare the initial model and the selected model. Report the p-value of this test.
+
+```{r}
+frm2 <- formula(step(m1, direction = "backward", k=log(nrow(quiz_df)), trace=0))
+m2 <- glm(formula = frm2, data = quiz_df, family = "binomial")
+anova(m2, m1, test="LRT")$"Pr(>Chi)"
+```
+
+
+Q5. Calculate the 5-fold cross-validation misclassification rate when using this model as a classifier that seeks to minimize the misclassification rate. Since the data will be split randomly, use the seed provided after fitting the model. Also, use the relevant function from the boot package to ensure your calculation uses the same splits for grading purposes. (Even with the same seed, the splits could be done differently.)
+
+```{r}
+library("boot")
+set.seed(1)
+cv.glm(data = quiz_df, glmfit = m2, K=5)$delta
+
+```
+
+
+
+
