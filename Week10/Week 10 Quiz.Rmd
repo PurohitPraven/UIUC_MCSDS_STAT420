@@ -50,6 +50,167 @@ X_3 is qsec
 Report the value of the estimate for \beta_3
 
 ```{r}
+m1 <- glm(formula = am~mpg+hp+qsec, data = mtcars, family = "binomial")
+coef(m1)
+```
+
+Q3. Using the model fit in Exercise 2, estimate the change in log-odds that a car has a manual transmission for an increase in fuel efficiency of one mile per gallon.
+
+```{r}
+# assume hp and qsec remains constant
+diff(predict(m1, newdata = data.frame(mpg=c(22.8, 23.8), qsec=c(18.61, 18.61), hp=c(93, 93)), type = "link"))
+
+
 
 ```
+
+Q4. Using the model fit in Exercise 2, estimate the log-odds that a car has a manual transmission for a car with a fuel efficiency of 19 miles per gallon, 150 horsepower, and a quarter mile time of 19 seconds.
+
+```{r}
+predict(m1, newdata = data.frame(mpg=c(19), hp=c(150), qsec=c(19)))
+```
+
+Q5. Using the model fit in Exercise 2, estimate the probability that a car with a fuel efficiency of 22 miles per gallon, 123 horsepower, and a quarter mile time of 18 seconds has a manual transmission.
+```{r}
+
+predict(m1, newdata = data.frame(mpg=c(22), hp=c(123), qsec=c(18)), type = "response")
+
+```
+
+Q6. Use a likeliood ratio test to test
+
+$H_0: \beta_1 = \beta_2 = \beta_3 = 0$
+
+for the model fit in Exercise 2. Report the test statistic of this test.
+```{r}
+m_null <- glm(formula = am~1, data = mtcars, family = "binomial")
+anova(m_null, m1, test = "LRT")$"Deviance"
+```
+
+
+Q7. Use a Wald test to test $H_0: \beta_2 = 0$ versus $H_0: \beta_2 = 0$ Report the p-value of this test.
+
+```{r}
+coef(summary(m1))
+```
+
+
+
+
+Q8. or Exercises 8 - 15, we will use two related diabetes datasets about the Pima Native Americans from the MASS package; Pima.tr and Pima.te. For details, use ?MASS::Pima.tr. They are essentially a train (Pima.tr) and test (Pima.te) dataset that are pre-split.
+
+Recall that
+
+$p({\bf x}) = P[Y = 1 \mid {\bf X} = {\bf x}]$
+
+Use to training data to fit the model
+
+$\log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_1^2 + \beta_4 x_2^2 + \beta_5 x_1 x_2$
+
+where
+
+Y is a binary categorical variable that takes the value 1 when an individual is diabetic according to WHO criteria, 0 if not
+X_1 is glu
+X_2 is ped
+Report the estimate of \beta_4
+
+Hint: You do not need to create a response variable with values 1 and 0, instead you can use the factor variable type.
+
+```{r}
+library(MASS)
+```
+
+```{r}
+
+m1 <- glm(formula = "type~glu+ped+I(glu^2)+I(ped^2)+glu:ped", data = Pima.tr, family = "binomial")
+coef(m1)
+```
+
+Q9. Use the model fit in Exercise 8 to obtain a predicted probability of diabetes for each of the individuals in the test dataset (Pima.te). What proportion of these probabilities are larger than 0.80?
+
+```{r}
+mean(predict(m1, newdata = Pima.te, type = "response")>.8)
+```
+
+Q10. Fit an additive logistic regression to model the probability of diabetes using the train dataset, Pima.tr, which uses all available predictors in the dataset. Using this as an initial model, use AIC and a backwards stepwise procedure to select a reduced model. How many predictors are used in this reduced model?
+
+```{r}
+m2 <- glm(formula = type~., data = Pima.tr, family = "binomial")
+m3 <- step(m2, direction = "backward", trace=0)
+length(coef(m3))-1
+
+```
+
+Q11. Fit a logistic regression to model the probability of diabetes using the train dataset, Pima.tr, which uses all available predictors in the dataset as well as all possible two-way interactions. Using this as an initial model, use AIC and a backwards stepwise procedure to select a reduced model. What is the deviance of this reduced model?
+
+```{r}
+m4 <- glm(formula = type~(npreg+glu+bp+skin+bmi+ped+age)^2, data = Pima.tr, family = "binomial")
+m5 <- step(m4, direction = "backward", trace = 0)
+deviance(m5)
+```
+
+Q12. Obtain 5-fold cross-validated misclassification rates for each of the previous 5 models used as classifiers that seek to minimize the misclassification rate. (The models from Exercises 8, 10, and 11) Since the data will be split randomly, use the seeds provided to obtain the cross-validated results after fitting the models. Also, use the relevant cross-validation function from the boot package to ensure your calculation uses the same splits for grading purposes. (Even with the same seed, the splits could be done differently.)
+
+Report the best cross-validated misclassification rate of these five.
+
+
+```{r}
+library(boot)
+set.seed(42)
+# get cross-validated results for the polynomial model here
+(cv_mis1 <- cv.glm(glmfit = m1, data = Pima.tr, K=5)$delta[1])
+
+set.seed(42)
+# get cross-validated results for the additive model here
+(cv_mis2 <- cv.glm(glmfit = m2, data = Pima.tr, K=5)$delta[1])
+
+set.seed(42)
+# get cross-validated results for the model selected from additive model here
+(cv_mis3 <- cv.glm(glmfit = m3, data = Pima.tr, K=5)$delta[1])
+
+set.seed(42)
+# get cross-validated results for the interaction model here
+(cv_mis4 <- cv.glm(glmfit = m4, data = Pima.tr, K=5)$delta[1])
+
+set.seed(42)
+# get cross-validated results for the model selected from interaction model here
+(cv_mis5 <- cv.glm(glmfit = m1, data = Pima.tr, K=5)$delta[1])
+
+min(cv_mis1, cv_mis2, cv_mis3, cv_mis4, cv_mis5)
+```
+
+Q13. Using the additive model previously fit to the training dataset, create a classifier that seeks to minimize the misclassification rate. Report the misclassification rate or this classifier in the test dataest.
+
+```{r}
+mean(ifelse(predict(m2, newdata = Pima.te) > 0, "Yes", "No") != Pima.te$type)
+
+```
+
+
+Q14. Using the additive model previously fit to the training dataset, create a classifier that seeks to minimize the misclassification rate. Report the sensitivity of this classifier in the test dataset.
+
+```{r}
+make_conf_mat = function(predicted, actual) {
+table(predicted = predicted, actual = actual)
+}
+pred1 <- ifelse(predict(m2, newdata = Pima.te) > 0, "Yes", "No")
+conf_mat <- make_conf_mat(predicted = pred1, actual = Pima.te$type)
+conf_mat[2, 2] / sum(conf_mat[, 2])
+```
+
+Q15. Using the additive model previously fit to the training dataset, create a classifier that classifies an individual as diabetic if their predicted probability of diabetes is greater than 0.3. Report the sensitivity of this classifier in the test dataset.
+
+```{r}
+
+pred1 <- ifelse(predict(m2, newdata = Pima.te, type = "response") > 0.3, "Yes", "No")
+conf_mat <- make_conf_mat(predicted = pred1, actual = Pima.te$type)
+conf_mat[2, 2] / sum(conf_mat[, 2])
+
+```
+
+
+
+
+
+
 

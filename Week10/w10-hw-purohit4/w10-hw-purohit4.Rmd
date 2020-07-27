@@ -22,11 +22,17 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 In this exercise we will investigate the distributions of hypothesis tests for logistic regression. For this exercise, we will use the following predictors.
 
 ```{r}
+sim_xs <- function(sample_size){
+  x1 = rnorm(n = sample_size)
+  x2 = rnorm(n = sample_size)
+  x3 = rnorm(n = sample_size)
+  df1 <- data.frame(cbind(x1=x1, x2=x2, x3=x3))
+  return(df1)
+}
 sample_size = 150
 set.seed(120)
-x1 = rnorm(n = sample_size)
-x2 = rnorm(n = sample_size)
-x3 = rnorm(n = sample_size)
+df_x <- sim_xs(sample_size)
+
 ```
 
 Recall that
@@ -48,40 +54,126 @@ where
 
 **(a)** To investigate the distributions, simulate from this model 2500 times. To do so, calculate 
 
-$$
-P[Y = 1 \mid {\bf X} = {\bf x}]
-$$ 
+$$ P[Y = 1 \mid {\bf X} = {\bf x}] $$ 
 
 for an observation, and then make a random draw from a Bernoulli distribution with that success probability. (Note that a Bernoulli distribution is a Binomial distribution with parameter $n = 1$. There is no direction function in `R` for a Bernoulli distribution.)
 
 Each time, fit the model:
 
-$$
-\log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3
-$$
+$$\log\left(\frac{p({\bf x})}{1 - p({\bf x})}\right) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3$$
 
 Store the test statistics for two tests:
 
 - The Wald test for $H_0: \beta_2 = 0$, which we say follows a standard normal distribution for "large" samples
 - The likelihood ratio test for $H_0: \beta_2 = \beta_3 = 0$, which we say follows a $\chi^2$ distribution (with some degrees of freedom) for "large" samples
 
+```{r}
+
+sim_wald_lrt <- function(num_simul, beta_0, beta_1){
+  wald_ts <- rep(0,num_simul)
+  lrt <- rep(0, num_simul)
+  eta = beta_0 + beta_1 * df_x$x1
+  p = 1 / (1 + exp(-eta))
+  for (i in 1:num_simul) {
+    y = rbinom(n = sample_size, size = 1, prob = p)
+    df1 <- data.frame(y, df_x)
+    m_null <- glm(formula = "y~x1", data = df1, family = "binomial")
+    m2 <- glm(formula = "y~.", data = df1, family = "binomial")
+    wald_ts[i] <- coef(summary(m2))["x2", "z value"]
+    lrt[i] <- anova(m_null, m2, test = "Chisq")$"Deviance"[2]
+  }
+  
+  return(data.frame(cbind(wald_ts=wald_ts, lrt=lrt)))
+}
+```
+```{r}
+
+num_simul <- 2500
+beta_0 = 0.4
+beta_1 = -0.35
+
+df_test_results <- sim_wald_lrt(num_simul = num_simul, beta_0 = beta_0, beta_1 = beta_1)
+```
+
+
+
+
 **(b)** Plot a histogram of the empirical values for the Wald test statistic. Overlay the density of the true distribution assuming a large sample.
+
+```{r}
+plot_waldtest <- function(wald_test){
+  hist(wald_test, probability = TRUE,
+  main = "Wald Test Distribution", xlab = "Wald test Statistic Value")
+  curve(dnorm(x), add = TRUE, col="red")
+}
+
+```
+```{r}
+plot_waldtest(df_test_results$wald_ts)
+
+```
+
 
 **(c)** Use the empirical results for the Wald test statistic to estimate the probability of observing a test statistic larger than 1. Also report this probability using the true distribution of the test statistic assuming a large sample.
 
+```{r}
+compare_empirical_true_wald <- function(wald_ts){
+  (data.frame(cbind(empirical_wald_probability=mean(wald_ts>1), true_wald_probability=pnorm(1, lower.tail = FALSE))))
+}
+```
+
+```{r}
+compare_empirical_true_wald(df_test_results$wald_ts)
+```
+
+
 **(d)** Plot a histogram of the empirical values for the likelihood ratio test statistic. Overlay the density of the true distribution assuming a large sample.
+
+```{r}
+plot_lrt <- function(lrt){
+  hist(lrt, probability = TRUE, breaks = 35, 
+       main = "Likelihood Ratio Test Distribution", xlab = "LRT Test Statistic Value")
+  curve(dchisq(x, df = 2), add = TRUE, col = "red")
+}
+```
+```{r}
+plot_lrt(df_test_results$lrt)
+```
+
 
 **(e)** Use the empirical results for the likelihood ratio test statistic to estimate the probability of observing a test statistic larger than 5. Also report this probability using the true distribution of the test statistic assuming a large sample.
 
-**(f)** Repeat **(a)**-**(e)** but with simulation using a smaller sample size of 10. Based on these results, is this sample size large enough to use the standard normal and $\chi^2$ distributions in this situation? Explain.
+```{r}
+compare_empirical_true_lrt <- function(lrt){
+  (data.frame(cbind(empirical_lrt_probability=mean(lrt>5), true_lrt_probability=pchisq(5, df=2, lower.tail = FALSE))))
+}
+```
 
 ```{r}
+compare_empirical_true_lrt(df_test_results$lrt)
+```
+
+**(f)** Repeat **(a)**-**(e)** but with simulation using a smaller sample size of 10. Based on these results, is this sample size large enough to use the standard normal and $\chi^2$ distributions in this situation? Explain.
+
+```{r message=FALSE, warning=FALSE}
 sample_size = 10
 set.seed(120)
-x1 = rnorm(n = sample_size)
-x2 = rnorm(n = sample_size)
-x3 = rnorm(n = sample_size)
+df_x <- sim_xs(sample_size)
+
+df_test_results <- sim_wald_lrt(num_simul = num_simul, beta_0 = beta_0, beta_1 = beta_1)
+
+plot_waldtest(df_test_results$wald_ts)
+
+compare_empirical_true_wald(df_test_results$wald_ts)
+
+plot_lrt(df_test_results$lrt)
+
+compare_empirical_true_lrt(df_test_results$lrt)
+
 ```
+
+The distributions are valid for large sample sizes and we can see that they are followed when the sample size is 150. But when we have a small sample size of 10, the distributions are not followed and we can see that the curves and the distributions are not the same based on the probabilities and the histograms
+
 
 ***
 
