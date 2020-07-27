@@ -95,8 +95,7 @@ beta_1 = -0.35
 df_test_results <- sim_wald_lrt(num_simul = num_simul, beta_0 = beta_0, beta_1 = beta_1)
 ```
 
-
-
+<br><br>
 
 **(b)** Plot a histogram of the empirical values for the Wald test statistic. Overlay the density of the true distribution assuming a large sample.
 
@@ -113,6 +112,7 @@ plot_waldtest(df_test_results$wald_ts)
 
 ```
 
+<br><br>
 
 **(c)** Use the empirical results for the Wald test statistic to estimate the probability of observing a test statistic larger than 1. Also report this probability using the true distribution of the test statistic assuming a large sample.
 
@@ -127,6 +127,8 @@ compare_empirical_true_wald(df_test_results$wald_ts)
 ```
 
 
+<br><br>
+
 **(d)** Plot a histogram of the empirical values for the likelihood ratio test statistic. Overlay the density of the true distribution assuming a large sample.
 
 ```{r}
@@ -140,6 +142,7 @@ plot_lrt <- function(lrt){
 plot_lrt(df_test_results$lrt)
 ```
 
+<br><br>
 
 **(e)** Use the empirical results for the likelihood ratio test statistic to estimate the probability of observing a test statistic larger than 5. Also report this probability using the true distribution of the test statistic assuming a large sample.
 
@@ -152,6 +155,8 @@ compare_empirical_true_lrt <- function(lrt){
 ```{r}
 compare_empirical_true_lrt(df_test_results$lrt)
 ```
+
+<br><br>
 
 **(f)** Repeat **(a)**-**(e)** but with simulation using a smaller sample size of 10. Based on these results, is this sample size large enough to use the standard normal and $\chi^2$ distributions in this situation? Explain.
 
@@ -199,6 +204,8 @@ ptitanic_trn = ptitanic[trn_idx, ]
 ptitanic_tst = ptitanic[-trn_idx, ]
 ```
 
+<br><br>
+
 **(a)** Consider the model
 
 $$
@@ -220,23 +227,99 @@ is the probability that a certain passenger survives given their attributes and
 
 Fit this model to the training data and report its deviance.
 
+```{r}
+m1 <- glm(survived ~ pclass + sex + age + sex:age, data = ptitanic_trn, family = "binomial")
+deviance(m1)
+```
+
+<br><br>
+
 **(b)** Use the model fit in **(a)** and an appropriate statistical test to determine if class played a significant role in surviving on the Titanic. Use $\alpha = 0.01$. Report:
 
+
+```{r}
+m_null <- glm(survived ~ sex + age + sex:age, data = ptitanic_trn, family = "binomial")
+(anova_result <- anova(m_null, m1, test = "LRT"))
+```
+
 - The null hypothesis of the test
+$H_0: \beta_1 = \beta_2 = 0$
+
+
 - The test statistic of the test
+```{r}
+anova_result$Deviance[2]
+```
+
+
 - The p-value of the test
+```{r}
+anova_result$`Pr(>Chi)`[2]
+```
+
+
 - A statistical decision
+
+Reject the Null Hypothesis
+
 - A practical conclusion
+
+The class of a passenger played a significant role in if a passenger survived or not 
+
+<br><br>
 
 **(c)** Use the model fit in **(a)** and an appropriate statistical test to determine if an interaction between age and sex played a significant role in surviving on the Titanic. Use $\alpha = 0.01$. Report:
 
+```{r}
+beta_5_summary <- coef(summary(m1))["sexmale:age", ]
+```
+
+
 - The null hypothesis of the test
+
+$H_0: \beta_5 = 0$
+
+
 - The test statistic of the test
+```{r}
+beta_5_summary["z value"]
+```
+
+
 - The p-value of the test
+
+```{r}
+beta_5_summary["Pr(>|z|)"]
+```
+
+
 - A statistical decision
+
+Fail to Reject the Null Hypothesis
+
 - A practical conclusion
 
+The interaction between age and sex did not play a significant role in if a passenger survived or not 
+
+<br><br>
+
 **(d)** Use the model fit in **(a)** as a classifier that seeks to minimize the misclassification rate. Classify each of the passengers in the test dataset. Report the misclassification rate, the sensitivity, and the specificity of this classifier. (Use survived as the positive class.)
+
+
+```{r}
+ptitanic_tst$predicted_survived <- as.factor(ifelse(predict(m1, newdata = ptitanic_tst, type = "response")>.5, "survived", "died"))
+
+pred_vs_actual <- table(ptitanic_tst$predicted_survived, ptitanic_tst$survived)
+misclassification_rate <- mean(ptitanic_tst$predicted_survived != ptitanic_tst$survived)
+specificity <- pred_vs_actual[1, 1] / sum(pred_vs_actual[, 1])
+sensitivity <- pred_vs_actual[2, 2] / sum(pred_vs_actual[, 2])
+
+knitr::kable(data.frame(cbind("Misclassification rate"=misclassification_rate, "specificity"=specificity, "sensitivity"=sensitivity)))
+```
+
+
+
+
 
 ***
 
@@ -249,13 +332,50 @@ For this exercise we will use data found in [`wisc-train.csv`](wisc-train.csv) a
 
 You should consider coercing the response to be a factor variable if it is not stored as one after importing the data.
 
+```{r}
+wisc_train <- read.csv("wisc-train.csv")
+wisc_test <- read.csv("wisc-test.csv")
+wisc_test$class <- as.factor(wisc_test$class)
+wisc_train$class <- as.factor(wisc_train$class)
+```
+```{r}
+library(boot)
+```
+
+
 **(a)** The response variable `class` has two levels: `M` if a tumor is malignant, and `B` if a tumor is benign. Fit three models to the training data.
 
 - An additive model that uses `radius`, `smoothness`, and `texture` as predictors
 - An additive model that uses all available predictors
 - A model chosen via backwards selection using AIC. Use a model that considers all available predictors as well as their two-way interactions for the start of the search.
 
-For each, obtain a 5-fold cross-validated misclassification rate using the model as a classifier that seeks to minimize the misclassification rate. Based on this, which model is best? Relative to the best, are the other two underfitting or over fitting? Report the test misclassification rate for the model you picked as the best.
+```{r message=FALSE, warning=FALSE}
+m_1 <- glm(formula = class~radius+smoothness+texture, data = wisc_train, family = "binomial")
+m_2 <- glm(formula = class~., data = wisc_train, family = "binomial")
+m3_0 <- glm(formula = class~(.)^2, data = wisc_train, family = "binomial", maxit=30)
+m_3 <- step(m3_0, direction = "backward", trace=0)
+```
+
+For each, obtain a 5-fold cross-validated misclassification rate using the model as a classifier that seeks to minimize the misclassification rate. Based on this, which model is best? Relative to the best, are the other two underfitting or over fitting? 
+
+```{r message=FALSE, warning=FALSE}
+mis_1 <- cv.glm(wisc_train, m_1, K = 5)$delta[1]
+mis_2 <- cv.glm(wisc_train, m_2, K = 5)$delta[1]
+mis_3 <- cv.glm(wisc_train, m_3, K = 5)$delta[1]
+df1 <- data.frame(cbind(smallest=mis_1, all_predictors=mis_2, step_predictors=mis_3))
+row.names(df1) <- c("misclassification rate")
+df1
+```
+Best is the smallest model whose misclassification rate is `r mis_1`. The other two models are overfitting
+
+
+Report the test misclassification rate for the model you picked as the best.
+
+```{r}
+mean(ifelse(predict(m_1, wisc_test) > 0, "M", "B") != wisc_test$class)
+```
+
+<br><br>
 
 **(b)** In this situation, simply minimizing misclassifications might be a bad goal since false positives and false negatives carry very different consequences. Consider the `M` class as the "positive" label. Consider each of the probabilities stored in `cutoffs` in the creation of a classifier using the **additive** model fit in **(a)**.
 
@@ -272,4 +392,30 @@ $$
       0 & \hat{p}({\bf x}) \leq c 
 \end{cases}
 $$
+
+```{r}
+pred_class_prob <- predict(m_2, newdata = wisc_test, type = "response")
+sensitivity <- rep(0, length(cutoffs))
+specificity <- rep(0, length(cutoffs))
+j=1
+for(i in cutoffs){
+  pred_class <- ifelse(pred_class_prob > i, "M", "B")
+  t <- table(pred_class, wisc_test$class)
+  specificity[j] <- t[1, 1] / sum(t[, 1])
+  sensitivity[j] <- t[2, 2] / sum(t[, 2])
+  j <- j+1
+}
+```
+
+
+```{r fig.width=15}
+library(ggplot2)
+
+ggplot(data = data.frame(cutoffs, specificity, sensitivity), aes(x=cutoffs, y=specificity, color="blue")) + geom_line() + geom_line(aes(y=sensitivity, col="red")) + scale_color_discrete(name="Type", labels=c("Specificity", "Sensitivity")) + ylab("Specificity or Sensitivity") + ggtitle("Plot showing variation of specificity and sensitivity by cutoff values") + theme_light()
+
+```
+
+Looking at the plot, if we use .5 as cutoff we would miss catching approximately 5% of the positive cases. Hence we should reduce the cutoff to as much as we can tolerate, so that we catch maximum positive cases. In general a cutoff between 0 and 0.25 should be selected based on the accepted tolerance
+
+
 
