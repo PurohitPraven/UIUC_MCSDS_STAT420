@@ -1,0 +1,169 @@
+---
+title: "Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+
+library("tibble")
+library("readr")
+library("Hmisc")
+library("dplyr")
+library("statsr")
+library("GGally")
+```
+
+
+We first read the training dataset and look at its structure
+
+```{r}
+df1 <-read.csv("train.csv",as.is = FALSE )
+
+str(df1)
+```
+
+Now we investigate the dataset to see what actions we need to take with the dataset before creating a model
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, include=FALSE}
+Hmisc::html(Hmisc::describe(df1))
+```
+
+Since the output is very long, we use echo=FALSE, but as a sample, we show the output below for the first 5 rows
+
+```{r message=FALSE, warning=FALSE}
+Hmisc::html(Hmisc::describe(df1[,1:5]), where=c('cwd', 'tmp'))
+```
+
+
+We have 80 predictors in the dataset. That tells us that we really arent short of predictors.
+
+Based on the above dataset description (showing only first 5 for brevity) we draw the following conclusions
+
+
+**Remove these columns**
+
+* Remove Id column since it is not a predictor and is simply a running id
+* Alley - has 1369 missing values and only 91 observations with values. 
+* Street - Only 6 elements or 0.4% data elements have Street as Grvl, rest are all Pave. 6 is too few data elements to make a prediction 
+* LotFrontage has 259 missing values. This is about 18% of total observations. If we were short of predictors we would not delete it. Since there a lot of predictors that convey space of the house, we will delete this column
+* Utilities - Only 1 value has NoSeWa and the rest are all AllPub. Since only 1 element isnt enough for creating a model
+* Condition2 - remove since 99% are Norm while the remaining 1% are distributed across 7 other values. This implies that the other 7 values dont have enough data to make a useful prediction
+* RoofMatl - 98.2% is CompShg and the remaining 1.8% is spread across 7 values and the remaining 7 values dont have enough data to make a prediction
+* X3SsnPorch - 98.4% is value 0, and the remaining 1.6% is spread across 19 types. Each of these has only 1 or 2 observtions hence not enough data for prediction
+* PoolArea - 99.5% has value 0 and the remaining .5% is apread across 7 factors, implying not enough data in each type to make a model
+* PoolQC - since only 7 observations have non missing values
+* MiscFeature, MiscVal - since only 54 and 52 observations respectively  have values
+* FirePlaceQu - has 690 values missing which is approximately 47% of total predictors. Since we are not short of number of predictors, and this one has half the values missing, we will delete this predictor
+* Fence - 1179 values missing.
+
+
+**Other Observations**
+
+* MasVnrType and MasVnrArea - has 8 missing values
+* BsmtQual, BsmtCond, BsmtExposure, BsmtFinType1, BsmtFinType2 - each have 37 or 38 missing values
+* Electrical = has 1 value missing
+* GarageType, GarageYrBlt, GarageFinish, GarageQual, GarageCond - has 81 values missing
+
+Based on the above analysis we remove the ones that we want to remove and store the column names for the ones with missing values in a vector to be used later if necessary
+
+```{r}
+remove_cols <- c("Id", "Alley", "Street", "LotFrontage", "Utilities", "Condition2", "RoofMatl", "X3SsnPorch", "PoolArea", "PoolQC", "MiscFeature", "MiscVal", "FirePlaceQ", "Fence")
+
+col_with_missing_values <- c("MasVnrType", "MasVnrArea", "BsmtQual", "BsmtCond", "BsmtExposure", "BsmtFinType1", "BsmtFinType2", "Electrical", "GarageType", "GarageYrBlt", "GarageFinish", "GarageQual", "GarageCond")
+
+keep_cols <- colnames(df1)[!(colnames(df1) %in% remove_cols)]
+
+df_cols_removed <- subset(df1, select = as.vector(eval(keep_cols)))
+```
+
+Now, to identify columns that have high correlations. We define high correlation as great than 70% correlation.
+
+In order to identify correlation we first create a dataframe that has only numeric predictors
+
+```{r}
+df_only_numeric <- df_cols_removed[,sapply(df_cols_removed, is.numeric)]
+```
+
+Now we identify the correlation in numeric predictors. We mark all correlations less than .75 as NA, so that we can easily identify highly corelated features
+
+```{r}
+cor_relation = cor(df_only_numeric, use = "complete.obs")
+cor_relation[abs(cor_relation) < 0.75] <- NA
+cor_relation
+```
+
+
+Based on the above correlation matrix, we make the below observations
+
+**Remove the following predictors**
+
+* YearBuilt and GarageYrBlt has .82 correlation coefficient. This makes sense since the Garage will be built in the same year as the house, with a few exceptions. We also reason that the price will be more tied to how old the house is. Since YearBuilt of house will be a more useful predictor, we will remove GarageYrBlt
+* X1stFlrSF and TotalBsmtSF has a .82 correlation. This is obvious since the size of teh 1st floor will be very similar to size of basement. We can also reason that the price will be more correlated to the price of the 1st floor. Hence we will remove TotalBsmtSF
+* GarageArea and GarageCars have a .83 correlation. Intutively we can see that both of these are related. Hence we remove GarageCars 
+
+**Make a note of these**
+* OverallQual has a .78 correlation with SalePrice. Given that, we should make sure OverallQual is part of the model
+* GrLivArea and TotRmsAbvGrd has a correlation of .82. We see that number of Bedrooms and kitchens and batrooms are already captured separately. Intutively, we are still not sure if removing any of these would be a good thing. So we keep a note of these two, but dont remove them
+
+
+```{r}
+remove_cols2 <- c("GarageYrBlt", "TotalBsmtSF", "GarageCars")
+
+keep_cols2 <- colnames(df_cols_removed)[!(colnames(df_cols_removed) %in% remove_cols2)]
+
+df_cols_removed <- subset(df_cols_removed, select = as.vector(eval(keep_cols2)))
+
+ncol(df_cols_removed)
+
+```
+
+We see that now we are left with 65 columns compared to the 81 that we started with.
+
+Now, before we begin modeling, we look at the pairs plots to see if any of the parameters are an obvious choice for transformations
+
+We only look at numeric columns. We filter out the columns that have 25 or less discrete values, since they will probably not be candidates for transformations
+
+```{r}
+df_only_numeric <- df_cols_removed[,sapply(df_cols_removed, is.numeric)]
+remove_for_plot <- c()
+j=1
+for(i in colnames(df_only_numeric)){
+  k <- length(unique(df_only_numeric[,i])<20)
+  if(k<20){
+    remove_for_plot[j] <- i
+    j <- j+1
+  }
+}
+
+keep_for_plot <- colnames(df_only_numeric)[!(colnames(df_only_numeric) %in% remove_for_plot)]
+
+
+df_cols_removed_for_plot <- subset(df_only_numeric, select = as.vector(eval(keep_for_plot)))
+
+```
+
+
+
+```{r fig.height=30, fig.width=35, message=FALSE, warning=FALSE}
+#pairs(df_only_numeric)
+ggpairs(df_cols_removed_for_plot, ggplot2::aes(color=I("navyblue")), title = "ggpairs plot to see correlation and distribution", lower = list(continuous = wrap("smooth")))
+```
+
+
+`
+```{r}
+
+```
+
+
+
+```{r}
+lm("SalePrice ~ Condition1", data=df1)
+```
+
+
+  
