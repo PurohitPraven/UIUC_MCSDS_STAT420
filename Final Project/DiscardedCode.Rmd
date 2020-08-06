@@ -1,0 +1,118 @@
+---
+title: "discarded code"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+`
+```{r fig.height=7, fig.width=20, message=FALSE, warning=FALSE}
+
+g1 <- ggplot(data = df_cols_removed, aes(x=LotArea, y=SalePrice))+geom_point()
+g2 <- ggplot(data = df_cols_removed, aes(x=MasVnrArea, y=SalePrice))+geom_point()
+g3 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF1, y=SalePrice))+geom_point()
+g4 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF2, y=SalePrice))+geom_point()
+g5 <- ggplot(data = df_cols_removed, aes(x=X1stFlrSF, y=SalePrice))+geom_point()
+g6 <- ggplot(data = df_cols_removed, aes(x=GrLivArea, y=SalePrice))+geom_point()
+g7 <- ggplot(data = df_cols_removed, aes(x=GarageArea, y=SalePrice))+geom_point()
+g8 <- ggplot(data = df_cols_removed, aes(x=WoodDeckSF, y=SalePrice))+geom_point()
+g9 <- ggplot(data = df_cols_removed, aes(x=OpenPorchSF, y=SalePrice))+geom_point()
+g10 <- ggplot(data = df_cols_removed, aes(x=EnclosedPorch, y=SalePrice))+geom_point()
+g11 <- ggplot(data = df_cols_removed, aes(x=YearBuilt, y=SalePrice))+geom_point()
+g12 <- ggplot(data = df_cols_removed, aes(x=YearRemodAdd, y=SalePrice))+geom_point()
+
+#Now apply the transformations
+
+tg1 <- ggplot(data = df_cols_removed, aes(x=log(LotArea), y=SalePrice))+geom_point()
+tg2 <- ggplot(data = df_cols_removed, aes(x=log(MasVnrArea), y=SalePrice))+geom_point()
+tg3 <- ggplot(data = df_cols_removed, aes(x=log(BsmtFinSF1), y=SalePrice))+geom_point()
+tg4 <- ggplot(data = df_cols_removed, aes(x=log(BsmtFinSF2), y=SalePrice))+geom_point()
+tg5 <- ggplot(data = df_cols_removed, aes(x=log(X1stFlrSF), y=SalePrice))+geom_point()
+tg6 <- ggplot(data = df_cols_removed, aes(x=log(GrLivArea), y=SalePrice))+geom_point()
+tg7 <- ggplot(data = df_cols_removed, aes(x=log(GarageArea), y=SalePrice))+geom_point()
+tg8 <- ggplot(data = df_cols_removed, aes(x=log(WoodDeckSF), y=SalePrice))+geom_point()
+tg9 <- ggplot(data = df_cols_removed, aes(x=log(OpenPorchSF), y=SalePrice))+geom_point()
+tg10 <- ggplot(data = df_cols_removed, aes(x=log(EnclosedPorch), y=SalePrice))+geom_point()
+tg11 <- ggplot(data = df_cols_removed, aes(x=1/log(YearBuilt), y=SalePrice))+geom_point()
+tg12 <- ggplot(data = df_cols_removed, aes(x=1/log(YearRemodAdd), y=SalePrice))+geom_point()
+
+grid.arrange(g1,g2,g3,g4,g5,g6,tg1,tg2,tg3,tg4,tg5,tg6, ncol=6, top="Set 1 - Comparison of transformation vs not to see if transformation will help")
+
+
+grid.arrange(g7,g8,g9,g10,g11,g12,tg7,tg8,tg9,tg10,tg11,tg12, ncol=6, top="Set 2 - Comparison of transformation vs not to see if transformation will help")
+```
+
+```{r fig.height=7, fig.width=20, message=FALSE, warning=FALSE}
+
+g1 <- ggplot(data = df_cols_removed, aes(x=LotArea, y=log(SalePrice)))+geom_point()
+g2 <- ggplot(data = df_cols_removed, aes(x=MasVnrArea, y=log(SalePrice)))+geom_point()
+g3 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF1, y=log(SalePrice)))+geom_point()
+g4 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF2, y=log(SalePrice)))+geom_point()
+g5 <- ggplot(data = df_cols_removed, aes(x=X1stFlrSF, y=log(SalePrice)))+geom_point()
+g6 <- ggplot(data = df_cols_removed, aes(x=GrLivArea, y=log(SalePrice)))+geom_point()
+g7 <- ggplot(data = df_cols_removed, aes(x=GarageArea, y=log(SalePrice)))+geom_point()
+g8 <- ggplot(data = df_cols_removed, aes(x=WoodDeckSF, y=log(SalePrice)))+geom_point()
+g9 <- ggplot(data = df_cols_removed, aes(x=OpenPorchSF, y=log(SalePrice)))+geom_point()
+g10 <- ggplot(data = df_cols_removed, aes(x=EnclosedPorch, y=log(SalePrice)))+geom_point()
+g11 <- ggplot(data = df_cols_removed, aes(x=YearBuilt, y=log(SalePrice)))+geom_point()
+g12 <- ggplot(data = df_cols_removed, aes(x=YearRemodAdd, y=log(SalePrice)))+geom_point()
+
+#Now apply the transformations
+
+tg1 <- ggplot(data = df_cols_removed, aes(x=log(LotArea), y=log(SalePrice)))+geom_point()
+tg2 <- ggplot(data = df_cols_removed, aes(x=log(MasVnrArea), y=log(SalePrice)))+geom_point()
+tg3 <- ggplot(data = df_cols_removed, aes(x=log(BsmtFinSF1), y=log(SalePrice)))+geom_point()
+tg4 <- ggplot(data = df_cols_removed, aes(x=log(BsmtFinSF2), y=log(SalePrice)))+geom_point()
+tg5 <- ggplot(data = df_cols_removed, aes(x=log(X1stFlrSF), y=log(SalePrice)))+geom_point()
+tg6 <- ggplot(data = df_cols_removed, aes(x=log(GrLivArea), y=log(SalePrice)))+geom_point()
+tg7 <- ggplot(data = df_cols_removed, aes(x=log(GarageArea), y=log(SalePrice)))+geom_point()
+tg8 <- ggplot(data = df_cols_removed, aes(x=log(WoodDeckSF), y=log(SalePrice)))+geom_point()
+tg9 <- ggplot(data = df_cols_removed, aes(x=log(OpenPorchSF), y=log(SalePrice)))+geom_point()
+tg10 <- ggplot(data = df_cols_removed, aes(x=log(EnclosedPorch), y=log(SalePrice)))+geom_point()
+tg11 <- ggplot(data = df_cols_removed, aes(x=1/log(YearBuilt), y=log(SalePrice)))+geom_point()
+tg12 <- ggplot(data = df_cols_removed, aes(x=1/log(YearRemodAdd), y=log(SalePrice)))+geom_point()
+
+grid.arrange(g1,g2,g3,g4,g5,g6,tg1,tg2,tg3,tg4,tg5,tg6, ncol=6, top="Set 1 - Comparison of transformation vs not to see if transformation will help")
+
+
+grid.arrange(g7,g8,g9,g10,g11,g12,tg7,tg8,tg9,tg10,tg11,tg12, ncol=6, top="Set 2 - Comparison of transformation vs not to see if transformation will help")
+```
+
+
+```{r fig.height=7, fig.width=20, message=FALSE, warning=FALSE}
+
+g1 <- ggplot(data = df_cols_removed, aes(x=LotArea, y=SalePrice))+geom_point()
+g2 <- ggplot(data = df_cols_removed, aes(x=MasVnrArea, y=SalePrice))+geom_point()
+g3 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF1, y=SalePrice))+geom_point()
+g4 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF2, y=SalePrice))+geom_point()
+g5 <- ggplot(data = df_cols_removed, aes(x=X1stFlrSF, y=SalePrice))+geom_point()
+g6 <- ggplot(data = df_cols_removed, aes(x=GrLivArea, y=SalePrice))+geom_point()
+g7 <- ggplot(data = df_cols_removed, aes(x=GarageArea, y=SalePrice))+geom_point()
+g8 <- ggplot(data = df_cols_removed, aes(x=WoodDeckSF, y=SalePrice))+geom_point()
+g9 <- ggplot(data = df_cols_removed, aes(x=OpenPorchSF, y=SalePrice))+geom_point()
+g10 <- ggplot(data = df_cols_removed, aes(x=EnclosedPorch, y=SalePrice))+geom_point()
+g11 <- ggplot(data = df_cols_removed, aes(x=YearBuilt, y=SalePrice))+geom_point()
+g12 <- ggplot(data = df_cols_removed, aes(x=YearRemodAdd, y=SalePrice))+geom_point()
+
+#Now apply the transformations
+
+tg1 <- ggplot(data = df_cols_removed, aes(x=LotArea, y=log(SalePrice)))+geom_point()
+tg2 <- ggplot(data = df_cols_removed, aes(x=MasVnrArea, y=log(SalePrice)))+geom_point()
+tg3 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF1, y=log(SalePrice)))+geom_point()
+tg4 <- ggplot(data = df_cols_removed, aes(x=BsmtFinSF2, y=log(SalePrice)))+geom_point()
+tg5 <- ggplot(data = df_cols_removed, aes(x=X1stFlrSF, y=log(SalePrice)))+geom_point()
+tg6 <- ggplot(data = df_cols_removed, aes(x=GrLivArea, y=log(SalePrice)))+geom_point()
+tg7 <- ggplot(data = df_cols_removed, aes(x=GarageArea, y=log(SalePrice)))+geom_point()
+tg8 <- ggplot(data = df_cols_removed, aes(x=WoodDeckSF, y=log(SalePrice)))+geom_point()
+tg9 <- ggplot(data = df_cols_removed, aes(x=OpenPorchSF, y=log(SalePrice)))+geom_point()
+tg10 <- ggplot(data = df_cols_removed, aes(x=EnclosedPorch, y=log(SalePrice)))+geom_point()
+tg11 <- ggplot(data = df_cols_removed, aes(x=YearBuilt, y=log(SalePrice)))+geom_point()
+tg12 <- ggplot(data = df_cols_removed, aes(x=YearRemodAdd, y=log(SalePrice)))+geom_point()
+
+grid.arrange(g1,g2,g3,g4,g5,g6,tg1,tg2,tg3,tg4,tg5,tg6, ncol=6, top="Set 1 - Comparison of transformation vs not to see if transformation will help")
+
+
+grid.arrange(g7,g8,g9,g10,g11,g12,tg7,tg8,tg9,tg10,tg11,tg12, ncol=6, top="Set 2 - Comparison of transformation vs not to see if transformation will help")
+```
