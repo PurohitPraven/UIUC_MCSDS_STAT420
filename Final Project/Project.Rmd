@@ -3,7 +3,8 @@ title: "Project"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+options(scipen = 1, digits = 4, width = 80, fig.alin = "center")
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -18,8 +19,8 @@ library("GGally")
 library("gridExtra")
 library("MASS")
 library("car")
-
-library(stringr)
+library("lmtest")
+library("stringr")
 ```
 
 
@@ -275,7 +276,7 @@ bc <- boxcox(m3,xlab = "lambda for YearRemodAdd", lambda = seq(-200,400))
 (best_lam <- bc$x[which(bc$y==max(bc$y))])
 ```
 
-YearBuilt and YearRemodAdd have very high $\lambda$ and using these transformations will make it very hard to explain the model. We will keep a note of these two to experiment with, if necessary
+YearBuilt and YearRemodAdd have very high $\lambda$ and using these transformations will make it very hard to explain the model. We will keep a note of these two, and experiment with them if necessary
 
 We will not identify the Lambda for MasVnrArea, BsmtFinSF1, BsmtFinSF2, WoodDeckSF, OpenPorchSF, EnclosedPorch since those predictors contant 0's, and we cant run the boxcox funtion on them unless we handle the 0's. Since we have a lot of predictors, we will not message these 6 predictors.
 
@@ -285,98 +286,73 @@ Based on the above analysis we create 4 models to start with
 
 1) A simple additive model
 2) A model with the above transformations but without the extreme transformations for YearBuilt and YearRemodAdd
-2) A model with the above transformations including the extreme transformations for YearBuilt and YearRemodAdd
+
+```{r}
+create_formula <- function(data_set, response, cols_to_remove="", cols_to_add=""){
+  
+  predictor_list <- colnames(df_cols_removed)
+  
+  predictor_list <- predictor_list[!(predictor_list %in% cols_to_remove)]
+  n <- length(predictor_list)
+
+  for(i in 1:length(cols_to_add)){
+    n <- n+1
+    predictor_list[n] <- cols_to_add[i]
+  }
+  
+  frm1 <- paste(response, " ~ ", paste(predictor_list, collapse = ' + '))
+}
+```
+
+```{r}
+num_predictors_in_formula <- function(model_formula){
+
+  return(length(strsplit(as.character(model_formula)[3], fixed = TRUE, split = "+")[[1]]))
+}
+
+```
 
 ```{r cache=TRUE}
 m_additive <- lm("SalePrice~.", data = df_cols_removed)
 ```
 
 ```{r}
-predictor_list <- colnames(df_cols_removed)
-predictor_list <- predictor_list[!(predictor_list %in% c("LotArea", "GarageArea", "SalePrice"))]
-n <- length(predictor_list)
-n <- n+1
-predictor_list[n] <- "log(LotArea)"
-n <- n+1
-predictor_list[n] <- "log(GarageArea)"
-frm1 <- paste("log(SalePrice) ~ ", paste(predictor_list, collapse = ' + '))
-m_transform_1 <- lm(formula = frm1, data = df_cols_removed)
+frm <- create_formula(df_cols_removed, "log(SalePrice)", c("SalePrice", "LotArea", "GarageArea"), c("log(LotArea)", "log(GarageArea)"))
+
+m_transform_1 <- lm(formula = frm, data = df_cols_removed)
 
 ```
 
 ```{r}
-predictor_list <- colnames(df_cols_removed)
-predictor_list <- predictor_list[!(predictor_list %in% c("LotArea", "GarageArea", "SalePrice", "YearBuilt", "YearRemodAdd"))]
-n <- length(predictor_list)
-n <- n+1
-predictor_list[n] <- "log(LotArea)"
-n <- n+1
-predictor_list[n] <- "log(GarageArea)"
-n <- n+1
-predictor_list[n] <- "YearBuilt^35"
-n <- n+1
-predictor_list[n] <- "YearRemodAdd^55"
+frm <- create_formula(df_cols_removed, "log(SalePrice)", c("SalePrice", "LotArea", "GarageArea", "YearBuilt", "YearRemodAdd"), c("log(LotArea)", "log(GarageArea)", "YearBuilt^35", "YearRemodAdd^55"))
 
-frm2 <- paste("log(SalePrice) ~ ", paste(predictor_list, collapse = ' + '))
-m_transform_2 <- lm(formula = frm2, data = df_cols_removed)
+m_transform_2 <- lm(formula = frm, data = df_cols_removed)
 
 ```
-
 
 Now we use step backwards with aic for all 3 models above to find 3 good models which are smaller than the above
 
 ```{r cache=TRUE}
 m_additive_step <- step(m_additive, trace = 0)
-```
-
-```{r}
-(frm1 <- formula(m_additive_step))
-length((strsplit(frm1,"+", fixed = TRUE))[[1]])
-paste("number of predictors = ", )
-
+(frm <- formula(m_additive_step))
 ```
 
 ```{r cache=TRUE}
 m_transform_1_step <- step(m_transform_1, trace = 0)
+(frm <- formula(m_transform_1_step))
 ```
 
-```{r}
-formula(m_transform_1_step)
+By using AIC to step backwards we are not penalizing the models for the number of predictors. Since the models are still huge, we will run step BIC backwards on the results of the step AIC with the hope of getting smaller models
+
+```{r cache=TRUE}
+m_additive_step_bic <- step(m_additive_step, trace = 0, k=log(nrow(df_cols_removed)))
+(frm <- formula(m_additive_step_bic))
 ```
 
 ```{r cache=TRUE}
-m_transform_2_step <- step(m_transform_2, trace = 0)
-```
-
-```{r}
-formula(m_transform_2_step)
-```
-
-Since the models are still huge, we will run step BIC on the results of the step AIC
-
-```{r cache=TRUE}
-m_additive_step_bic <- step(m_additive_step, trace = 0)
-```
-
-```{r}
-formula(m_additive_step)
-```
-
-```{r cache=TRUE}
-m_transform_1_step_bic <- step(m_transform_1_step, trace = 0)
-```
-
-```{r}
-formula(m_transform_1_step_bic)
-```
-
-
-```{r cache=TRUE}
-m_transform_2_step_bic <- step(m_transform_2_step, trace = 0)
-```
-
-```{r}
-formula(m_transform_2_step_bic)
+m_transform_1_step_bic <- step(m_transform_1_step, trace = 0, k=log(nrow(df_cols_removed)))
+(frm <- formula(m_transform_1_step_bic))
+num_predictors_in_formula(frm)
 ```
 
 
@@ -398,15 +374,14 @@ diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha 
   if(testit == TRUE){
     shapiro_Normalcy_test_result <- shapiro.test(resid(model))$"p.value"
     
-    bptest(model)
-    bptest_Const_Variance_test_result <-  bptest(model)$"p.value"
+    bptest_Const_Variance_test_result <-  bptest(model)$"p.value"[[1]]
     
-    model <- m_additive
-    rmse <- sqrt(mean(resid(model) ^ 2))
-    loocv_cross_validated_rmse <- sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
+    rmse <- round(sqrt(mean(resid(model) ^ 2)), 4)
+    loocv_cross_validated_rmse <- round(sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2)), 4)
     aic <- extractAIC(model)[2]
+    num_predictors <- num_predictors_in_formula(formula(model))
     
-    l1 <- list(shapiro_Normalcy_test_result=shapiro_Normalcy_test_result, bptest_Const_Variance_test_result=bptest_Const_Variance_test_result, RMSE=rmse, loocv_cross_validated_rmse=loocv_cross_validated_rmse, AdjustedR2=summary(model)$"adj.r.squared", AIC=aic)
+    l1 <- list(num_predictors=num_predictors, shapiro_Normalcy_test_pvalue=shapiro_Normalcy_test_result, bptest_Const_Variance_test_pvalue=bptest_Const_Variance_test_result, RMSE=rmse, loocv_cross_validated_rmse=loocv_cross_validated_rmse, AdjustedR2=summary(model)$"adj.r.squared", AIC=aic)
     
     return(l1)
   }
@@ -415,16 +390,93 @@ diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha 
 
 
 ```{r fig.height=7, fig.width=15}
-m_additive_step_result <- diagnostics(m_additive_step)
-m_transform_1_step_result <- diagnostics(m_transform_1_step)
-m_transform_2_step_result <- diagnostics(m_transform_2_step)
+m_additive_step_result <- diagnostics(m_additive_step, plotit = FALSE)
+m_additive_step_bic_result <- diagnostics(m_additive_step_bic, plotit = FALSE)
 
-df_result <- rbind(m_additive_step=m_additive_step_result, m_transform_1_step=m_transform_1_step_result, m_transform_2_step=m_transform_2_step_result)
+m_transform_1_step_result <- diagnostics(m_transform_1_step, plotit = FALSE)
+m_transform_1_step_bic_result <- diagnostics(m_transform_1_step_bic, plotit = FALSE)
+
+df_result <- rbind(m_additive_step=m_additive_step_result, m_additive_step_bic=m_additive_step_bic_result, m_transform_1_step=m_transform_1_step_result, m_transform_1_step_bic=m_transform_1_step_bic_result)
 
 ```
 ```{r}
 knitr::kable(df_result)
 ```
 
+Looking at the above table, we can clearly see that the additive model isnt yielding a good model after stepping back using AIC and BIC. The RMSE is extremely high. Hence we will discard this model for now.
+
+This leaves us with 2 models to evaluate
+
+```{r}
+formula(m_transform_1_step)
+
+formula(m_transform_1_step_bic)
+```
+
+We can see that m_transform_1_step_bic is a subset of m_transform_1_step. We will look at the annova test to see which of these two is better
+
+```{r}
+anova(m_transform_1_step_bic, m_transform_1_step)
+```
+
+Looking at the p-value we can say that the larger model has atleast some of the parameters that have a significant relationship with the predictor
+
+Let us look at the diagnostics for this model
+
+```{r fig.width=15}
+diagnostics(m_transform_1_step)
+
+```
+
+We will not look at the individual significant of the parameters of this model to see if we can eliminate any predictors
+
+```{r}
+a <- coef(summary(m_transform_1_step))[,"Pr(>|t|)"] 
+```
+
+We will be conservative and use $\alpha = .01$. We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
+
+```{r}
+names(a[a>.01])
+```
+
+We will select all non-categorical variables that have pvalue>.01 and will will choose only the categorical predictors to remove that have most of the categories with p-value greater than 1
+
+* LotShape
+* LotConfig
+* LandSlope
+* Neighborhood
+* Condition1 -
+* YearRemodAdd
+* Exterior1st
+* ExterCond
+* Foundation 
+* BsmtExposure
+* BsmtFinType
+* Heating
+* Functional
+* PavedDrive
+* EnclosedPorch
+* SaleType
+* SaleCondition
+
+
+```{r}
+remove_cols3 <- c("LotShape", "LotConfig", "LandSlope", "Neighborhood", "Condition1", "YearRemodAdd", "Exterior1st", "ExterCond", "Foundation", "BsmtExposure", "BsmtFinType", "Heating", "Functional", "PavedDrive", "EnclosedPorch", "SaleType", "SaleCondition")
+library("NLP")
+
+f <- formula(m_transform_1_step)
+a <- paste(f, collapse = '+')
+strsplit(as.String(f), fixed = TRUE, split = "+")[[1]]
+
+predictor_list <- strsplit(as.String(formula(m_transform_1_step)), fixed = TRUE, split = "+")[[1]]
+predictor_list <- predictor_list[!(predictor_list %in% remove_cols3)]
+
+frm1 <- paste("log(SakePrice) ~ ", paste(predictor_list, collapse = ' + '))
+
+df_cols_removed <- subset(df_cols_removed, select = as.vector(eval(keep_cols2)))
+
+ncol(df_cols_removed)
+```
 
 
