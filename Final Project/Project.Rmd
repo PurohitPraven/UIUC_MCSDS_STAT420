@@ -1,12 +1,27 @@
 ---
-title: "Project"
-output: html_document
+title: 'Final Project'
+author: "STAT 420, Summer 2020, Mandalorians"
+date: ''
+output:
+  bookdown::html_document2: 
+    toc: true
+  bookdown::pdf_document2: 
+    toc: true
+   
+fig_caption: yes
+urlcolor: cyan
 ---
+
+\usepackage{subfig}
+
+***
+
 
 ```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
 options(scipen = 1, digits = 4, width = 80, fig.alin = "center")
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 
 ```{r message=FALSE}
 
@@ -23,14 +38,22 @@ library("lmtest")
 library("stringr")
 ```
 
+# Introduction
 
-We first read the training dataset and look at its structure
+We have a housing dataset. We have pulled this dataset as part of a kaggle challenge. We have the train and test data as separate files. Since this is a challenge, we dont have the predicted values for the test dataset.
+
+Our job is to predict house prices, given 80 predictors.
+
+We can see the structure of the dataset below
 
 ```{r}
 df1 <-read.csv("train.csv",as.is = FALSE )
 
 str(df1)
 ```
+
+
+
 
 Now we investigate the dataset to see what actions we need to take with the dataset before creating a model
 
@@ -502,6 +525,15 @@ plot(m_transform_1_step_sig_only)
 
 Our diagnostics plots seem to be looking good. 
 
+We look at variance inflation factors, and filter by only vifs that are >5
+
+```{r}
+vif(m_transform_1_step_sig_only)[vif(m_transform_1_step_sig_only)>5]
+```
+
+We notice that while there are high vif values, they are for categorical variables, and hence we choose to do nothing with this
+
+
 We will now look at high influence points and investigate them
 
 ```{r}
@@ -511,12 +543,71 @@ We will now look at high influence points and investigate them
 As an experiment we try and remove the influentials and see what impact this has on the diagnostics
 
 ```{r}
+df_wo_influentials <- df_cols_removed[-influentials,]
+df_only_influentials <- df_cols_removed[influentials,]
+
+m_no_influentials <- lm(formula(m_transform_1_step_sig_only), data = df_wo_influentials)
+
 
 ```
 
 
 
 ```{r}
+
+m_transform_1_step_sig_only_result <- diagnostics(m_transform_1_step_sig_only, plotit = FALSE)
+m_no_influentials_result <- diagnostics(m_no_influentials, plotit = FALSE)
+
+df_result <- rbind(m_transform_1_step_sig_only=m_transform_1_step_sig_only_result , m_no_influentials=m_no_influentials_result)
+
+knitr::kable(df_result)
 ```
+
+
+We see that our diagnostics have improved significantly. So now we know that it is the influential points that are causing our model 
+
+Now we need to figure out if removing the influentials is the right thing to do
+
+```{r}
+df_only_influentials
+
+```
+
+Looking at the dataset that just has the influential points, we decide to keep them, since we dont see a real justification for removing them.
+
+We had noted at the start that OverallCond had .78 correlation with SalePrice. We will now use just log(SalePrice)~OverallCond as the starting model and step forward with the scope being the current best model
+
+```{r}
+m_small <- lm("log(SalePrice)~OverallCond", data = df_cols_removed)
+
+m_small_step <- step(m_small, scope = formula(m_transform_1_step_sig_only), direction = "forward", trace = 0)
+
+```
+
+We will now look at diagnostics data with these three models
+
+```{r}
+
+m_transform_1_step_sig_only_result <- diagnostics(m_transform_1_step_sig_only, plotit = FALSE)
+m_small_step_result <- diagnostics(m_small_step, plotit = FALSE)
+
+df_result <- rbind(m_transform_1_step=m_transform_1_step_result, m_small_step=m_small_step_result)
+
+knitr::kable(df_result)
+```
+Most of the diagnostics are the same, but the number of predictors is less for the m_small_step model.
+
+Hence we will use this as our final model.
+
+We look at the diagnostics plot finally
+```{r}
+plot(m_small_step)
+
+```
+
+
+Our diagnostics plots look fairly ok. We know that our shapiro test and BP test are rejecting the null hypothesis, but since the graphs looks pretty good, and we know that these tests are quick to reject for large datasets, we will move ahead with this model
+
+
 
 
