@@ -419,7 +419,7 @@ We can see that m_transform_1_step_bic is a subset of m_transform_1_step. We wil
 anova(m_transform_1_step_bic, m_transform_1_step)
 ```
 
-Looking at the p-value we can say that the larger model has atleast some of the parameters that have a significant relationship with the predictor
+Looking at the p-value we can say that the larger model has atleast some of the parameters that have a significant relationship with the predictor. Hence we will continue to use the larger model
 
 Let us look at the diagnostics for this model
 
@@ -428,55 +428,95 @@ diagnostics(m_transform_1_step)
 
 ```
 
-We will not look at the individual significant of the parameters of this model to see if we can eliminate any predictors
+Looking at the diagnostics, our model can still do better. We will now look at the individual significant of the parameters of this model to see if we can eliminate any predictors
 
 ```{r}
 a <- coef(summary(m_transform_1_step))[,"Pr(>|t|)"] 
+names(a)
 ```
 
-We will be conservative and use $\alpha = .01$. We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
+We will be conservative and use $\alpha = .1  $. We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
 
 ```{r}
-names(a[a>.01])
+names(a[a>.1])
 ```
 
-We will select all non-categorical variables that have pvalue>.01 and will will choose only the categorical predictors to remove that have most of the categories with p-value greater than 1
+We will select all non-categorical variables that have $pvalue>.1$ and will will choose only the categorical predictors to remove that have all of the categories with $pvalue>.1$
 
-* LotShape
-* LotConfig
-* LandSlope
-* Neighborhood
-* Condition1 -
+* LandSlope - Intutively we think this is important hence we will not remove it
 * YearRemodAdd
-* Exterior1st
 * ExterCond
-* Foundation 
-* BsmtExposure
 * BsmtFinType
-* Heating
-* Functional
-* PavedDrive
+* PavedDrive 
 * EnclosedPorch
-* SaleType
-* SaleCondition
+* SaleType - Intutively we think this is important hence we will not remove it
 
+Now we modify the formula of the model that is best so far, m_transform_1, and remove the above 5 predictors from it
 
 ```{r}
-remove_cols3 <- c("LotShape", "LotConfig", "LandSlope", "Neighborhood", "Condition1", "YearRemodAdd", "Exterior1st", "ExterCond", "Foundation", "BsmtExposure", "BsmtFinType", "Heating", "Functional", "PavedDrive", "EnclosedPorch", "SaleType", "SaleCondition")
-library("NLP")
+remove_cols3 <- c("YearRemodAdd","ExterCond","PavedDrive", "EnclosedPorch", "BsmtFinType")
 
 f <- formula(m_transform_1_step)
-a <- paste(f, collapse = '+')
-strsplit(as.String(f), fixed = TRUE, split = "+")[[1]]
-
-predictor_list <- strsplit(as.String(formula(m_transform_1_step)), fixed = TRUE, split = "+")[[1]]
+predictor_list <- str_split(f, pattern = fixed(" + "))[[3]]
 predictor_list <- predictor_list[!(predictor_list %in% remove_cols3)]
+# replacing the \n that str_spit introduces after 500 characters
+predictor_list <- str_replace(predictor_list, "\n    ", "")
+# create the formula
+(frm1 <- paste("log(SalePrice) ~ ", paste(predictor_list, collapse = ' + ')))
 
-frm1 <- paste("log(SakePrice) ~ ", paste(predictor_list, collapse = ' + '))
+```
 
-df_cols_removed <- subset(df_cols_removed, select = as.vector(eval(keep_cols2)))
+Now we use the above formula to create the model and look at its diagnostics
 
-ncol(df_cols_removed)
+```{r}
+m_transform_1_step_sig_only <- lm(frm1, data = df_cols_removed)
+```
+
+We do an anova test between the two models to make sure we have not discarded significant predictors
+
+```{r}
+anova(m_transform_1_step_sig_only, m_transform_1_step)
+```
+
+Based on the result of the anova test, we see that for our smaller model we fail to reject the Null Hypothesis, hence we move ahead with this model
+
+Now we will compare the diagnostics of the 2 models
+
+
+```{r fig.height=7, fig.width=15}
+m_transform_1_step_result <- diagnostics(m_transform_1_step, plotit = FALSE)
+m_transform_1_step_sig_only_result <- diagnostics(m_transform_1_step_sig_only, plotit = FALSE)
+
+df_result <- rbind(m_transform_1_step=m_transform_1_step_result, m_transform_1_step_sig_only=m_transform_1_step_sig_only_result)
+
+knitr::kable(df_result)
+```
+
+We see that our diagnostic staticstics are about the same. Hence we will select the smaller model, m_transform_1_step_sig_only, as our better model
+
+we will now look at the diagnostics plots for this model
+
+```{r}
+plot(m_transform_1_step_sig_only)
+```
+
+Our diagnostics plots seem to be looking good. 
+
+We will now look at high influence points and investigate them
+
+```{r}
+(influentials <- which(cooks.distance(m_transform_1_step_sig_only) > (4 / length(cooks.distance(m_transform_1_step_sig_only)))))
+```
+
+As an experiment we try and remove the influentials and see what impact this has on the diagnostics
+
+```{r}
+
+```
+
+
+
+```{r}
 ```
 
 
