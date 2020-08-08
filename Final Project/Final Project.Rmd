@@ -1,19 +1,16 @@
-
-\DeclareUnicodeCharacter{00A0}{~}
-
 ---
 title: 'Final Project'
 author: "STAT 420, Summer 2020, Mandalorians"
 date: ''
 output:
    
-  bookdown::pdf_document2: 
-    toc: true
   bookdown::html_document2: 
     toc: true
 fig_caption: yes
 urlcolor: cyan
 ---
+
+\DeclareUnicodeCharacter{00A0}{~}
 
 ***
 
@@ -53,7 +50,10 @@ df1 <-read.csv("train.csv",as.is = FALSE )
 str(df1)
 ```
 
+# Method
 
+
+## Investigations - Visually looking at data statistics
 
 
 Now we investigate the dataset to see what actions we need to take with the dataset before creating a model
@@ -68,6 +68,9 @@ Since the output is very long, we use echo=FALSE, but as a sample, we show the o
 Hmisc::html(Hmisc::describe(df1[,1:5]), where=c('cwd', 'tmp'))
 ```
 
+
+
+## Data Cleanup based on data inspection
 
 We have 80 predictors in the dataset. That tells us that we really arent short of predictors.
 
@@ -110,6 +113,10 @@ keep_cols <- colnames(df1)[!(colnames(df1) %in% remove_cols)]
 df_cols_removed <- subset(df1, select = as.vector(eval(keep_cols)))
 ```
 
+
+
+## Investigation - Correlation
+
 Now, to identify columns that have high correlations. We define high correlation as great than 70% correlation.
 
 In order to identify correlation we first create a dataframe that has only numeric predictors
@@ -120,12 +127,17 @@ df_only_numeric <- df_cols_removed[,sapply(df_cols_removed, is.numeric)]
 
 Now we identify the correlation in numeric predictors. We mark all correlations less than .75 as NA, so that we can easily identify highly corelated features
 
+For breivity of the resport, we only show the head of the corellation matrix, while we had looked at the entire matrix to come to our conclusions below
+
 ```{r}
 cor_relation = cor(df_only_numeric, use = "complete.obs")
 cor_relation[abs(cor_relation) < 0.75] <- NA
-cor_relation
+head(cor_relation)
 ```
 
+
+
+## Data Cleanup based on correlation
 
 Based on the above correlation matrix, we make the below observations
 
@@ -137,6 +149,7 @@ Based on the above correlation matrix, we make the below observations
 * GrLivArea and TotRmsAbvGrd has a correlation of .82. We see that number of Bedrooms and kitchens and batrooms are already captured separately. Hence we remove TotRmsAbvGrd
 
 **Make a note of these**
+
 * OverallQual has a .78 correlation with SalePrice. Given that, we should make sure OverallQual is part of the model
 
 
@@ -155,6 +168,9 @@ ncol(df_cols_removed)
 We see that now we are left with 63 columns compared to the 81 that we started with.
 
 
+
+## Data Cleanup to handle missing values
+
 We know that step wont work with missing values. Hence we will need to remove those. 
 
 ```{r}
@@ -163,6 +179,14 @@ nrow(df_cols_removed)
 ```
 
 We started with 1460 observations and 81 columns and after our initial cleanup we end up with 1338 observations and 63 columns
+
+
+
+## Transformation identification
+
+
+
+### Pairs plot
 
 Now, before we begin modeling, we look at the pairs plots to see if any of the parameters are an obvious choice for transformations
 
@@ -200,7 +224,7 @@ ggpairs( df_cols_removed_for_plot, ggplot2::aes(color=I("navyblue")), title = "g
 
 We make the following observations from the plot
 
-** Potential for transformations **
+**Potential for transformations**
 
 * LotArea
 * MasVnrArea
@@ -216,17 +240,83 @@ We make the following observations from the plot
 * YearRemodAdd 
 * SalePrice
 
-In order to validate that transformations are necessary we will start with a simple additive model and look at its diagnostics plots
 
-```{r message=FALSE, warning=FALSE}
-m1 <- lm("SalePrice~.", data=df_cols_removed)
-plot(m1)
+```{r}
+diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha = .05, plotit = TRUE, testit = TRUE){
+  
+  if(plotit == TRUE){
+    g1 <- ggplot(data = model, aes(sample=.resid)) + 
+      stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
+      ggtitle("Normal QQ Plot") +  theme_light() 
+    
+    g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
+      geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
+      xlab("Fitted") + ylab("Residuals") + ggtitle("Residuals vs Fitted Plot") + theme_light() 
+    
+    grid.arrange(g1, g2, ncol=2)
+  }
+  
+  if(testit == TRUE){
+    shapiro_Normalcy_test_result <- shapiro.test(resid(model))$"p.value"
+    
+    bptest_Const_Variance_test_result <-  bptest(model)$"p.value"[[1]]
+    
+    rmse <- round(sqrt(mean(resid(model) ^ 2)), 4)
+    aic <- extractAIC(model)[2]
+    num_predictors <- num_predictors_in_formula(formula(model))
+    
+    l1 <- list(num_predictors=num_predictors, shapiro_Normalcy_test_pvalue=shapiro_Normalcy_test_result, bptest_Const_Variance_test_pvalue=bptest_Const_Variance_test_result, RMSE=rmse, AdjustedR2=summary(model)$"adj.r.squared", AIC=aic)
+    
+    return(l1)
+  }
+}
+```
+
+```{r}
+create_formula <- function(data_set, response, cols_to_remove="", cols_to_add=""){
+  
+  predictor_list <- colnames(df_cols_removed)
+  
+  predictor_list <- predictor_list[!(predictor_list %in% cols_to_remove)]
+  n <- length(predictor_list)
+
+  for(i in 1:length(cols_to_add)){
+    n <- n+1
+    predictor_list[n] <- cols_to_add[i]
+  }
+  
+  frm1 <- paste(response, " ~ ", paste(predictor_list, collapse = ' + '))
+}
+```
+
+```{r}
+num_predictors_in_formula <- function(model_formula){
+
+  return(length(strsplit(as.character(model_formula)[3], fixed = TRUE, split = "+")[[1]]))
+}
+
 ```
 
 
-Based on the diagnostics plot we see that some kind of transformation for the response is necessary.
+In order to validate that transformations are necessary we will start with a simple additive model and look at its diagnostics plots
 
-In order to figure out the transformation we find the lambda for it
+```{r fig.height=5, fig.width=15, message=FALSE, warning=FALSE}
+m1 <- lm("SalePrice~.", data=df_cols_removed)
+diagnostics(m1)
+```
+
+
+Based on the diagnostics we see that some kind of transformation for the response is necessary.
+
+
+
+### Boxcox lambda identifications for response and predictors
+
+
+
+#### Response transformation identification
+
+In order to figure out the transformation for the response, we find the lambda for it
 
 ```{r}
 boxcox(m1)
@@ -249,12 +339,15 @@ since our $\lambda$ is close to 0 we will do log transformations
 We redo the model and look at the diagnostics plots again
 
 
-```{r message=FALSE, warning=FALSE}
+```{r fig.height=5, fig.width=15, message=FALSE, warning=FALSE}
 m2 <- lm("log(SalePrice)~.", data=df_cols_removed)
-plot(m2)
+diagnostics(m2)
 ```
 
 We see that the plots are a lot better, but there seems to be some scope for improvement. 
+
+
+#### Predictors transformation identification
 
 Let us now identify the lamda transformations for the other columns we identified and using those variables as response, fit the model, but keep log(SalePrice) in the predictor with others
 
@@ -304,32 +397,13 @@ YearBuilt and YearRemodAdd have very high $\lambda$ and using these transformati
 
 We will not identify the Lambda for MasVnrArea, BsmtFinSF1, BsmtFinSF2, WoodDeckSF, OpenPorchSF, EnclosedPorch since those predictors contant 0's, and we cant run the boxcox funtion on them unless we handle the 0's. Since we have a lot of predictors, we will not message these 6 predictors.
 
- 
 
-```{r}
-create_formula <- function(data_set, response, cols_to_remove="", cols_to_add=""){
-  
-  predictor_list <- colnames(df_cols_removed)
-  
-  predictor_list <- predictor_list[!(predictor_list %in% cols_to_remove)]
-  n <- length(predictor_list)
 
-  for(i in 1:length(cols_to_add)){
-    n <- n+1
-    predictor_list[n] <- cols_to_add[i]
-  }
-  
-  frm1 <- paste(response, " ~ ", paste(predictor_list, collapse = ' + '))
-}
-```
+## Model Identification
 
-```{r}
-num_predictors_in_formula <- function(model_formula){
 
-  return(length(strsplit(as.character(model_formula)[3], fixed = TRUE, split = "+")[[1]]))
-}
 
-```
+### Models - Simple, transformation, and using step
 
 Based on the above analysis we create the below models to start with
 
@@ -347,52 +421,21 @@ m_transform_1 <- lm(formula = frm, data = df_cols_removed)
 
 ```
 
-Now we use step backwards with bic for the above to find better versions of these models that are smaller than them
+Now we use step backwards with aic for the above to find better versions of these models that are smaller than them
 
 ```{r cache=TRUE}
-m_additive_step <- step(m_additive, trace = 0, k=log(nrow(df_cols_removed)))
+m_additive_step <- step(m_additive, trace = 0)
 (frm <- formula(m_additive_step))
 ```
 
 ```{r cache=TRUE}
-m_transform_1_step <- step(m_transform_1, trace = 0, k=log(nrow(df_cols_removed)))
+m_transform_1_step <- step(m_transform_1, trace = 0)
 (frm <- formula(m_transform_1_step))
 ```
 
+We now compare the diagnostics of these models
 
 ```{r}
-diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha = .05, plotit = TRUE, testit = TRUE){
-  
-  if(plotit == TRUE){
-    g1 <- ggplot(data = model, aes(sample=.resid)) + 
-      stat_qq(color=I(pcol)) + stat_qq_line(color = I(lcol)) +
-      ggtitle("Normal QQ Plot") +  theme_light() 
-    
-    g2 <- ggplot(data = model, aes(x = fitted(model), y = resid(model))) +
-      geom_point(color=I(pcol)) + geom_hline(yintercept=0, color = I(lcol)) +
-      xlab("Fitted") + ylab("Residuals") + ggtitle("Residuals vs Fitted Plot") + theme_light() 
-    
-    grid.arrange(g1, g2, ncol=2)
-  }
-  
-  if(testit == TRUE){
-    shapiro_Normalcy_test_result <- shapiro.test(resid(model))$"p.value"
-    
-    bptest_Const_Variance_test_result <-  bptest(model)$"p.value"[[1]]
-    
-    rmse <- round(sqrt(mean(resid(model) ^ 2)), 4)
-    aic <- extractAIC(model)[2]
-    num_predictors <- num_predictors_in_formula(formula(model))
-    
-    l1 <- list(num_predictors=num_predictors, shapiro_Normalcy_test_pvalue=shapiro_Normalcy_test_result, bptest_Const_Variance_test_pvalue=bptest_Const_Variance_test_result, RMSE=rmse, AdjustedR2=summary(model)$"adj.r.squared", AIC=aic)
-    
-    return(l1)
-  }
-}
-```
-
-
-```{r fig.height=7, fig.width=15}
 m_additive_result <- diagnostics(m_additive, plotit = FALSE)
 m_additive_step_result <- diagnostics(m_additive_step, plotit = FALSE)
 
@@ -409,7 +452,22 @@ knitr::kable(df_result)
 
 Looking at the above table, we can clearly see that the additive model isnt yielding a good model. The RMSE is extremely high. Hence we will discard this model for now.
 
-We will also discard the m_transform_1 model since the diagnostics are similar but the number of predictors is very high
+
+
+
+#### Anova test
+
+In order to confirm that the model generated using step (m_transform_1_step) is a better model than the m_transform_1 model, we will do an anova test
+
+```{r}
+anova(m_transform_1, m_transform_1_step)
+```
+
+Based on the anova test, we see that the smaller model is sufficient hence we move ahead with m_transform_1_step
+
+
+
+#### Model selection
 
 Hence we will use m_transform_1_step model going forward
 
@@ -418,12 +476,9 @@ formula(m_transform_1_step)
 ```
 
 
-Let us look at the diagnostics for this model
 
-```{r fig.width=15}
-diagnostics(m_transform_1_step)
 
-```
+### Individual parameter significance test for selected model
 
 Looking at the diagnostics, our model can still do better. We will now look at the individual significant of the parameters of this model to see if we can eliminate any predictors
 
@@ -433,29 +488,105 @@ names(a)
 ```
 
 
-The above are all the coefficients of the model. We will use them to compare to the below filtered list of value > .1
+The above are all the coefficients of the model. We will use them to compare to the below filtered list of p-values > .1
 
-We will be conservative and use alpha = .1 We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
+We will use alpha = .1 
+We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
 
 ```{r}
 names(a[a>.01])
 ```
 
-We see that there are no variables that have p-value < .1, implying that all the variables have a significant relationship with the response
+
+
+We will select all non-categorical variables that have $pvalue>.1$ and will will choose only the categorical predictors to remove that have all of the categories with $pvalue>.1$
+
+* LandSlope - Intutively we think this is important hence we will not remove it
+* YearRemodAdd
+* ExterCond
+* KitchenAbvGr - we intutively think this is important and will not remove it
+* PavedDrive 
+* EnclosedPorch
+* SaleType - Intutively we think this is important hence we will not remove it
+
+Now we modify the formula of the model that is best so far, and remove the above identified predictors from it
+
+```{r}
+remove_cols3 <- c("YearRemodAdd","ExterCond", "PavedDrive", "EnclosedPorch")
+
+f <- formula(m_transform_1_step)
+predictor_list <- str_split(f, pattern = fixed(" + "))[[3]]
+predictor_list <- predictor_list[!(predictor_list %in% remove_cols3)]
+# replacing the \n that str_spit introduces after 500 characters
+predictor_list <- str_replace(predictor_list, "\n    ", "")
+# create the formula
+(frm1 <- paste("log(SalePrice) ~ ", paste(predictor_list, collapse = ' + ')))
+
+```
+
+Now we use the above formula to create the model
+
+```{r}
+m_transform_1_step_sig_only <- lm(frm1, data = df_cols_removed)
+```
+
+
+
+#### Anova test
+
+We do an anova test between the two models to make sure we have not discarded significant predictors
+
+```{r}
+anova(m_transform_1_step_sig_only, m_transform_1_step)
+```
+
+Based on the result of the anova test, we see that for our smaller model we fail to reject the Null Hypothesis, hence we move ahead with this model
+
+
+
+#### Diagnostic comparison
+
+Now we will compare the diagnostics of the 2 models
+
+
+```{r}
+m_transform_1_step_result <- diagnostics(m_transform_1_step, plotit = FALSE)
+m_transform_1_step_sig_only_result <- diagnostics(m_transform_1_step_sig_only, plotit = FALSE)
+
+df_result <- rbind(m_transform_1_step=m_transform_1_step_result, m_transform_1_step_sig_only=m_transform_1_step_sig_only_result)
+
+knitr::kable(df_result)
+```
+
+We see that our diagnostic statistics are about the same. 
+
+
+
+#### Model selection
+
+Hence we will select the smaller model, m_transform_1_step_sig_only, as our better model
+
+
+
+### Variance Inflation factor identification
 
 We look at variance inflation factors, and filter by only vifs that are >5
 
 ```{r}
-faraway::vif(m_transform_1_step)[faraway::vif(m_transform_1_step)>5]
+faraway::vif(m_transform_1_step_sig_only)[faraway::vif(m_transform_1_step_sig_only)>5]
 ```
 
 We notice that while there are high vif values, they are for categorical variables, and hence we choose to do nothing with this. There is YearBuilt, but it is not large enough for us to remove it, and individually we have already seen above, that it seems to have a significant relationship with the response. Hence we make no changes
 
 
+
+### Influential points identification and handling
+
 We will now look at high influence points and investigate them
 
 ```{r}
-(influentials <- which(cooks.distance(m_transform_1_step) > (4 / length(cooks.distance(m_transform_1_step)))))
+influentials <- which(cooks.distance(m_transform_1_step_sig_only) > (4 / length(cooks.distance(m_transform_1_step_sig_only))))
+length(influentials)
 ```
 
 As an experiment we try and remove the influentials and see what impact this has on the diagnostics
@@ -464,39 +595,78 @@ As an experiment we try and remove the influentials and see what impact this has
 df_wo_influentials <- df_cols_removed[-influentials,]
 df_only_influentials <- df_cols_removed[influentials,]
 
-m_no_influentials <- lm(formula(m_transform_1_step), data = df_wo_influentials)
+m_no_influentials <- lm(formula(m_transform_1_step_sig_only), data = df_wo_influentials)
 
 ```
+
+
+
+#### Diagnostics Comparison
 
 Now we compare the diagnostics data
 
 ```{r}
 
-m_transform_1_step_result <- diagnostics(m_transform_1_step, plotit = FALSE)
+m_transform_1_step_sig_only_result <- diagnostics(m_transform_1_step_sig_only, plotit = FALSE)
 m_no_influentials_result <- diagnostics(m_no_influentials, plotit = FALSE)
 
-df_result <- rbind(m_transform_1_step = m_transform_1_step_result, 
+df_result <- rbind(m_transform_1_step_sig_only = m_transform_1_step_sig_only_result, 
                    m_no_influentials = m_no_influentials_result)
 
 knitr::kable(df_result)
 ```
 
-We see that our diagnostics have improved significantly. We will have to sacrifice about 7% of the observations but the improvements in RMSE and Adjusted Rsquare are significant. Hence we will So now we know that it is the influential points that are causing our model to have less than ideal diagnostics.
+We see that our diagnostics have improved significantly, including BP test and saphiro test p-values.
+
+We will have to sacrifice about 7% of the observations but the improvements in RMSE and Adjusted Rsquare are significant. 
+
+So now we know that it is the influential points that are causing our model to have less than ideal diagnostics and hence we will discard the influential points and select the new model as our better model
+
+
+
+## Selected model
 
 Hence now our good model is m_no_influentials and the dataset is df_wo_influentials
 
-We look at the diagnostics plot finally
-
-```{r fig.width=15, message=FALSE, warning=FALSE}
-diagnostics(m_no_influentials)
-
+```{r}
+formula(m_no_influentials)
 ```
 
 
+# Results
+
+
+
+## Comparison of all models
+
+We have already seen this in various places but we will now compare the diagnostics of all the models that we have seen to see how we have progressed
+
+
+```{r}
+
+df_result <- rbind(m_additive = m_additive_result,
+                   m_additive_step = m_additive_step_result,
+                   m_transform_1 = m_transform_1_result,
+                   m_transform_1_step = m_transform_1_step_result,
+                   m_transform_1_step_sig_only = m_transform_1_step_sig_only_result, 
+                   m_no_influentials = m_no_influentials_result)
+
+knitr::kable(df_result)
+```
+
+
+
+## Diagnostic plots
+
+We also look at the diagnostics plot of our selected model
+
+```{r fig.height=5, fig.width=15, message=FALSE, warning=FALSE}
+diagnostics(m_no_influentials, testit = FALSE)
+
+```
+
 Our diagnostics plots look fairly good We know that our shapiro test and BP test are rejecting the null hypothesis, but since the graphs looks pretty good, and we know that these tests are quick to reject for large datasets, we will select this model as our final model
 
-
-# Diagnostics
 
 
 # Discussion
