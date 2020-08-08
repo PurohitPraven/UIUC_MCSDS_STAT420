@@ -1,25 +1,26 @@
+
+\DeclareUnicodeCharacter{00A0}{~}
+
 ---
 title: 'Final Project'
 author: "STAT 420, Summer 2020, Mandalorians"
 date: ''
 output:
-  bookdown::html_document2: 
-    toc: true
+   
   bookdown::pdf_document2: 
     toc: true
-   
+  bookdown::html_document2: 
+    toc: true
 fig_caption: yes
 urlcolor: cyan
 ---
-
-\usepackage{subfig}
 
 ***
 
 
 ```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
-options(scipen = 1, digits = 4, width = 80, fig.alin = "center")
 knitr::opts_chunk$set(echo = TRUE)
+options(tinytex.verbose = TRUE)
 ```
 
 
@@ -33,7 +34,7 @@ library("statsr")
 library("GGally")
 library("gridExtra")
 library("MASS")
-library("car")
+library("faraway")
 library("lmtest")
 library("stringr")
 ```
@@ -217,7 +218,7 @@ We make the following observations from the plot
 
 In order to validate that transformations are necessary we will start with a simple additive model and look at its diagnostics plots
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 m1 <- lm("SalePrice~.", data=df_cols_removed)
 plot(m1)
 ```
@@ -248,7 +249,7 @@ since our $\lambda$ is close to 0 we will do log transformations
 We redo the model and look at the diagnostics plots again
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 m2 <- lm("log(SalePrice)~.", data=df_cols_removed)
 plot(m2)
 ```
@@ -305,7 +306,7 @@ We will not identify the Lambda for MasVnrArea, BsmtFinSF1, BsmtFinSF2, WoodDeck
 
  
 
-Based on the above analysis we create 4 models to start with
+Based on the above analysis we create 2 models to start with
 
 1) A simple additive model
 2) A model with the above transformations but without the extreme transformations for YearBuilt and YearRemodAdd
@@ -353,7 +354,7 @@ m_transform_2 <- lm(formula = frm, data = df_cols_removed)
 
 ```
 
-Now we use step backwards with aic for all 3 models above to find 3 good models which are smaller than the above
+Now we use step backwards with aic for all 2 models above to find 2 good models which are smaller than the above
 
 ```{r cache=TRUE}
 m_additive_step <- step(m_additive, trace = 0)
@@ -400,11 +401,10 @@ diagnostics <- function(model = fit_1, pcol = 'dodgerblue', lcol = 'red', alpha 
     bptest_Const_Variance_test_result <-  bptest(model)$"p.value"[[1]]
     
     rmse <- round(sqrt(mean(resid(model) ^ 2)), 4)
-    loocv_cross_validated_rmse <- round(sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2)), 4)
     aic <- extractAIC(model)[2]
     num_predictors <- num_predictors_in_formula(formula(model))
     
-    l1 <- list(num_predictors=num_predictors, shapiro_Normalcy_test_pvalue=shapiro_Normalcy_test_result, bptest_Const_Variance_test_pvalue=bptest_Const_Variance_test_result, RMSE=rmse, loocv_cross_validated_rmse=loocv_cross_validated_rmse, AdjustedR2=summary(model)$"adj.r.squared", AIC=aic)
+    l1 <- list(num_predictors=num_predictors, shapiro_Normalcy_test_pvalue=shapiro_Normalcy_test_result, bptest_Const_Variance_test_pvalue=bptest_Const_Variance_test_result, RMSE=rmse, AdjustedR2=summary(model)$"adj.r.squared", AIC=aic)
     
     return(l1)
   }
@@ -455,10 +455,9 @@ Looking at the diagnostics, our model can still do better. We will now look at t
 
 ```{r}
 a <- coef(summary(m_transform_1_step))[,"Pr(>|t|)"] 
-names(a)
 ```
 
-We will be conservative and use $\alpha = .1  $. We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
+We will be conservative and use alpha = .1 We now identify the individual columns that have p-value of greater than .1 and remove them from the dataset to create another model
 
 ```{r}
 names(a[a>.1])
@@ -519,7 +518,7 @@ We see that our diagnostic staticstics are about the same. Hence we will select 
 
 we will now look at the diagnostics plots for this model
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 plot(m_transform_1_step_sig_only)
 ```
 
@@ -528,7 +527,7 @@ Our diagnostics plots seem to be looking good.
 We look at variance inflation factors, and filter by only vifs that are >5
 
 ```{r}
-vif(m_transform_1_step_sig_only)[vif(m_transform_1_step_sig_only)>5]
+faraway::vif(m_transform_1_step_sig_only)[faraway::vif(m_transform_1_step_sig_only)>5]
 ```
 
 We notice that while there are high vif values, they are for categorical variables, and hence we choose to do nothing with this
@@ -563,44 +562,45 @@ df_result <- rbind(m_transform_1_step_sig_only=m_transform_1_step_sig_only_resul
 knitr::kable(df_result)
 ```
 
+We see that our diagnostics have improved significantly. We will have to sacrifice about 7% of the observations but the improvements in RMSE and Adjusted Rsquare are significant. Hence we will So now we know that it is the influential points that are causing our model to have less than ideal diagnostics.
 
-We see that our diagnostics have improved significantly. So now we know that it is the influential points that are causing our model 
-
-Now we need to figure out if removing the influentials is the right thing to do
-
-```{r}
-df_only_influentials
-
-```
-
-Looking at the dataset that just has the influential points, we decide to keep them, since we dont see a real justification for removing them.
+Hence now our good model is m_no_influentials and the dataset is df_wo_influentials
 
 We had noted at the start that OverallCond had .78 correlation with SalePrice. We will now use just log(SalePrice)~OverallCond as the starting model and step forward with the scope being the current best model
 
 ```{r}
-m_small <- lm("log(SalePrice)~OverallCond", data = df_cols_removed)
+m_small <- lm("log(SalePrice)~OverallCond", data = df_wo_influentials)
 
-m_small_step <- step(m_small, scope = formula(m_transform_1_step_sig_only), direction = "forward", trace = 0)
+m_small_step <- step(m_small, scope = formula(m_no_influentials), direction = "forward", trace = 0)
 
 ```
 
-We will now look at diagnostics data with these three models
+We will now look at diagnostics data with these two models
 
 ```{r}
 
-m_transform_1_step_sig_only_result <- diagnostics(m_transform_1_step_sig_only, plotit = FALSE)
+m_no_influentials_result <- diagnostics(m_no_influentials, plotit = FALSE)
 m_small_step_result <- diagnostics(m_small_step, plotit = FALSE)
 
-df_result <- rbind(m_transform_1_step=m_transform_1_step_result, m_small_step=m_small_step_result)
+df_result <- rbind(m_no_influentials=m_no_influentials_result, m_small_step=m_small_step_result)
 
 knitr::kable(df_result)
 ```
-Most of the diagnostics are the same, but the number of predictors is less for the m_small_step model.
 
-Hence we will use this as our final model.
+
+Most of the diagnostics are the same
+
+To decide we will look at the anova test
+```{r}
+anova(m_small_step, m_no_influentials)
+```
+
+
+With most of the diagnostics being the same and the pvalue of anova test being fairly large, and the number of predictors being slightly less for the smaller model, we will use m_small_step our final model.
 
 We look at the diagnostics plot finally
-```{r}
+
+```{r message=FALSE, warning=FALSE}
 plot(m_small_step)
 
 ```
@@ -608,6 +608,15 @@ plot(m_small_step)
 
 Our diagnostics plots look fairly ok. We know that our shapiro test and BP test are rejecting the null hypothesis, but since the graphs looks pretty good, and we know that these tests are quick to reject for large datasets, we will move ahead with this model
 
+
+
+# Diagnostics
+
+
+# Discussion
+
+
+# Result
 
 
 
