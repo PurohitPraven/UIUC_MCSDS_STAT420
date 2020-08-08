@@ -6,10 +6,13 @@ output:
    
   bookdown::html_document2: 
     toc: true
-fig_caption: yes
-urlcolor: cyan
+    number_sections: yes
+    fig_caption: yes
+    urlcolor: cyan
+    toc_depth: 4
 ---
 
+\usepackage{subfig}
 \DeclareUnicodeCharacter{00A0}{~}
 
 ***
@@ -38,9 +41,34 @@ library("stringr")
 
 # Introduction
 
-We have a housing dataset. We have pulled this dataset as part of a kaggle challenge. We have the train and test data as separate files. Since this is a challenge, we dont have the predicted values for the test dataset.
+### Title of Project
 
-Our job is to predict house prices, given 80 predictors.
+The title of our project is "House Price Prediction"
+
+### Source of dataset
+
+The dataset is from Kaggle. Link is https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
+
+### Statement of personal interest
+
+Personal Interest -  We wish to start on Kaggle competitions and this is supposed to be a good kickstarter dataset. We intend to submit this on Kaggle post completion of the project
+
+### Description of the dataset
+
+We have a housing dataset. We have pulled this dataset as part of a kaggle challenge. The dataset is split into training data with 1460 observation and test data which is 1459 observations. Since this is a Kaggle challenge, we dont have the predicted values for the test dataset, hence we cant use the test data to validate our predictions.
+
+
+### What are the variables?
+
+The variables of this dataset represent the characteristics of a house. It includes things like, zone, neighborhood, size, shape, condition, year etc. It is an exhaustive compilation of all the potential things that can impact the price of a house.
+
+We unfortunately do not have a file describing each variable, but looking at them it is easy to infer their meaning.
+
+### Goal of this model
+
+The goal of the model we are creating is to accurately predict the price of the houses.
+
+### Dataset structure
 
 We can see the structure of the dataset below
 
@@ -52,8 +80,10 @@ str(df1)
 
 # Method
 
+## Data Cleaning
 
-## Investigations - Visually looking at data statistics
+
+### Investigations - Visually looking at data statistics {#id1}
 
 
 Now we investigate the dataset to see what actions we need to take with the dataset before creating a model
@@ -70,7 +100,7 @@ Hmisc::html(Hmisc::describe(df1[,1:5]), where=c('cwd', 'tmp'))
 
 
 
-## Data Cleanup based on data inspection
+### Data Cleanup based on data inspection
 
 We have 80 predictors in the dataset. That tells us that we really arent short of predictors.
 
@@ -86,8 +116,8 @@ Based on the above dataset description (showing only first 5 for brevity) we dra
 * Utilities - Only 1 value has NoSeWa and the rest are all AllPub. Since only 1 element isnt enough for creating a model
 * Condition2 - remove since 99% are Norm while the remaining 1% are distributed across 7 other values. This implies that the other 7 values dont have enough data to make a useful prediction
 * RoofMatl - 98.2% is CompShg and the remaining 1.8% is spread across 7 values and the remaining 7 values dont have enough data to make a prediction
-* X3SsnPorch - 98.4% is value 0, and the remaining 1.6% is spread across 19 types. Each of these has only 1 or 2 observtions hence not enough data for prediction
-* PoolArea - 99.5% has value 0 and the remaining .5% is apread across 7 factors, implying not enough data in each type to make a model
+* X3SsnPorch - 98.4% is value 0, and the remaining 1.6% is spread across 19 types. Each of these has only 1 or 2 observations hence not enough data for prediction
+* PoolArea - 99.5% has value 0 and the remaining .5% is spread across 7 factors, implying not enough data in each type to make a model
 * PoolQC - since only 7 observations have non missing values
 * MiscFeature, MiscVal - since only 54 and 52 observations respectively  have values
 * FirePlaceQu - has 690 values missing which is approximately 47% of total predictors. Since we are not short of number of predictors, and this one has half the values missing, we will delete this predictor
@@ -115,7 +145,7 @@ df_cols_removed <- subset(df1, select = as.vector(eval(keep_cols)))
 
 
 
-## Investigation - Correlation
+### Investigation - Correlation
 
 Now, to identify columns that have high correlations. We define high correlation as great than 70% correlation.
 
@@ -125,9 +155,9 @@ In order to identify correlation we first create a dataframe that has only numer
 df_only_numeric <- df_cols_removed[,sapply(df_cols_removed, is.numeric)]
 ```
 
-Now we identify the correlation in numeric predictors. We mark all correlations less than .75 as NA, so that we can easily identify highly corelated features
+Now we identify the correlation in numeric predictors. We mark all correlations less than .75 as NA, so that we can easily identify highly correlated features
 
-For breivity of the resport, we only show the head of the corellation matrix, while we had looked at the entire matrix to come to our conclusions below
+For brevity of the report, we only show the head of the correlation matrix, while we had looked at the entire matrix to come to our conclusions below
 
 ```{r}
 cor_relation = cor(df_only_numeric, use = "complete.obs")
@@ -137,16 +167,16 @@ head(cor_relation)
 
 
 
-## Data Cleanup based on correlation
+### Data Cleanup based on correlation
 
 Based on the above correlation matrix, we make the below observations
 
 **Remove the following predictors**
 
 * YearBuilt and GarageYrBlt has .82 correlation coefficient. This makes sense since the Garage will be built in the same year as the house, with a few exceptions. We also reason that the price will be more tied to how old the house is. Since YearBuilt of house will be a more useful predictor, we will remove GarageYrBlt
-* X1stFlrSF and TotalBsmtSF has a .82 correlation. This is obvious since the size of teh 1st floor will be very similar to size of basement. We can also reason that the price will be more correlated to the price of the 1st floor. Hence we will remove TotalBsmtSF
-* GarageArea and GarageCars have a .83 correlation. Intutively we can see that both of these are related. Hence we remove GarageCars 
-* GrLivArea and TotRmsAbvGrd has a correlation of .82. We see that number of Bedrooms and kitchens and batrooms are already captured separately. Hence we remove TotRmsAbvGrd
+* X1stFlrSF and TotalBsmtSF has a .82 correlation. This is obvious since the size of the 1st floor will be very similar to size of basement. We can also reason that the price will be more correlated to the price of the 1st floor. Hence we will remove TotalBsmtSF
+* GarageArea and GarageCars have a .83 correlation. Intuitively we can see that both of these are related. Hence we remove GarageCars 
+* GrLivArea and TotRmsAbvGrd has a correlation of .82. We see that number of Bedrooms and kitchens and bathrooms are already captured separately. Hence we remove TotRmsAbvGrd
 
 **Make a note of these**
 
@@ -169,7 +199,7 @@ We see that now we are left with 63 columns compared to the 81 that we started w
 
 
 
-## Data Cleanup to handle missing values
+### Data Cleanup to handle missing values
 
 We know that step wont work with missing values. Hence we will need to remove those. 
 
@@ -195,7 +225,7 @@ For the purpose of being able to see the plots clearly, we do two things for the
 1) We only look at numeric columns
 2) We filter out the columns that have 25 or less discrete values, since they will probably not be candidates for transformations
 
-We wont save this intermim dataset. It is only created to be able to see the distribution across many predictors clearly
+We wont save this interim dataset. It is only created to be able to see the distribution across many predictors clearly
 
 ```{r}
 df_only_numeric <- df_cols_removed[,sapply(df_cols_removed, is.numeric)]
@@ -217,7 +247,7 @@ df_cols_removed_for_plot <- subset(df_only_numeric, select = as.vector(eval(keep
 
 
 
-```{r fig.height=30, fig.width=35, message=FALSE, warning=FALSE, cache=TRUE}
+```{r fig.height=30, fig.width=35, message=FALSE, warning=FALSE}
 #pairs(df_only_numeric)
 ggpairs( df_cols_removed_for_plot, ggplot2::aes(color=I("navyblue")), title = "ggpairs plot to see correlation and distribution", lower = list(continuous = wrap("smooth")), axisLabels = "show", switch = "both")
 ```
@@ -302,15 +332,15 @@ In order to validate that transformations are necessary we will start with a sim
 
 ```{r fig.height=5, fig.width=15, message=FALSE, warning=FALSE}
 m1 <- lm("SalePrice~.", data=df_cols_removed)
-diagnostics(m1)
+knitr::kable(data.frame(diagnostics(m1)))
 ```
 
 
-Based on the diagnostics we see that some kind of transformation for the response is necessary.
+Based on the diagnostics and the plots we see that some kind of transformation for the response is necessary.
 
 
 
-### Boxcox lambda identifications for response and predictors
+### Boxcox lambda identifications for response and predictors {#id2}
 
 
 
@@ -324,7 +354,7 @@ boxcox(m1)
 ```
 We know that the most common Box-Cox Transformations are
 
-|$\lambda$|Tranasformed Data|
+|$\lambda$|Transformed Data|
 |---------|-----------------|
 |-2|$y^{-2}$|
 |-1|$y^{-1}$|
@@ -341,15 +371,15 @@ We redo the model and look at the diagnostics plots again
 
 ```{r fig.height=5, fig.width=15, message=FALSE, warning=FALSE}
 m2 <- lm("log(SalePrice)~.", data=df_cols_removed)
-diagnostics(m2)
+knitr::kable(data.frame(diagnostics(m2)))
 ```
 
-We see that the plots are a lot better, but there seems to be some scope for improvement. 
+We see that the plots and the diagnoistics are a lot better, but there seems to be some scope for improvement. 
 
 
 #### Predictors transformation identification
 
-Let us now identify the lamda transformations for the other columns we identified and using those variables as response, fit the model, but keep log(SalePrice) in the predictor with others
+Let us now identify the lambda transformations for the other columns we identified and using those variables as response, fit the model, but keep log(SalePrice) in the predictor with others
 
 
 ```{r}
@@ -395,7 +425,7 @@ bc <- boxcox(m3,xlab = "lambda for YearRemodAdd", lambda = seq(-200,400))
 
 YearBuilt and YearRemodAdd have very high $\lambda$ and using these transformations will make it very hard to explain the model. We will keep a note of these two, and experiment with them if necessary
 
-We will not identify the Lambda for MasVnrArea, BsmtFinSF1, BsmtFinSF2, WoodDeckSF, OpenPorchSF, EnclosedPorch since those predictors contant 0's, and we cant run the boxcox funtion on them unless we handle the 0's. Since we have a lot of predictors, we will not message these 6 predictors.
+We will not identify the Lambda for MasVnrArea, BsmtFinSF1, BsmtFinSF2, WoodDeckSF, OpenPorchSF, EnclosedPorch since those predictors constant 0's, and we cant run the boxcox function on them unless we handle the 0's. Since we have a lot of predictors, we will not message these 6 predictors.
 
 
 
@@ -403,14 +433,14 @@ We will not identify the Lambda for MasVnrArea, BsmtFinSF1, BsmtFinSF2, WoodDeck
 
 
 
-### Models - Simple, transformation, and using step
+### Models - Simple, transformation, and using step {#id3}
 
 Based on the above analysis we create the below models to start with
 
 1) A simple additive model
 2) A model with the above transformations but without the extreme transformations for YearBuilt and YearRemodAdd
 
-```{r cache=TRUE}
+```{r}
 m_additive <- lm("SalePrice~.", data = df_cols_removed)
 ```
 
@@ -423,19 +453,19 @@ m_transform_1 <- lm(formula = frm, data = df_cols_removed)
 
 Now we use step backwards with aic for the above to find better versions of these models that are smaller than them
 
-```{r cache=TRUE}
+```{r}
 m_additive_step <- step(m_additive, trace = 0)
 (frm <- formula(m_additive_step))
 ```
 
-```{r cache=TRUE}
+```{r}
 m_transform_1_step <- step(m_transform_1, trace = 0)
 (frm <- formula(m_transform_1_step))
 ```
 
 We now compare the diagnostics of these models
 
-```{r}
+```{r statcomp}
 m_additive_result <- diagnostics(m_additive, plotit = FALSE)
 m_additive_step_result <- diagnostics(m_additive_step, plotit = FALSE)
 
@@ -455,7 +485,7 @@ Looking at the above table, we can clearly see that the additive model isnt yiel
 
 
 
-#### Anova test
+#### Anova test {#id4}
 
 In order to confirm that the model generated using step (m_transform_1_step) is a better model than the m_transform_1 model, we will do an anova test
 
@@ -469,7 +499,7 @@ Based on the anova test, we see that the smaller model is sufficient hence we mo
 
 #### Model selection
 
-Hence we will use m_transform_1_step model going forward
+As we concluded above, we will use m_transform_1_step model going forward. Below is the formula of the model selected.
 
 ```{r}
 formula(m_transform_1_step)
@@ -478,7 +508,7 @@ formula(m_transform_1_step)
 
 
 
-### Individual parameter significance test for selected model
+### Individual parameter significance test for selected model {#id5}
 
 Looking at the diagnostics, our model can still do better. We will now look at the individual significant of the parameters of this model to see if we can eliminate any predictors
 
@@ -501,13 +531,13 @@ names(a[a>.01])
 
 We will select all non-categorical variables that have $pvalue>.1$ and will will choose only the categorical predictors to remove that have all of the categories with $pvalue>.1$
 
-* LandSlope - Intutively we think this is important hence we will not remove it
+* LandSlope - Intuitively we think this is important hence we will not remove it
 * YearRemodAdd
 * ExterCond
-* KitchenAbvGr - we intutively think this is important and will not remove it
+* KitchenAbvGr - we intuitively think this is important and will not remove it
 * PavedDrive 
 * EnclosedPorch
-* SaleType - Intutively we think this is important hence we will not remove it
+* SaleType - Intuitively we think this is important hence we will not remove it
 
 Now we modify the formula of the model that is best so far, and remove the above identified predictors from it
 
@@ -544,7 +574,7 @@ Based on the result of the anova test, we see that for our smaller model we fail
 
 
 
-#### Diagnostic comparison
+#### Diagnostic comparison {#id6}
 
 Now we will compare the diagnostics of the 2 models
 
@@ -558,17 +588,17 @@ df_result <- rbind(m_transform_1_step=m_transform_1_step_result, m_transform_1_s
 knitr::kable(df_result)
 ```
 
-We see that our diagnostic statistics are about the same. 
+We see that our diagnostic statistics are about the same, with minor degradation of the diagnostics for the smaller model. 
 
 
 
 #### Model selection
 
-Hence we will select the smaller model, m_transform_1_step_sig_only, as our better model
+Since the diagnostics are almost similar, and we prefer smaller models, hence we will select the smaller model, m_transform_1_step_sig_only, as our better model
 
 
 
-### Variance Inflation factor identification
+### Variance Inflation factor identification {#id7}
 
 We look at variance inflation factors, and filter by only vifs that are >5
 
@@ -580,7 +610,7 @@ We notice that while there are high vif values, they are for categorical variabl
 
 
 
-### Influential points identification and handling
+### Influential points identification and handling {#id8}
 
 We will now look at high influence points and investigate them
 
@@ -656,7 +686,7 @@ knitr::kable(df_result)
 
 
 
-## Diagnostic plots
+## Diagnostic plots of Selected Model
 
 We also look at the diagnostics plot of our selected model
 
@@ -665,14 +695,61 @@ diagnostics(m_no_influentials, testit = FALSE)
 
 ```
 
-Our diagnostics plots look fairly good We know that our shapiro test and BP test are rejecting the null hypothesis, but since the graphs looks pretty good, and we know that these tests are quick to reject for large datasets, we will select this model as our final model
+Our diagnostics plots look fairly good. Using an $\alpha = .001$, even our shapiro test and BP test validate the normality and equal variance assumptions. Hence we will select this model as our final model
 
 
 
 # Discussion
 
+We spent a lot of time inspecting and cleaning the data in \@ref(id1). The amount of effort isnt visible in this report, since it was primary inspecting the Hmisc::describe output, which was very detailed. The effort was worth it though since had we not spent the time, our diagnostics or our discovery process could have been fairly painful
 
-# Result
+We also used boxcox in section \@ref(id2) to identify response and predictor transformations. That was also valuable and as we saw in  \@ref(id3), it significantly improved the model.
+
+What is not shown in the report is that we used bic to step back from our selected model in \@ref(id3), but the anova test for the selected model failed. For brevity of report, we only showed the aic step function, and as we can see in \@ref(id4), the anova test failed to reject the null Hypothesis for this smaller function
+
+We spent a significant time looking at the individual significance test in \@ref(id5), and experimenting with the variables there. This analysis had a limited benefit, and resulted in only making our diagnostic parameters worse, as can be seen in \@ref(id6). We still picked the smaller model as a compromise of less predictors vs only minor diagnostic statistic worsening. We should investigate further if we had not removed the parameters here, would our predictions be significantly better
+
+We looked at variance inflation factors in \@ref(id7), but chose not to remove any since our primary aim was better prediction, and the vifs werent extremely high
+
+We then investigated the result of removing influential observations. As we can see in \@ref(id8) this had a significant improvement on the diagnostics, and it seemed like a good compromise
+
+After looking at the diagnostics plot we come to the final conclusion that we have a good enough model
+
+
+```{r}
+knitr::kable(data.frame(diagnostics(m_no_influentials, plotit = FALSE)))
+```
+
+
+As we can see from the diagnostic statistics above, the model is useful since it has a fairly low RMSE and a very high adjusted $R^2$. Our AIC is also very low. We did look at the equal variance and the qq plot, and the plots look fairly good for such a large dataset. The shapiro test has a .001 p value and BP test has a .005 p-value. If we use an $\alpha = .001$, then we see that the normality and equal variance assumptions are met. For a data set this large, this is quite an accomplishment. 
+
+Hence we can conclude that we have a fairly good model.
+
+
+# Appendix
+
+## Names of the team members
+
+The team consisted of Praveen Purohit and Sunil Nandamuri
+
+
+## Description of data
+
+We spent a lot of time studying the data, but including it would clutter the report. We are showing it below
+
+```{r}
+
+Hmisc::describe(df1)
+```
+
+
+## Correlation Matrix
+
+We looked at and analyzed the correlation matrix but only shared a small snippet of it. We share the complete correlation matrix below
+
+```{r}
+cor(df_only_numeric, use = "complete.obs")
+```
 
 
 
